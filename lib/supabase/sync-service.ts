@@ -54,8 +54,13 @@ export async function fetchClientsFromSupabase(): Promise<ClientRecord[] | null>
 export async function saveClientToSupabase(c: ClientRecord): Promise<boolean> {
   if (!isSupabaseConfigured || !supabase) return false;
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const payload = {
     id: c.id,
+    user_id: user?.id || null,
     name: c.name,
     initials: c.initials,
     first_name: c.firstName,

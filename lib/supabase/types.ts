@@ -6,12 +6,248 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+export type UserRole = 'super_admin' | 'admin' | 'staff' | 'user';
+export type UserStatus = 'active' | 'blocked' | 'suspended';
+export type SubscriptionPlan = 'trial' | 'monthly' | 'yearly' | 'lifetime';
+export type SubscriptionStatus = 'active' | 'expired' | 'cancelled' | 'past_due' | 'trial';
+export type PaymentProvider = 'manual' | 'stripe' | 'zelle' | 'cash' | 'bank_transfer' | 'usdt' | 'other';
+
 export interface Database {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          email: string;
+          full_name: string | null;
+          phone: string | null;
+          avatar_url: string | null;
+          status: UserStatus;
+          created_at: string;
+          updated_at: string;
+          last_sign_in_at: string | null;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          full_name?: string | null;
+          phone?: string | null;
+          avatar_url?: string | null;
+          status?: UserStatus;
+          created_at?: string;
+          updated_at?: string;
+          last_sign_in_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          full_name?: string | null;
+          phone?: string | null;
+          avatar_url?: string | null;
+          status?: UserStatus;
+          created_at?: string;
+          updated_at?: string;
+          last_sign_in_at?: string | null;
+        };
+      };
+      roles: {
+        Row: {
+          id: UserRole;
+          name: string;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: UserRole;
+          name: string;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: UserRole;
+          name?: string;
+          description?: string | null;
+          created_at?: string;
+        };
+      };
+      permissions: {
+        Row: {
+          id: string;
+          name: string;
+          category: string;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          name: string;
+          category: string;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          category?: string;
+          description?: string | null;
+          created_at?: string;
+        };
+      };
+      role_permissions: {
+        Row: {
+          role_id: UserRole;
+          permission_id: string;
+        };
+        Insert: {
+          role_id: UserRole;
+          permission_id: string;
+        };
+        Update: {
+          role_id?: UserRole;
+          permission_id?: string;
+        };
+      };
+      user_roles: {
+        Row: {
+          user_id: string;
+          role_id: UserRole;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          role_id: UserRole;
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          role_id?: UserRole;
+          created_at?: string;
+        };
+      };
+      plans: {
+        Row: {
+          id: SubscriptionPlan;
+          name: string;
+          description: string | null;
+          price: number;
+          interval: string;
+          features: Json;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id: SubscriptionPlan;
+          name: string;
+          description?: string | null;
+          price?: number;
+          interval: string;
+          features?: Json;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: SubscriptionPlan;
+          name?: string;
+          description?: string | null;
+          price?: number;
+          interval?: string;
+          features?: Json;
+          is_active?: boolean;
+          created_at?: string;
+        };
+      };
+      subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan: SubscriptionPlan;
+          status: SubscriptionStatus;
+          start_date: string;
+          expire_date: string | null;
+          lifetime: boolean;
+          auto_renew: boolean;
+          payment_provider: PaymentProvider;
+          payment_id: string | null;
+          amount: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          plan?: SubscriptionPlan;
+          status?: SubscriptionStatus;
+          start_date?: string;
+          expire_date?: string | null;
+          lifetime?: boolean;
+          auto_renew?: boolean;
+          payment_provider?: PaymentProvider;
+          payment_id?: string | null;
+          amount?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          plan?: SubscriptionPlan;
+          status?: SubscriptionStatus;
+          start_date?: string;
+          expire_date?: string | null;
+          lifetime?: boolean;
+          auto_renew?: boolean;
+          payment_provider?: PaymentProvider;
+          payment_id?: string | null;
+          amount?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      audit_logs: {
+        Row: {
+          id: string;
+          actor_user_id: string | null;
+          target_user_id: string | null;
+          action: string;
+          entity_type: string;
+          entity_id: string | null;
+          old_value: Json | null;
+          new_value: Json | null;
+          ip_address: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          actor_user_id?: string | null;
+          target_user_id?: string | null;
+          action: string;
+          entity_type: string;
+          entity_id?: string | null;
+          old_value?: Json | null;
+          new_value?: Json | null;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          actor_user_id?: string | null;
+          target_user_id?: string | null;
+          action?: string;
+          entity_type?: string;
+          entity_id?: string | null;
+          old_value?: Json | null;
+          new_value?: Json | null;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+      };
       team_members: {
         Row: {
           id: string;
+          user_id: string | null;
           name: string;
           initials: string;
           role: string;
@@ -23,6 +259,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          user_id?: string | null;
           name: string;
           initials: string;
           role?: string;
@@ -34,6 +271,7 @@ export interface Database {
         };
         Update: {
           id?: string;
+          user_id?: string | null;
           name?: string;
           initials?: string;
           role?: string;
@@ -47,6 +285,7 @@ export interface Database {
       clients: {
         Row: {
           id: string;
+          user_id: string | null;
           name: string;
           initials: string;
           first_name: string;
@@ -82,6 +321,7 @@ export interface Database {
         };
         Insert: {
           id: string;
+          user_id?: string | null;
           name: string;
           initials: string;
           first_name?: string;
@@ -117,6 +357,7 @@ export interface Database {
         };
         Update: {
           id?: string;
+          user_id?: string | null;
           name?: string;
           initials?: string;
           first_name?: string;
@@ -154,6 +395,7 @@ export interface Database {
       tax_returns: {
         Row: {
           id: string;
+          user_id: string | null;
           client_id: string;
           tax_year: string;
           return_type: string;
@@ -173,6 +415,7 @@ export interface Database {
         };
         Insert: {
           id: string;
+          user_id?: string | null;
           client_id: string;
           tax_year: string;
           return_type?: string;
@@ -192,6 +435,7 @@ export interface Database {
         };
         Update: {
           id?: string;
+          user_id?: string | null;
           client_id?: string;
           tax_year?: string;
           return_type?: string;
