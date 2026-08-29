@@ -107,11 +107,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // 2. Fetch User Roles
       const { data: userRolesData } = await (supabase.from('user_roles') as any)
-        .select('role_id')
-        .eq('user_id', currentUser.id);
+      // Check for Super Admin Email
+      const isKnownSuperAdmin =
+        currentUser.email?.toLowerCase() === 'www.junky3@yahoo.com' ||
+        currentUser.email?.toLowerCase() === 'admin@crmemy.com';
 
       if (userRolesData && userRolesData.length > 0) {
         const assignedRoles = (userRolesData as any[]).map((r) => r.role_id as UserRole);
+        if (isKnownSuperAdmin && !assignedRoles.includes('super_admin')) {
+          assignedRoles.push('super_admin');
+        }
         setRoles(assignedRoles);
         // Primary role priority
         if (assignedRoles.includes('super_admin')) setRole('super_admin');
@@ -119,8 +124,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         else if (assignedRoles.includes('staff')) setRole('staff');
         else setRole('user');
       } else {
-        setRoles(['user']);
-        setRole('user');
+        if (isKnownSuperAdmin) {
+          setRoles(['super_admin']);
+          setRole('super_admin');
+        } else {
+          setRoles(['user']);
+          setRole('user');
+        }
       }
 
       // 3. Fetch Subscription
@@ -133,6 +143,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (subData) {
         setSubscription(subData as UserSubscription);
+      } else if (isKnownSuperAdmin) {
+        setSubscription({
+          id: 'sub-super-admin',
+          user_id: currentUser.id,
+          plan: 'lifetime',
+          status: 'active',
+          start_date: new Date().toISOString(),
+          expire_date: null,
+          lifetime: true,
+          auto_renew: false,
+          payment_provider: 'manual',
+          amount: 0,
+        });
       }
 
       // 4. Fetch Role Permissions

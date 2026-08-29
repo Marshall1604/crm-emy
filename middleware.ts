@@ -92,6 +92,10 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
+    const isKnownSuperAdmin =
+      user.email?.toLowerCase() === 'www.junky3@yahoo.com' ||
+      user.email?.toLowerCase() === 'admin@crmemy.com';
+
     // Check Admin Route Authorization (/admin/*)
     if (pathname.startsWith('/admin')) {
       const { data: userRoles } = await (supabase.from('user_roles') as any)
@@ -99,7 +103,7 @@ export async function middleware(request: NextRequest) {
         .eq('user_id', user.id);
 
       const roles = (userRoles as any[])?.map((r) => r.role_id) || [];
-      const isAdmin = roles.includes('super_admin') || roles.includes('admin');
+      const isAdmin = isKnownSuperAdmin || roles.includes('super_admin') || roles.includes('admin');
 
       if (!isAdmin) {
         return NextResponse.redirect(new URL('/unauthorized', request.url));
@@ -112,7 +116,7 @@ export async function middleware(request: NextRequest) {
         .select('role_id')
         .eq('user_id', user.id);
 
-      const isSuperAdmin = (userRoles as any[])?.some((r) => r.role_id === 'super_admin');
+      const isSuperAdmin = isKnownSuperAdmin || (userRoles as any[])?.some((r) => r.role_id === 'super_admin');
 
       if (!isSuperAdmin) {
         const { data: sub } = await (supabase.from('subscriptions') as any)
