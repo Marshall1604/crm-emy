@@ -558,9 +558,9 @@ export function ClientsList() {
                       >
                         <b
                           style={{
-                            fontSize: '11px',
-                            fontWeight: 650,
-                            color: '#172033',
+                            fontSize: '13.5px',
+                            fontWeight: 700,
+                            color: '#092c5c',
                           }}
                         >
                           {c.name}
