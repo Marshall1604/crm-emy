@@ -67,7 +67,7 @@ export function AdminDashboard() {
   const expiredSubs = usersList.filter((u) => u.subscription?.status === 'expired').length || 0;
 
   // Monthly Recurring Revenue estimate
-  const mrr = (monthlySubs * 49) + Math.round((yearlySubs * 490) / 12);
+  const mrr = (monthlySubs * 19) + Math.round((yearlySubs * 199) / 12);
 
   return (
     <div className="space-y-7">

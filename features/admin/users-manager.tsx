@@ -133,7 +133,7 @@ const mockDefaultUsers: AdminUserRecord[] = [
       expire_date: '2027-08-10T11:30:00Z',
       lifetime: false,
       payment_provider: 'stripe',
-      amount: 490,
+      amount: 199,
     },
   },
   {
@@ -154,7 +154,7 @@ const mockDefaultUsers: AdminUserRecord[] = [
       expire_date: '2026-09-15T09:00:00Z',
       lifetime: false,
       payment_provider: 'zelle',
-      amount: 49,
+      amount: 19,
     },
   },
   {
@@ -175,7 +175,7 @@ const mockDefaultUsers: AdminUserRecord[] = [
       expire_date: '2026-09-20T14:40:00Z',
       lifetime: false,
       payment_provider: 'stripe',
-      amount: 49,
+      amount: 19,
     },
   },
   {
@@ -286,7 +286,7 @@ export function UsersManager() {
   const [daysToAdd, setDaysToAdd] = useState<number>(30);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly' | 'lifetime'>('monthly');
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'zelle' | 'cash' | 'bank_transfer' | 'usdt'>('zelle');
-  const [paymentAmount, setPaymentAmount] = useState<number>(49);
+  const [paymentAmount, setPaymentAmount] = useState<number>(19);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -414,7 +414,7 @@ export function UsersManager() {
             expire_date: expireDate,
             lifetime: isLifetime,
             payment_provider: isLifetime ? 'manual' : 'stripe',
-            amount: isLifetime ? 999 : createForm.plan === 'yearly' ? 490 : createForm.plan === 'monthly' ? 49 : 0,
+            amount: isLifetime ? 390 : createForm.plan === 'yearly' ? 199 : createForm.plan === 'monthly' ? 19 : 0,
           },
         };
       }
@@ -697,9 +697,9 @@ export function UsersManager() {
           className="h-10 px-3 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 bg-white cursor-pointer"
         >
           <option value="">All Subscription Plans</option>
-          <option value="monthly">Monthly Pro ($49)</option>
-          <option value="yearly">Annual Enterprise ($490)</option>
-          <option value="lifetime">Lifetime License</option>
+          <option value="monthly">Monthly Pro ($19)</option>
+          <option value="yearly">Annual Enterprise ($199)</option>
+          <option value="lifetime">Lifetime License ($390)</option>
           <option value="trial">7-Day Trial</option>
           <option value="expired">Expired Subscriptions</option>
         </select>
@@ -1070,9 +1070,9 @@ export function UsersManager() {
                   className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white font-medium"
                 >
                   <option value="trial">7-Day Free Trial ($0)</option>
-                  <option value="monthly">Monthly Pro ($49/mo)</option>
-                  <option value="yearly">Annual Enterprise ($490/yr)</option>
-                  <option value="lifetime">Lifetime License ($999)</option>
+                  <option value="monthly">Monthly Pro ($19/mo)</option>
+                  <option value="yearly">Annual Enterprise ($199/yr)</option>
+                  <option value="lifetime">Lifetime License ($390)</option>
                 </select>
               </div>
             </div>
@@ -1182,8 +1182,8 @@ export function UsersManager() {
                   onChange={(e: any) => setSelectedPlan(e.target.value)}
                   className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white"
                 >
-                  <option value="monthly">Monthly Pro ($49)</option>
-                  <option value="yearly">Annual Enterprise ($490)</option>
+                  <option value="monthly">Monthly Pro ($19)</option>
+                  <option value="yearly">Annual Enterprise ($199)</option>
                 </select>
               </div>
 

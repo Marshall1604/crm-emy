@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 
 export default function AdminPaymentsPage() {
   const transactions = [
-    { id: 'TXN-902', user: 'Daniel Lee', plan: 'Annual Enterprise', method: 'Stripe', amount: '$490.00', date: 'Aug 10, 2026', status: 'Completed' },
-    { id: 'TXN-901', user: 'Sarah Kim', plan: 'Monthly Pro', method: 'Zelle', amount: '$49.00', date: 'Aug 15, 2026', status: 'Completed' },
-    { id: 'TXN-900', user: 'Michael Chen', plan: 'Monthly Pro', method: 'Bank Transfer', amount: '$49.00', date: 'Aug 20, 2026', status: 'Completed' },
+    { id: 'TXN-902', user: 'Daniel Lee', plan: 'Annual Enterprise', method: 'Stripe', amount: '$199.00', date: 'Aug 10, 2026', status: 'Completed' },
+    { id: 'TXN-901', user: 'Sarah Kim', plan: 'Monthly Pro', method: 'Zelle', amount: '$19.00', date: 'Aug 15, 2026', status: 'Completed' },
+    { id: 'TXN-900', user: 'Michael Chen', plan: 'Monthly Pro', method: 'Bank Transfer', amount: '$19.00', date: 'Aug 20, 2026', status: 'Completed' },
   ];
 
   return (

@@ -17,7 +17,7 @@ export default function AdminPlansPage() {
     {
       id: 'monthly',
       name: 'Monthly Pro',
-      price: '$49',
+      price: '$19',
       interval: 'per month',
       features: ['Unlimited clients and business returns', 'Form 1040, 1065, 1120-S support', 'Excel exports & reporting', 'Standard support'],
       activeUsers: 2,
@@ -25,15 +25,15 @@ export default function AdminPlansPage() {
     {
       id: 'yearly',
       name: 'Annual Enterprise',
-      price: '$490',
-      interval: 'per year (Save $98)',
-      features: ['All Pro features', '2 Months free included', 'Priority IRS e-file prep', 'Dedicated onboarding'],
+      price: '$199',
+      interval: 'per year (Save $29)',
+      features: ['All Pro features', 'Save over 13% compared to monthly', 'Priority IRS e-file prep', 'Dedicated onboarding'],
       activeUsers: 1,
     },
     {
       id: 'lifetime',
       name: 'Lifetime License',
-      price: '$999',
+      price: '$390',
       interval: 'one-time payment',
       features: ['Permanent unlimited access', 'Never expires', 'All future SaaS upgrades included', 'VIP dedicated support'],
       activeUsers: 1,

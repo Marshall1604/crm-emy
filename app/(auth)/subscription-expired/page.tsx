@@ -83,7 +83,7 @@ export default function SubscriptionExpiredPage() {
                 )}
               </div>
               <div className="flex items-baseline gap-1 my-3">
-                <span className="text-3xl font-extrabold text-slate-900">$49</span>
+                <span className="text-3xl font-extrabold text-slate-900">$19</span>
                 <span className="text-xs text-slate-500 font-medium">/ month</span>
               </div>
               <p className="text-xs text-slate-600 mb-4">Flexible monthly billing, cancel anytime.</p>
@@ -108,7 +108,7 @@ export default function SubscriptionExpiredPage() {
               onClick={() => setIsSupportModalOpen(true)}
               className="w-full mt-6 h-10 text-xs font-bold bg-[#092c5c] hover:bg-[#072247] text-white"
             >
-              Renew Monthly ($49)
+              Renew Monthly ($19)
             </Button>
           </div>
 
@@ -122,7 +122,7 @@ export default function SubscriptionExpiredPage() {
             }`}
           >
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-blue-600 text-white text-[11px] font-extrabold tracking-wide uppercase">
-              Save 2 Months Free
+              Save $29 / Year
             </div>
 
             <div>
@@ -135,7 +135,7 @@ export default function SubscriptionExpiredPage() {
                 )}
               </div>
               <div className="flex items-baseline gap-1 my-3">
-                <span className="text-3xl font-extrabold text-slate-900">$490</span>
+                <span className="text-3xl font-extrabold text-slate-900">$199</span>
                 <span className="text-xs text-slate-500 font-medium">/ year</span>
               </div>
               <p className="text-xs text-slate-600 mb-4">Best value for tax preparation offices.</p>
@@ -147,7 +147,7 @@ export default function SubscriptionExpiredPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>2 Months Free included</span>
+                  <span>Save over 13% vs monthly</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -160,7 +160,7 @@ export default function SubscriptionExpiredPage() {
               onClick={() => setIsSupportModalOpen(true)}
               className="w-full mt-6 h-10 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
             >
-              Renew Yearly ($490)
+              Renew Yearly ($199)
             </Button>
           </div>
 
@@ -186,7 +186,7 @@ export default function SubscriptionExpiredPage() {
                 )}
               </div>
               <div className="flex items-baseline gap-1 my-3">
-                <span className="text-3xl font-extrabold text-slate-900">$999</span>
+                <span className="text-3xl font-extrabold text-slate-900">$390</span>
                 <span className="text-xs text-slate-500 font-medium">one-time</span>
               </div>
               <p className="text-xs text-slate-600 mb-4">Pay once, permanent access forever.</p>
@@ -211,7 +211,7 @@ export default function SubscriptionExpiredPage() {
               onClick={() => setIsSupportModalOpen(true)}
               className="w-full mt-6 h-10 text-xs font-bold bg-purple-700 hover:bg-purple-800 text-white"
             >
-              Get Lifetime ($999)
+              Get Lifetime ($390)
             </Button>
           </div>
         </div>

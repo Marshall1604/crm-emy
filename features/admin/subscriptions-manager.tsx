@@ -43,7 +43,7 @@ export function SubscriptionsManager() {
       start: 'Aug 10, 2026',
       expire: 'Aug 10, 2027',
       provider: 'Stripe',
-      amount: '$490.00',
+      amount: '$199.00',
     },
     {
       id: 'sub-03',
@@ -54,7 +54,7 @@ export function SubscriptionsManager() {
       start: 'Aug 15, 2026',
       expire: 'Sep 15, 2026',
       provider: 'Zelle',
-      amount: '$49.00',
+      amount: '$19.00',
     },
     {
       id: 'sub-04',
@@ -65,7 +65,7 @@ export function SubscriptionsManager() {
       start: 'Aug 20, 2026',
       expire: 'Sep 20, 2026',
       provider: 'Bank Wire',
-      amount: '$49.00',
+      amount: '$19.00',
     },
     {
       id: 'sub-05',
@@ -104,13 +104,13 @@ export function SubscriptionsManager() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <span className="text-xs font-bold text-slate-500 uppercase">Monthly Subscribers</span>
           <div className="text-3xl font-black text-slate-900 mt-2">2</div>
-          <p className="text-xs text-slate-500 mt-1">$49/month per seat</p>
+          <p className="text-xs text-slate-500 mt-1">$19/month per seat</p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <span className="text-xs font-bold text-slate-500 uppercase">Yearly Subscribers</span>
           <div className="text-3xl font-black text-slate-900 mt-2">1</div>
-          <p className="text-xs text-blue-700 font-semibold mt-1">$490/year billed</p>
+          <p className="text-xs text-blue-700 font-semibold mt-1">$199/year billed</p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-purple-200 bg-purple-50/20 shadow-xs">
