@@ -1,4 +1,4 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from './types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -15,9 +15,9 @@ export function createClient() {
   if (!isSupabaseConfigured) {
     return null;
   }
-  return createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
 }
 
 export const supabase = isSupabaseConfigured
-  ? createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey)
+  ? createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
   : null;

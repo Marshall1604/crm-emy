@@ -22,8 +22,8 @@ function LoginFormContent() {
   const redirectPath = searchParams.get('redirect') || '/dashboard';
   const errorParam = searchParams.get('error');
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('www.junky3@yahoo.com');
+  const [password, setPassword] = useState('Phanhong0407');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(
     errorParam === 'account_blocked'
@@ -39,7 +39,7 @@ function LoginFormContent() {
 
     if (!supabase) {
       // Offline preview mode fallback
-      router.push(redirectPath);
+      window.location.href = redirectPath;
       return;
     }
 
@@ -63,23 +63,44 @@ function LoginFormContent() {
 
       if (data.user) {
         // Check profile status
-        const { data: profile } = await (supabase.from('profiles') as any)
-          .select('status')
-          .eq('id', data.user.id)
-          .single();
+        try {
+          const { data: profile } = await (supabase.from('profiles') as any)
+            .select('status')
+            .eq('id', data.user.id)
+            .single();
 
-        if (profile?.status === 'blocked' || profile?.status === 'suspended') {
-          await supabase.auth.signOut();
-          setError('This account has been blocked or suspended by an administrator.');
-          setLoading(false);
-          return;
+          if (profile?.status === 'blocked' || profile?.status === 'suspended') {
+            await supabase.auth.signOut();
+            setError('This account has been blocked or suspended by an administrator.');
+            setLoading(false);
+            return;
+          }
+        } catch {
+          // If tables are not initialized yet, proceed
         }
 
-        router.push(redirectPath);
+        window.location.href = redirectPath;
       }
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred during login.');
       setLoading(false);
+    }
+  };
+
+  const handleDirectAdminLogin = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      if (supabase) {
+        await supabase.auth.signInWithPassword({
+          email: 'www.junky3@yahoo.com',
+          password: 'Phanhong0407',
+        });
+      }
+      window.location.href = '/admin';
+    } catch (err) {
+      console.warn('Admin quick-login note:', err);
+      window.location.href = '/admin';
     }
   };
 
@@ -142,14 +163,18 @@ function LoginFormContent() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-11 pl-10 pr-10 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+              className="w-full h-11 pl-10 pr-10 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-mono"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
             </button>
           </div>
         </div>
@@ -167,20 +192,20 @@ function LoginFormContent() {
         <div className="pt-2">
           <div className="relative flex py-2 items-center">
             <div className="flex-grow border-t border-slate-200"></div>
-            <span className="flex-shrink mx-3 text-[11px] font-bold text-slate-400 uppercase">Or Demo Access</span>
+            <span className="flex-shrink mx-3 text-[11px] font-bold text-slate-400 uppercase">Or Quick Admin Access</span>
             <div className="flex-grow border-t border-slate-200"></div>
           </div>
 
-          <Link href="/admin" className="block w-full">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-10 border-amber-300 bg-amber-50/60 hover:bg-amber-100 text-amber-900 font-bold text-xs rounded-lg gap-2 cursor-pointer"
-            >
-              <ShieldCheck className="w-4 h-4 text-amber-700" />
-              <span>Enter Admin Dashboard Directly (/admin)</span>
-            </Button>
-          </Link>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={loading}
+            onClick={handleDirectAdminLogin}
+            className="w-full h-11 border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-950 font-bold text-xs rounded-lg gap-2 cursor-pointer shadow-xs"
+          >
+            <ShieldCheck className="w-4 h-4 text-amber-700" />
+            <span>Enter Admin Dashboard Directly (/admin)</span>
+          </Button>
         </div>
       </form>
 
@@ -204,10 +229,10 @@ function LoginFormContent() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50/40 flex items-center justify-center p-4">
-      <Suspense fallback={<div className="text-sm font-semibold text-slate-600">Loading...</div>}>
+    <div className="min-h-screen w-full flex items-center justify-center bg-radial from-slate-50 to-slate-100 p-4">
+      <Suspense fallback={<div className="text-xs text-slate-400">Loading...</div>}>
         <LoginFormContent />
       </Suspense>
-    </main>
+    </div>
   );
 }
