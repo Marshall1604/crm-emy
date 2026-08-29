@@ -58,10 +58,10 @@ export interface ClientRecord {
   dependents: {
     fullName: string;
     ssn: string;
-    dob: string;
+    dob?: string;
     relationship: string;
-    phone: string;
-    address: string;
+    phone?: string;
+    address?: string;
   }[];
 
   // Notes

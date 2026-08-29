@@ -16,7 +16,7 @@ export async function fetchClientsFromSupabase(): Promise<ClientRecord[] | null>
     return null;
   }
 
-  return data.map((row) => ({
+  return (data as any[]).map((row) => ({
     id: row.id,
     name: row.name,
     initials: row.initials,
@@ -88,7 +88,7 @@ export async function saveClientToSupabase(c: ClientRecord): Promise<boolean> {
     client_since: c.updated,
   };
 
-  const { error } = await supabase.from('clients').upsert(payload);
+  const { error } = await (supabase.from('clients') as any).upsert(payload);
   if (error) {
     console.error('Failed to save client to Supabase:', error);
     return false;
@@ -98,29 +98,31 @@ export async function saveClientToSupabase(c: ClientRecord): Promise<boolean> {
 
 export async function deleteClientFromSupabase(id: string): Promise<boolean> {
   if (!isSupabaseConfigured || !supabase) return false;
-  const { error } = await supabase.from('clients').delete().eq('id', id);
+  const { error } = await (supabase.from('clients') as any).delete().eq('id', id);
   return !error;
 }
 
 export async function fetchTeamFromSupabase(): Promise<TeamMember[] | null> {
   if (!isSupabaseConfigured || !supabase) return null;
-  const { data, error } = await supabase.from('team_members').select('*');
+  const { data, error } = await (supabase.from('team_members') as any).select('*');
   if (error || !data) return null;
 
-  return data.map((row) => ({
+  return (data as any[]).map((row) => ({
     id: row.id,
     name: row.name,
     initials: row.initials,
     role: row.role as any,
     email: row.email,
-    phone: row.phone,
+    phone: row.phone || '',
     status: row.status as any,
+    assigned: Number(row.assigned || 0),
+    lastActive: row.last_active || 'Active',
   }));
 }
 
 export async function saveTeamMemberToSupabase(member: TeamMember): Promise<boolean> {
   if (!isSupabaseConfigured || !supabase) return false;
-  const { error } = await supabase.from('team_members').upsert({
+  const { error } = await (supabase.from('team_members') as any).upsert({
     id: member.id,
     name: member.name,
     initials: member.initials,
