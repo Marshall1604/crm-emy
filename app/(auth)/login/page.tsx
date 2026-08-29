@@ -162,6 +162,26 @@ function LoginFormContent() {
           {loading ? 'Signing in...' : 'Sign In to Workspace'}
           <ArrowRight className="w-4 h-4" />
         </Button>
+
+        {/* QUICK DEMO / ADMIN ACCESS BUTTON */}
+        <div className="pt-2">
+          <div className="relative flex py-2 items-center">
+            <div className="flex-grow border-t border-slate-200"></div>
+            <span className="flex-shrink mx-3 text-[11px] font-bold text-slate-400 uppercase">Or Demo Access</span>
+            <div className="flex-grow border-t border-slate-200"></div>
+          </div>
+
+          <Link href="/admin" className="block w-full">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-10 border-amber-300 bg-amber-50/60 hover:bg-amber-100 text-amber-900 font-bold text-xs rounded-lg gap-2 cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4 text-amber-700" />
+              <span>Enter Admin Dashboard Directly (/admin)</span>
+            </Button>
+          </Link>
+        </div>
       </form>
 
       {/* Footer Navigation */}
