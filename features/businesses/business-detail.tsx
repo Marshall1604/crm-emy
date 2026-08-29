@@ -1,0 +1,56 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { Activity, CalendarDays, Check, ChevronDown, CircleDollarSign, ClipboardCheck, Download, Eye, EyeOff, FileText, FolderOpen, Mail, MapPin, MoreHorizontal, NotebookPen, Pencil, Phone, Plus, ReceiptText, Search, ShieldCheck, Upload, UserRound } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+const tabs=['Overview','Tax Returns','Partners','Documents','Tasks','Notes','Invoices','Activity'] as const;
+type Tab=typeof tabs[number];
+const returns=[{year:2026,form:'1065',status:'Waiting Documents',federal:'$4,850',state:'$1,900',fee:'$2,400'},{year:2025,form:'1065',status:'Completed',federal:'$7,240',state:'$2,130',fee:'$2,250'},{year:2024,form:'1065',status:'Completed',federal:'$6,810',state:'$1,740',fee:'$2,100'}];
+const partners=[{name:'Michael Chen',initials:'MC',role:'Managing Partner',ownership:'60%',email:'michael@abclogistics.com',phone:'(415) 555-0182',ssn:'***-**-4812'},{name:'Sofia Ramirez',initials:'SR',role:'Partner',ownership:'40%',email:'sofia@abclogistics.com',phone:'(415) 555-0146',ssn:'***-**-7395'}];
+const events=[
+  {icon:Plus,title:'Client created',detail:'ABC Logistics LLC was added to the workspace',actor:'Amy Tran',time:'Aug 12, 2026 · 9:14 AM',tone:'blue'},
+  {icon:Pencil,title:'Business information edited',detail:'Phone number and mailing address updated',actor:'Amy Tran',time:'Aug 18, 2026 · 2:32 PM',tone:'violet'},
+  {icon:Activity,title:'Status changed',detail:'New → Waiting Documents',actor:'Daniel Lee',time:'Aug 20, 2026 · 10:05 AM',tone:'amber'},
+  {icon:Upload,title:'Document uploaded',detail:'2026_Partner_Statements.pdf',actor:'Michael Chen',time:'Aug 23, 2026 · 4:48 PM',tone:'green'},
+  {icon:NotebookPen,title:'Note added',detail:'Waiting for two remaining K-1 statements.',actor:'Daniel Lee',time:'Aug 25, 2026 · 11:20 AM',tone:'violet'},
+  {icon:CircleDollarSign,title:'Preparation fee changed',detail:'Fee updated from $2,250 to $2,400',actor:'Amy Tran',time:'Aug 28, 2026 · 8:41 AM',tone:'green'},
+];
+
+export function BusinessDetail(){
+  const [tab,setTab]=useState<Tab>('Overview');const [showEin,setShowEin]=useState(false);const [year,setYear]=useState('2026');
+  return <main className="detail-shell">
+    <aside className="detail-sidebar"><Link href="/dashboard" className="detail-brand"><span>C<i>✓</i></span><b>CRM <em>EMY</em></b></Link><nav><p>WORKSPACE</p><Link href="/dashboard">▦ <span>Dashboard</span></Link><Link href="/clients">♙ <span>Clients</span></Link><Link className="selected" href="/businesses/abc-logistics">▣ <span>Businesses</span></Link><Link href="/tax-returns">▤ <span>Tax Returns</span></Link><Link href="/fees">$ <span>Fees</span></Link></nav><div className="detail-user"><span>AT</span><div><b>Amy Tran</b><small>Administrator</small></div></div></aside>
+    <section className="detail-main">
+      <header className="detail-topbar"><label><Search size={15}/><input placeholder="Search clients, cases, EIN..."/></label><div><Button variant="outline" size="sm"><Plus size={14}/>New task</Button><button className="avatar-button">AT</button></div></header>
+      <div className="record-head"><div className="record-breadcrumb"><Link href="/businesses">Businesses</Link><span>/</span><b>ABC Logistics LLC</b></div><div className="record-title-row"><div className="business-avatar">AL</div><div className="record-identity"><div><h1>ABC Logistics LLC</h1><span className="record-status waiting">Waiting Documents</span></div><p>DBA: ABC Freight & Logistics</p></div><div className="record-actions"><Button variant="outline" size="sm" disabled><Pencil size={14}/>Edit</Button><Button variant="outline" size="icon" disabled><MoreHorizontal size={16}/></Button></div></div>
+        <div className="record-meta"><div><span>EIN</span><b>{showEin?'12-3456789':'**-***6789'}</b><button onClick={()=>setShowEin(v=>!v)} aria-label={showEin?'Hide EIN':'Show EIN'}>{showEin?<EyeOff size={13}/>:<Eye size={13}/>}</button></div><div><span>Entity Type</span><b>Partnership</b></div><label><span>Current Tax Year</span><select value={year} onChange={e=>setYear(e.target.value)}><option>2026</option><option>2025</option><option>2024</option></select><ChevronDown size={12}/></label><div><span>Tax Return</span><b>Form 1065</b></div><div><span>Assigned Staff</span><i className="staff-dot">DL</i><b>Daniel Lee</b></div></div>
+      </div>
+      <nav className="record-tabs" aria-label="Business record sections">{tabs.map(item=><button key={item} className={tab===item?'active':''} onClick={()=>setTab(item)}>{item}{item==='Documents'&&<span>6</span>}{item==='Tasks'&&<span>3</span>}</button>)}</nav>
+      <div className="detail-content"><TabContent tab={tab} year={year}/></div>
+    </section>
+  </main>
+}
+
+function TabContent({tab,year}:{tab:Tab;year:string}){
+  if(tab==='Tax Returns')return <TaxReturns/>;
+  if(tab==='Partners')return <Partners/>;
+  if(tab==='Activity')return <ActivityTab/>;
+  if(tab==='Documents')return <SimplePanel icon={<FolderOpen/>} title="Documents" action="Upload document"><div className="doc-list">{['2026 Partner Statements.pdf','2025 Federal Return.pdf','California Form 565.pdf','Operating Agreement.pdf'].map((name,i)=><div key={name}><span className="file-icon"><FileText size={16}/></span><div><b>{name}</b><small>{i?'PDF · 1.8 MB':'PDF · 842 KB'} · Updated Aug {23-i}, 2026</small></div><Button variant="ghost" size="icon"><Download size={15}/></Button></div>)}</div></SimplePanel>;
+  if(tab==='Tasks')return <SimplePanel icon={<ClipboardCheck/>} title="Open tasks" action="Add task"><div className="task-list">{['Collect remaining K-1 statements','Confirm California mailing address','Review 2026 estimated payments'].map((task,i)=><label key={task}><input type="checkbox"/><span><b>{task}</b><small>Due Sep {4+i*2}, 2026 · Daniel Lee</small></span></label>)}</div></SimplePanel>;
+  if(tab==='Notes')return <SimplePanel icon={<NotebookPen/>} title="Internal notes" action="Add note"><div className="note-card"><p>Waiting for two remaining K-1 statements. Client confirmed they expect both by September 4.</p><span>Daniel Lee · Aug 25, 2026 at 11:20 AM</span></div></SimplePanel>;
+  if(tab==='Invoices')return <SimplePanel icon={<ReceiptText/>} title="Invoices" action="Create invoice"><div className="invoice-row"><div><b>INV-2026-0042</b><span>2026 Partnership Tax Preparation</span></div><strong>$2,400.00</strong><span className="invoice-status">Partially Paid</span><small>Balance $1,200.00</small></div></SimplePanel>;
+  return <Overview year={year}/>;
+}
+
+function Overview({year}:{year:string}){return <><section className="metric-row"><Metric title="Federal Tax" value="$4,850.00" note={`${year} Form 1065`} icon={<ShieldCheck/>} tone="blue"/><Metric title="State Tax" value="$1,900.00" note="CA · AZ · NY" icon={<MapPin/>} tone="violet"/><Metric title="Preparation Fee" value="$2,400.00" note="Current engagement" icon={<ReceiptText/>} tone="amber"/><Metric title="Amount Paid" value="$1,200.00" note="50% collected" icon={<Check/>} tone="green"/><Metric title="Balance" value="$1,200.00" note="Due Sep 15, 2026" icon={<CircleDollarSign/>} tone="red"/></section><div className="overview-grid"><section className="detail-panel"><PanelHeading title="Tax return history" sub="Multiple filing years for this business" action="View all"/><ReturnTable compact/></section><section className="detail-panel contact-panel"><PanelHeading title="Business details" sub="Primary contact information" action="Edit"/><div className="contact-list"><Info icon={<Mail/>} label="Email" value="office@abclogistics.com"/><Info icon={<Phone/>} label="Phone" value="(415) 555-0138"/><Info icon={<MapPin/>} label="Address" value="680 Harbor Way, Oakland, CA 94607"/><Info icon={<CalendarDays/>} label="Client since" value="August 12, 2024"/><Info icon={<UserRound/>} label="Primary contact" value="Michael Chen"/></div></section></div><section className="detail-panel mini-activity"><PanelHeading title="Recent activity" sub="Latest changes to this client" action="View activity"/><div>{events.slice(0,4).map(EventRow)}</div></section></>}
+function TaxReturns(){return <section className="detail-panel"><PanelHeading title="Tax return history" sub="All filing years and return statuses" action="Add tax return"/><ReturnTable/></section>}
+function ReturnTable({compact=false}:{compact?:boolean}){return <div className="returns-table"><div className="return-head"><span>Tax year</span><span>Return</span><span>Status</span><span>Federal tax</span><span>State tax</span><span>Fee</span><span/></div>{returns.slice(0,compact?3:returns.length).map(row=><div className="return-row" key={row.year}><b>{row.year}</b><span className="form-tag">Form {row.form}</span><span className={`return-status ${row.status==='Completed'?'completed':'waiting'}`}><i/>{row.status}</span><span>{row.federal}</span><span>{row.state}</span><b>{row.fee}</b><Button variant="ghost" size="icon"><MoreHorizontal size={15}/></Button></div>)}</div>}
+function Partners(){return <section className="detail-panel"><PanelHeading title="Partners / Owners" sub="Ownership and contact information" action="Add partner"/><div className="partner-cards">{partners.map(partner=><article key={partner.name}><header><span>{partner.initials}</span><div><h3>{partner.name}</h3><p>{partner.role}</p></div><Button variant="ghost" size="icon"><MoreHorizontal size={15}/></Button></header><div><Info icon={<CircleDollarSign/>} label="Ownership" value={partner.ownership}/><Info icon={<ShieldCheck/>} label="SSN" value={partner.ssn}/><Info icon={<Mail/>} label="Email" value={partner.email}/><Info icon={<Phone/>} label="Phone" value={partner.phone}/></div></article>)}</div></section>}
+function ActivityTab(){return <section className="detail-panel"><PanelHeading title="Activity timeline" sub="Complete audit history for this business" action="Filter"/><div className="activity-timeline">{events.map(EventRow)}</div></section>}
+function EventRow(event:typeof events[number]){const Icon=event.icon;return <div className="event-row" key={event.title+event.time}><span className={`event-icon ${event.tone}`}><Icon size={14}/></span><div><b>{event.title}</b><p>{event.detail}</p><small>{event.actor} · {event.time}</small></div></div>}
+function Metric({title,value,note,icon,tone}:{title:string;value:string;note:string;icon:React.ReactNode;tone:string}){return <article className="detail-metric"><span className={tone}>{icon}</span><p>{title}</p><h2>{value}</h2><small>{note}</small></article>}
+function PanelHeading({title,sub,action}:{title:string;sub:string;action:string}){return <header className="detail-panel-head"><div><h2>{title}</h2><p>{sub}</p></div><Button variant="ghost" size="sm">{action}<span>→</span></Button></header>}
+function Info({icon,label,value}:{icon:React.ReactNode;label:string;value:string}){return <div className="info-row"><span>{icon}</span><div><small>{label}</small><b>{value}</b></div></div>}
+function SimplePanel({icon,title,action,children}:{icon:React.ReactNode;title:string;action:string;children:React.ReactNode}){return <section className="detail-panel simple-panel"><div className="simple-title"><span>{icon}</span><h2>{title}</h2><Button size="sm"><Plus size={14}/>{action}</Button></div>{children}</section>}
