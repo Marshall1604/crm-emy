@@ -21,6 +21,7 @@ import {
 import { useAuth } from '@/lib/auth/auth-context';
 import { useLanguage } from '@/lib/i18n/language-context';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Button } from '@/components/ui/button';
 
 const workspace = [
@@ -225,6 +226,7 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
             <kbd>⌘ K</kbd>
           </label>
           <div className="flex items-center gap-2.5">
+            <ThemeSwitcher />
             <LanguageSwitcher />
 
             {isAdmin && (

@@ -30,6 +30,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 import { EditBusinessModal, type BusinessData } from './edit-business-modal';
 
 const defaultBusiness: BusinessData = {
@@ -161,6 +162,7 @@ export function BusinessDetail() {
             <input placeholder={t('search_placeholder')} />
           </label>
           <div className="flex items-center gap-2.5">
+            <ThemeSwitcher />
             <LanguageSwitcher />
 
             <Button

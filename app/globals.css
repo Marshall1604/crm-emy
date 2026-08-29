@@ -56,3 +56,544 @@
 /* Delete confirm modal */.delete-modal-content{max-width:420px!important;padding:28px 26px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px}.delete-modal-icon{width:48px;height:48px;border-radius:50%;background:#fef2f2;color:#dc2626;display:grid;place-items:center}.delete-modal-content h2{margin:0;font-size:17px;font-weight:700}.delete-modal-content p{font-size:13px;color:#64748b;max-width:300px;line-height:1.5}.delete-modal-actions{display:flex;gap:10px;justify-content:center;padding-top:6px}.btn-danger{background:#dc2626!important;color:#fff!important;border-color:#dc2626!important}.btn-danger:hover{background:#b91c1c!important}
 @media(max-width:720px){.team-page{padding:20px 14px 35px}.team-head{align-items:flex-start;gap:12px}.team-head button{font-size:0;width:38px;padding:0}.team-head button svg{margin:0}.team-summary{grid-template-columns:1fr}.member-form-row{grid-template-columns:1fr}}
 
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK THEME SYSTEM (GIAO DIỆN TỐI)
+   Smooth black-gray background, comfortable contrast, crystal clear text
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark,
+html.dark body {
+  background-color: #0b111e !important;
+  color: #f1f5f9 !important;
+}
+
+/* 1. Shell, Sidebars & Topbars */
+html.dark .app-shell,
+html.dark .tax-dashboard-shell,
+html.dark .detail-shell,
+html.dark .content,
+html.dark .tax-main,
+html.dark .detail-main,
+html.dark .route-content,
+html.dark .workspace-page,
+html.dark main {
+  background-color: #0b111e !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark .sidebar,
+html.dark .tax-sidebar,
+html.dark .detail-sidebar,
+html.dark .route-sidebar {
+  background-color: #0d1627 !important;
+  border-color: #1a273f !important;
+}
+
+html.dark .topbar,
+html.dark .tax-topbar,
+html.dark .detail-topbar,
+html.dark .route-topbar {
+  background-color: #0d1627 !important;
+  border-color: #1a273f !important;
+}
+
+html.dark .brand,
+html.dark .tax-brand,
+html.dark .detail-brand {
+  background-color: #0d1627 !important;
+  border-color: #1a273f !important;
+  color: #f8fafc !important;
+}
+
+/* 2. Navigation items */
+html.dark .nav-item,
+html.dark .detail-sidebar nav a,
+html.dark .tax-sidebar nav a,
+html.dark .route-nav a,
+html.dark .tax-sidebar nav button {
+  color: #94a3b8 !important;
+}
+
+html.dark .nav-item:hover,
+html.dark .nav-item.active,
+html.dark .detail-sidebar nav a:hover,
+html.dark .detail-sidebar nav a.selected,
+html.dark .tax-sidebar nav a:hover,
+html.dark .tax-sidebar nav a.selected,
+html.dark .route-nav a:hover,
+html.dark .route-nav a.selected {
+  background-color: #16243f !important;
+  color: #60a5fa !important;
+}
+
+html.dark .nav-count,
+html.dark .tax-sidebar nav a > b {
+  background-color: #1a2b4a !important;
+  color: #93c5fd !important;
+}
+
+html.dark .sidebar-footer,
+html.dark .detail-user,
+html.dark .tax-user,
+html.dark .route-user {
+  border-color: #1a273f !important;
+}
+
+/* 3. Cards, Panels, KPI boxes & Layout Containers */
+html.dark .stat-card,
+html.dark .panel,
+html.dark .detail-panel,
+html.dark .detail-metric,
+html.dark .route-card,
+html.dark .filter-panel,
+html.dark .returns-panel,
+html.dark .returns-list-card,
+html.dark .fees-table-card,
+html.dark .team-table-card,
+html.dark .team-summary article,
+html.dark .workspace-card,
+html.dark .form-card,
+html.dark .note-card,
+html.dark .fee-kpi,
+html.dark .partner-cards article,
+html.dark .bg-white {
+  background-color: #121c2e !important;
+  border-color: #1c2b44 !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.dark .partner-cards article > header {
+  background-color: #16233a !important;
+  border-color: #1c2b44 !important;
+}
+
+/* 4. Text and Headings High Contrast */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark strong,
+html.dark .font-extrabold,
+html.dark .font-black,
+html.dark .font-bold,
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-950,
+html.dark .detail-metric h2,
+html.dark .stat-card h2,
+html.dark .tax-kpi h2,
+html.dark .record-identity h1 {
+  color: #f8fafc !important;
+}
+
+html.dark p,
+html.dark span.text-slate-600,
+html.dark span.text-slate-500,
+html.dark .text-slate-700,
+html.dark .text-slate-600,
+html.dark .text-slate-500,
+html.dark .stat-card p,
+html.dark .detail-metric p,
+html.dark .tax-kpi p,
+html.dark .detail-panel-head p,
+html.dark .page-heading p {
+  color: #94a3b8 !important;
+}
+
+/* 5. Inputs, Selects, Search Bars */
+html.dark input,
+html.dark select,
+html.dark textarea,
+html.dark .crm-select,
+html.dark .year-select select {
+  background-color: #152238 !important;
+  border-color: #243756 !important;
+  color: #f8fafc !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+html.dark .search,
+html.dark .detail-topbar > label,
+html.dark .tax-topbar > label,
+html.dark .route-topbar > label,
+html.dark .returns-search,
+html.dark .filter-search input {
+  background-color: #152238 !important;
+  border-color: #243756 !important;
+  color: #f8fafc !important;
+}
+
+html.dark kbd,
+html.dark .search kbd,
+html.dark .tax-topbar kbd,
+html.dark .route-topbar kbd {
+  background-color: #1c2d49 !important;
+  border-color: #2b3f63 !important;
+  color: #94a3b8 !important;
+}
+
+/* 6. Tables, Thead, Tbody, Tr, Th, Td */
+html.dark table thead tr,
+html.dark table th,
+html.dark .return-head,
+html.dark .crm-team-table th,
+html.dark .engagement-table th,
+html.dark .fees-table th,
+html.dark .bg-slate-50\/80,
+html.dark .bg-slate-50 {
+  background-color: #16233a !important;
+  color: #94a3b8 !important;
+  border-color: #1c2b44 !important;
+}
+
+html.dark table tbody tr,
+html.dark table td,
+html.dark .return-row,
+html.dark .event-row,
+html.dark .crm-team-table td,
+html.dark .engagement-table td,
+html.dark .fees-table td,
+html.dark .info-row {
+  color: #e2e8f0 !important;
+  border-color: #18253b !important;
+}
+
+html.dark table tbody tr:hover,
+html.dark .return-row:hover,
+html.dark .hover\:bg-slate-50\/70:hover,
+html.dark .hover\:bg-slate-50:hover {
+  background-color: #182740 !important;
+}
+
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #18253b !important;
+}
+
+html.dark .border-slate-200,
+html.dark .border-slate-300,
+html.dark .border-slate-100 {
+  border-color: #1c2b44 !important;
+}
+
+html.dark .bg-slate-100 {
+  background-color: #16243f !important;
+  color: #cbd5e1 !important;
+}
+
+/* 7. Record Header & Tabs */
+html.dark .record-head,
+html.dark .record-tabs {
+  background-color: #0d1627 !important;
+  border-color: #1a273f !important;
+}
+
+html.dark .record-tabs button {
+  color: #94a3b8 !important;
+}
+
+html.dark .record-tabs button.active {
+  color: #60a5fa !important;
+  border-bottom-color: #3b82f6 !important;
+}
+
+html.dark .record-tabs button span {
+  background-color: #1a2b4a !important;
+  color: #93c5fd !important;
+}
+
+html.dark .record-meta {
+  border-color: #1a273f !important;
+}
+
+html.dark .record-meta > div,
+html.dark .record-meta > label {
+  border-color: #1a273f !important;
+}
+
+html.dark .record-meta b,
+html.dark .record-meta select {
+  color: #f8fafc !important;
+}
+
+/* 8. Modals & Dialogs */
+html.dark [data-slot="dialog-content"],
+html.dark .DialogContent,
+html.dark .business-modal,
+html.dark .member-modal-content,
+html.dark .delete-modal-content {
+  background-color: #0e1728 !important;
+  border-color: #20314f !important;
+  color: #f8fafc !important;
+}
+
+html.dark .modal-header,
+html.dark .modal-footer,
+html.dark .member-modal-header,
+html.dark .delete-modal-actions {
+  background-color: #121c2e !important;
+  border-color: #1c2b44 !important;
+}
+
+html.dark .modal-scroll {
+  background-color: #0b111e !important;
+}
+
+html.dark .modal-section,
+html.dark .dynamic-card {
+  background-color: #121c2e !important;
+  border-color: #1c2b44 !important;
+}
+
+html.dark .modal-section-head {
+  background-color: #152238 !important;
+  border-color: #1c2b44 !important;
+}
+
+html.dark .modal-field label,
+html.dark .member-form-field label {
+  color: #e2e8f0 !important;
+}
+
+html.dark .balance-card {
+  background-color: #13223d !important;
+  border-color: #213559 !important;
+}
+
+html.dark .balance-card strong {
+  color: #60a5fa !important;
+}
+
+html.dark .balance-card span,
+html.dark .balance-card small {
+  color: #94a3b8 !important;
+}
+
+/* 9. Miscellaneous components */
+html.dark .date {
+  background-color: #16243f !important;
+  border-color: #25395c !important;
+  color: #93c5fd !important;
+}
+
+html.dark .deadline strong {
+  color: #f8fafc !important;
+}
+
+html.dark .deadline div span {
+  color: #94a3b8 !important;
+}
+
+html.dark .deadline em {
+  background-color: #1c2d49 !important;
+  color: #cbd5e1 !important;
+}
+
+html.dark .activity {
+  background-color: #121c2e !important;
+}
+
+html.dark .activity strong {
+  color: #f8fafc !important;
+}
+
+html.dark .activity span {
+  color: #94a3b8 !important;
+}
+
+html.dark .form-tag,
+html.dark .entity-badge,
+html.dark .state-chip {
+  background-color: #16243f !important;
+  border-color: #25395c !important;
+  color: #e2e8f0 !important;
+}
+
+html.dark .donut:before {
+  background-color: #121c2e !important;
+}
+
+html.dark .donut strong {
+  color: #f8fafc !important;
+}
+
+html.dark .donut span {
+  color: #94a3b8 !important;
+}
+
+html.dark .legend-row {
+  color: #cbd5e1 !important;
+}
+
+html.dark .row-menu-dropdown {
+  background-color: #121c2e !important;
+  border-color: #20314f !important;
+}
+
+html.dark .row-menu-dropdown button {
+  color: #e2e8f0 !important;
+}
+
+html.dark .row-menu-dropdown button:hover {
+  background-color: #1a2b4a !important;
+}
+
+html.dark .team-table-card > footer {
+  background-color: #152238 !important;
+  border-color: #1c2b44 !important;
+  color: #94a3b8 !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DASHBOARD & INTERACTIVE WIDGETS DARK ENHANCEMENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Dashboard Pipeline Buttons Dark Mode */
+html.dark .bg-amber-50\/70 {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+html.dark .bg-amber-50\/70:hover, html.dark .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.22) !important;
+}
+html.dark .text-amber-900 {
+  color: #fcd34d !important;
+}
+html.dark .text-amber-700\/90 {
+  color: #fde68a !important;
+}
+html.dark .bg-amber-200\/80 {
+  background-color: rgba(245, 158, 11, 0.35) !important;
+  color: #fef3c7 !important;
+}
+
+html.dark .bg-blue-50\/70 {
+  background-color: rgba(59, 130, 246, 0.12) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+html.dark .bg-blue-50\/70:hover, html.dark .bg-blue-100 {
+  background-color: rgba(59, 130, 246, 0.22) !important;
+}
+html.dark .text-blue-900 {
+  color: #93c5fd !important;
+}
+html.dark .text-blue-700\/90 {
+  color: #bfdbfe !important;
+}
+html.dark .bg-blue-200\/80 {
+  background-color: rgba(59, 130, 246, 0.35) !important;
+  color: #eff6ff !important;
+}
+
+html.dark .bg-purple-50\/70 {
+  background-color: rgba(168, 85, 247, 0.12) !important;
+  border-color: rgba(168, 85, 247, 0.3) !important;
+}
+html.dark .bg-purple-50\/70:hover, html.dark .bg-purple-100 {
+  background-color: rgba(168, 85, 247, 0.22) !important;
+}
+html.dark .text-purple-900 {
+  color: #d8b4fe !important;
+}
+html.dark .text-purple-700\/90 {
+  color: #e9d5ff !important;
+}
+html.dark .bg-purple-200\/80 {
+  background-color: rgba(168, 85, 247, 0.35) !important;
+  color: #faf5ff !important;
+}
+
+html.dark .bg-indigo-50\/70 {
+  background-color: rgba(99, 102, 241, 0.12) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+html.dark .bg-indigo-50\/70:hover, html.dark .bg-indigo-100 {
+  background-color: rgba(99, 102, 241, 0.22) !important;
+}
+html.dark .text-indigo-900 {
+  color: #a5b4fc !important;
+}
+html.dark .text-indigo-700\/90 {
+  color: #c7d2fe !important;
+}
+html.dark .bg-indigo-200\/80 {
+  background-color: rgba(99, 102, 241, 0.35) !important;
+  color: #eef2ff !important;
+}
+
+html.dark .bg-emerald-50\/70 {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+html.dark .bg-emerald-50\/70:hover, html.dark .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.22) !important;
+}
+html.dark .text-emerald-900 {
+  color: #6ee7b7 !important;
+}
+html.dark .text-emerald-700\/90 {
+  color: #a7f3d0 !important;
+}
+html.dark .bg-emerald-200\/80 {
+  background-color: rgba(16, 185, 129, 0.35) !important;
+  color: #ecfdf5 !important;
+}
+
+/* Deadlines & Workload card dark mode */
+html.dark .bg-rose-50\/40, html.dark .bg-rose-50 {
+  background-color: rgba(244, 63, 94, 0.1) !important;
+  border-color: rgba(244, 63, 94, 0.25) !important;
+}
+html.dark .bg-rose-50\/40 .bg-white {
+  background-color: #1a1e2f !important;
+  border-color: rgba(244, 63, 94, 0.35) !important;
+}
+html.dark .bg-slate-50\/60 .bg-white {
+  background-color: #1a2438 !important;
+  border-color: #2b3e5e !important;
+}
+html.dark .bg-slate-50\/60, html.dark .bg-slate-50\/50 {
+  background-color: #141f33 !important;
+  border-color: #20314f !important;
+}
+
+html.dark .text-blue-700 {
+  color: #60a5fa !important;
+}
+html.dark .hover\:text-blue-900:hover {
+  color: #93c5fd !important;
+}
+html.dark .text-rose-700 {
+  color: #fb7185 !important;
+}
+html.dark .text-rose-800 {
+  color: #fda4af !important;
+}
+html.dark .bg-rose-100 {
+  background-color: rgba(244, 63, 94, 0.2) !important;
+}
+
+/* User Menu & Dropdown */
+html.dark .avatar-button {
+  background-color: #1a2b4a !important;
+  color: #93c5fd !important;
+}

@@ -4,6 +4,7 @@ import './globals.css';
 import { CrmShell } from '@/components/crm-shell';
 import { AuthProvider } from '@/lib/auth/auth-context';
 import { LanguageProvider } from '@/lib/i18n/language-context';
+import { ThemeProvider } from '@/lib/theme/theme-context';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -29,13 +30,15 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-150`}
       >
-        <LanguageProvider>
-          <AuthProvider>
-            <CrmShell>{children}</CrmShell>
-          </AuthProvider>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <CrmShell>{children}</CrmShell>
+            </AuthProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
