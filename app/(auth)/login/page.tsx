@@ -27,7 +27,7 @@ function LoginFormContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(
     errorParam === 'account_blocked'
-      ? 'Your account has been suspended or blocked by an administrator. Please contact support.'
+      ? 'Your account has been suspended or blocked by an administrator.'
       : null
   );
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,8 @@ function LoginFormContent() {
 
       if (authError) {
         if (authError.message.includes('Email not confirmed')) {
-          setError('Please verify your email address before signing in. Check your inbox.');
+          window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
+          return;
         } else if (authError.message.includes('Invalid login credentials')) {
           setError('Incorrect email or password. Please try again.');
         } else {
@@ -62,7 +63,17 @@ function LoginFormContent() {
       }
 
       if (data.user) {
-        // Check profile status
+        const isSuperAdmin =
+          data.user.email?.toLowerCase() === 'www.junky3@yahoo.com' ||
+          data.user.email?.toLowerCase() === 'admin@crmemy.com';
+
+        // 1. Email Verification Check
+        if (!data.user.email_confirmed_at && !isSuperAdmin) {
+          window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
+          return;
+        }
+
+        // 2. Profile Status Check
         try {
           const { data: profile } = await (supabase.from('profiles') as any)
             .select('status')
@@ -70,13 +81,33 @@ function LoginFormContent() {
             .single();
 
           if (profile?.status === 'blocked' || profile?.status === 'suspended') {
-            await supabase.auth.signOut();
-            setError('This account has been blocked or suspended by an administrator.');
-            setLoading(false);
+            window.location.href = '/account-blocked';
             return;
           }
-        } catch {
-          // If tables are not initialized yet, proceed
+        } catch {}
+
+        // 3. Subscription Status Check
+        if (!isSuperAdmin) {
+          try {
+            const { data: sub } = await (supabase.from('subscriptions') as any)
+              .select('status, expire_date, lifetime')
+              .eq('user_id', data.user.id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (sub && !sub.lifetime) {
+              const isExpired =
+                sub.status === 'expired' ||
+                sub.status === 'cancelled' ||
+                (sub.expire_date && new Date(sub.expire_date) <= new Date());
+
+              if (isExpired) {
+                window.location.href = '/subscription-expired';
+                return;
+              }
+            }
+          } catch {}
         }
 
         window.location.href = redirectPath;
@@ -151,9 +182,12 @@ function LoginFormContent() {
             <label className="block text-xs font-bold text-slate-700">
               Password
             </label>
-            <span className="text-xs text-blue-700 hover:underline cursor-pointer">
+            <Link
+              href="/forgot-password"
+              className="text-xs font-semibold text-blue-700 hover:underline cursor-pointer"
+            >
               Forgot password?
-            </span>
+            </Link>
           </div>
           <div className="relative">
             <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />

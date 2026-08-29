@@ -18,11 +18,15 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute =
     pathname === '/login' ||
     pathname === '/register' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password' ||
     pathname === '/verify-email' ||
+    pathname === '/account-blocked' ||
     pathname.startsWith('/auth/callback');
 
   const isSubscriptionExpiredRoute = pathname === '/subscription-expired';
   const isUnauthorizedRoute = pathname === '/unauthorized';
+  const isAccountBlockedRoute = pathname === '/account-blocked';
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -84,17 +88,19 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    // Check if account is blocked or suspended
-    if (profile?.status === 'blocked' || profile?.status === 'suspended') {
-      const redirectUrl = new URL('/login', request.url);
-      redirectUrl.searchParams.set('error', 'account_blocked');
-      // Sign out cookie
-      return NextResponse.redirect(redirectUrl);
-    }
-
     const isKnownSuperAdmin =
       user.email?.toLowerCase() === 'www.junky3@yahoo.com' ||
       user.email?.toLowerCase() === 'admin@crmemy.com';
+
+    // Email verification check
+    if (!user.email_confirmed_at && !isKnownSuperAdmin && !isAuthRoute) {
+      return NextResponse.redirect(new URL(`/verify-email?email=${encodeURIComponent(user.email || '')}`, request.url));
+    }
+
+    // Check if account is blocked or suspended
+    if ((profile?.status === 'blocked' || profile?.status === 'suspended') && !isAccountBlockedRoute) {
+      return NextResponse.redirect(new URL('/account-blocked', request.url));
+    }
 
     // Check Admin Route Authorization (/admin/*)
     if (pathname.startsWith('/admin')) {
