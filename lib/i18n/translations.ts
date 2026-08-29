@@ -2,7 +2,7 @@ export type Language = 'en' | 'vi';
 
 export const translations = {
   en: {
-    // Brand
+    // Brand & General
     brand_name: 'EMLY CUSTOMER LIST',
     tax_crm_workspace: 'TAX CRM WORKSPACE',
     live_sync_active: 'Live Sync Active',
@@ -20,7 +20,7 @@ export const translations = {
     nav_settings: 'Settings',
     nav_admin_dashboard: 'Admin Dashboard',
 
-    // User Profile
+    // User Profile & Roles
     admin_panel: 'Admin Panel',
     account_settings: 'Account Settings',
     sign_out: 'Sign Out',
@@ -68,7 +68,7 @@ export const translations = {
     stage_completed: 'Completed',
     stage_completed_desc: 'Accepted & done',
 
-    // Table Headers
+    // Table Headers & Common
     table_active_returns: 'Active Return Engagements',
     table_subtitle: 'Manage and track progress across client tax returns',
     th_client_business: 'CLIENT / BUSINESS',
@@ -79,8 +79,55 @@ export const translations = {
     th_fee_balance: 'FEE / BALANCE',
     th_action: 'ACTION',
     btn_view: 'View',
+    btn_edit: 'Edit',
+    btn_save: 'Save',
+    btn_cancel: 'Cancel',
     paid_in_full: 'Paid in full',
     due_label: 'Due:',
+    view_all: 'View all',
+    new_task: 'New task',
+
+    // Business Detail Page Specific
+    meta_ein: 'EIN',
+    meta_entity_type: 'ENTITY TYPE',
+    meta_current_year: 'CURRENT TAX YEAR',
+    meta_tax_return: 'TAX RETURN',
+    meta_assigned_staff: 'ASSIGNED STAFF',
+
+    tab_overview: 'Overview',
+    tab_tax_returns: 'Tax Returns',
+    tab_partners: 'Partners',
+    tab_documents: 'Documents',
+    tab_tasks: 'Tasks',
+    tab_notes: 'Notes',
+    tab_invoices: 'Invoices',
+    tab_activity: 'Activity',
+
+    metric_federal_tax: 'Federal Tax',
+    metric_state_tax: 'State Tax',
+    metric_prep_fee: 'Preparation Fee',
+    metric_amount_paid: 'Amount Paid',
+    metric_balance: 'Balance',
+    metric_current_eng: 'Current engagement',
+    metric_collected: 'collected',
+    metric_due_date: 'Due Sep 15, 2026',
+
+    history_title: 'Tax return history',
+    history_sub: 'Multiple filing years for this business',
+    th_federal: 'FEDERAL TAX',
+    th_state: 'STATE TAX',
+    th_fee: 'FEE',
+
+    details_title: 'Business details',
+    details_sub: 'Primary contact information',
+    lbl_email: 'Email',
+    lbl_phone: 'Phone',
+    lbl_address: 'Address',
+    lbl_client_since: 'Client since',
+    lbl_primary_contact: 'Primary contact',
+
+    activity_title: 'Recent activity',
+    activity_sub: 'Latest changes to this client',
 
     // Deadlines & Workload
     deadlines_title: 'Upcoming Deadlines',
@@ -116,7 +163,7 @@ export const translations = {
     lang_vi: 'Tiếng Việt (VN)',
   },
   vi: {
-    // Brand
+    // Brand & General
     brand_name: 'EMLY CUSTOMER LIST',
     tax_crm_workspace: 'KHÔNG GIAN LÀM VIỆC CRM THUẾ',
     live_sync_active: 'Đồng bộ trực tiếp',
@@ -134,7 +181,7 @@ export const translations = {
     nav_settings: 'Cài đặt hệ thống',
     nav_admin_dashboard: 'Trang quản trị Admin',
 
-    // User Profile
+    // User Profile & Roles
     admin_panel: 'Bảng Quản Trị',
     account_settings: 'Cài đặt tài khoản',
     sign_out: 'Đăng xuất',
@@ -182,7 +229,7 @@ export const translations = {
     stage_completed: 'Đã Hoàn Tất',
     stage_completed_desc: 'IRS đã chấp thuận xong',
 
-    // Table Headers
+    // Table Headers & Common
     table_active_returns: 'Danh Sách Hồ Sơ Khai Thuế',
     table_subtitle: 'Quản lý và cập nhật trạng thái chi tiết của từng hồ sơ khách hàng',
     th_client_business: 'KHÁCH HÀNG / DOANH NGHIỆP',
@@ -193,8 +240,55 @@ export const translations = {
     th_fee_balance: 'PHÍ / CÒN NỢ',
     th_action: 'THAO TÁC',
     btn_view: 'Xem chi tiết',
+    btn_edit: 'Chỉnh sửa',
+    btn_save: 'Lưu thay đổi',
+    btn_cancel: 'Hủy bỏ',
     paid_in_full: 'Đã thanh toán đủ',
     due_label: 'Còn nợ:',
+    view_all: 'Xem tất cả',
+    new_task: 'Tạo việc mới',
+
+    // Business Detail Page Specific
+    meta_ein: 'MÃ SỐ THUẾ EIN',
+    meta_entity_type: 'LOẠI HÌNH DOANH NGHIỆP',
+    meta_current_year: 'NĂM THUẾ HIỆN TẠI',
+    meta_tax_return: 'MẪU TỜ KHAI',
+    meta_assigned_staff: 'NHÂN VIÊN PHỤ TRÁCH',
+
+    tab_overview: 'Tổng quan',
+    tab_tax_returns: 'Hồ sơ thuế',
+    tab_partners: 'Thành viên góp vốn (Partners)',
+    tab_documents: 'Tài liệu / Giấy tờ',
+    tab_tasks: 'Đầu việc cần làm',
+    tab_notes: 'Ghi chú',
+    tab_invoices: 'Hóa đơn phí',
+    tab_activity: 'Nhật ký hoạt động',
+
+    metric_federal_tax: 'Thuế Liên Bang (Federal)',
+    metric_state_tax: 'Thuế Tiểu Bang (State)',
+    metric_prep_fee: 'Phí Dịch Vụ Khai Thuế',
+    metric_amount_paid: 'Đã Thanh Toán',
+    metric_balance: 'Số Tiền Còn Nợ',
+    metric_current_eng: 'Hợp đồng năm hiện tại',
+    metric_collected: 'đã thu',
+    metric_due_date: 'Hạn nộp: 15/09/2026',
+
+    history_title: 'Lịch sử hồ sơ thuế các năm',
+    history_sub: 'Danh sách các năm khai thuế của doanh nghiệp này',
+    th_federal: 'THUẾ LIÊN BANG',
+    th_state: 'THUẾ TIỂU BANG',
+    th_fee: 'PHÍ DỊCH VỤ',
+
+    details_title: 'Thông tin chi tiết doanh nghiệp',
+    details_sub: 'Thông tin liên hệ & địa chỉ công ty',
+    lbl_email: 'Email liên hệ',
+    lbl_phone: 'Số điện thoại',
+    lbl_address: 'Địa chỉ trụ sở',
+    lbl_client_since: 'Khách hàng từ ngày',
+    lbl_primary_contact: 'Người đại diện chính',
+
+    activity_title: 'Nhật ký hoạt động gần đây',
+    activity_sub: 'Các thay đổi mới nhất về hồ sơ này',
 
     // Deadlines & Workload
     deadlines_title: 'Hạn Chót Nộp Thuế Sắp Tới',
