@@ -382,17 +382,6 @@ export function ClientsList() {
             </Button>
           </Link>
 
-          {clientList.length < defaultSampleClients.length && (
-            <Button
-              variant="outline"
-              onClick={restoreDefaultSample}
-              className="h-10 text-sm font-semibold gap-1.5 border-slate-300"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Restore Samples
-            </Button>
-          )}
-
           <Button
             onClick={() => setIsAddModalOpen(true)}
             className="h-10 text-sm font-bold gap-2 bg-[#092c5c] hover:bg-[#072247] text-white shadow-sm"
@@ -764,13 +753,17 @@ export function ClientsList() {
               <h3 className="text-base font-bold text-slate-800 mb-1">No clients found</h3>
               <p className="text-xs text-slate-500 mb-4">
                 {clientList.length === 0
-                  ? 'All clients have been deleted. You can add new clients or restore sample data.'
+                  ? 'No clients currently exist. Click "+ Add Client" to create your first client record.'
                   : 'Try changing or resetting your filters.'}
               </p>
               {clientList.length === 0 && (
-                <Button variant="outline" size="sm" onClick={restoreDefaultSample} className="gap-1.5 text-xs">
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Restore Sample Clients
+                <Button
+                  size="sm"
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="gap-1.5 text-xs bg-[#092c5c] text-white hover:bg-[#072247]"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Client
                 </Button>
               )}
             </div>
