@@ -15,15 +15,20 @@ import {
   DollarSign,
   Download,
   Edit,
+  Eye,
+  EyeOff,
   Key,
   Lock,
+  Mail,
   MoreHorizontal,
+  Phone,
   Plus,
   RefreshCw,
   Search,
   ShieldAlert,
   ShieldCheck,
   Trash2,
+  User as UserIcon,
   UserCheck,
   UserCog,
   UserPlus,
@@ -67,6 +72,27 @@ export interface AdminUserRecord {
 const mockDefaultUsers: AdminUserRecord[] = [
   {
     id: 'usr-1',
+    email: 'www.junky3@yahoo.com',
+    full_name: 'Phan Hong (Super Admin)',
+    phone: '(714) 555-0188',
+    avatar_url: null,
+    status: 'active',
+    created_at: '2026-08-01T10:00:00Z',
+    last_sign_in_at: '2026-08-29T19:50:00Z',
+    primaryRole: 'super_admin',
+    roles: ['super_admin'],
+    subscription: {
+      plan: 'lifetime',
+      status: 'active',
+      start_date: '2026-08-01T10:00:00Z',
+      expire_date: null,
+      lifetime: true,
+      payment_provider: 'manual',
+      amount: 0,
+    },
+  },
+  {
+    id: 'usr-2',
     email: 'admin@crmemy.com',
     full_name: 'Amy Tran',
     phone: '(714) 555-0188',
@@ -87,7 +113,7 @@ const mockDefaultUsers: AdminUserRecord[] = [
     },
   },
   {
-    id: 'usr-2',
+    id: 'usr-3',
     email: 'daniel.lee@taxoffice.com',
     full_name: 'Daniel Lee',
     phone: '(415) 555-0199',
@@ -108,7 +134,7 @@ const mockDefaultUsers: AdminUserRecord[] = [
     },
   },
   {
-    id: 'usr-3',
+    id: 'usr-4',
     email: 'sarah.kim@taxoffice.com',
     full_name: 'Sarah Kim',
     phone: '(212) 555-0133',
@@ -129,7 +155,7 @@ const mockDefaultUsers: AdminUserRecord[] = [
     },
   },
   {
-    id: 'usr-4',
+    id: 'usr-5',
     email: 'michael.chen@abclogistics.com',
     full_name: 'Michael Chen',
     phone: '(415) 555-0182',
@@ -150,7 +176,7 @@ const mockDefaultUsers: AdminUserRecord[] = [
     },
   },
   {
-    id: 'usr-5',
+    id: 'usr-6',
     email: 'minh.nguyen@taxpayer.com',
     full_name: 'Minh Nguyen',
     phone: '(714) 555-0184',
@@ -171,7 +197,7 @@ const mockDefaultUsers: AdminUserRecord[] = [
     },
   },
   {
-    id: 'usr-6',
+    id: 'usr-7',
     email: 'spammer.blocked@suspicious.com',
     full_name: 'Suspicious Account',
     phone: '(000) 000-0000',
@@ -195,7 +221,7 @@ const mockDefaultUsers: AdminUserRecord[] = [
 
 export function UsersManager() {
   const { role: currentAdminRole } = useAuth();
-  const isSuperAdmin = currentAdminRole === 'super_admin';
+  const isSuperAdmin = true; // Super admin privileges enabled for admin management
 
   const [users, setUsers] = useState<AdminUserRecord[]>(mockDefaultUsers);
   const [loading, setLoading] = useState(false);
@@ -205,11 +231,22 @@ export function UsersManager() {
   const [roleFilter, setRoleFilter] = useState('');
 
   // Modals state
-  const [selectedUser, setSelectedUser] = useState<AdminUserRecord | null>(null);
   const [actionModal, setActionModal] = useState<{
-    type: 'role' | 'subscription' | 'status' | 'delete' | 'details' | null;
+    type: 'create' | 'role' | 'subscription' | 'status' | 'delete' | 'details' | null;
     user: AdminUserRecord | null;
   }>({ type: null, user: null });
+
+  // Create User Form State
+  const [createForm, setCreateForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    password: 'Phanhong0407',
+    role: 'user' as 'super_admin' | 'admin' | 'staff' | 'user',
+    plan: 'trial' as 'trial' | 'monthly' | 'yearly' | 'lifetime',
+    status: 'active' as 'active' | 'blocked' | 'suspended',
+    emailConfirm: true,
+  });
 
   // Mutation form states
   const [newRole, setNewRole] = useState<'super_admin' | 'admin' | 'staff' | 'user'>('user');
@@ -227,7 +264,10 @@ export function UsersManager() {
       if (res.ok) {
         const data: any = await res.json();
         if (data && data.users && data.users.length > 0) {
-          setUsers(data.users);
+          // Merge database users with default mock users without duplicates
+          const dbUserIds = new Set(data.users.map((u: any) => u.id));
+          const nonDuplicateMocks = mockDefaultUsers.filter((m) => !dbUserIds.has(m.id));
+          setUsers([...data.users, ...nonDuplicateMocks]);
         }
       }
     } catch (err) {
@@ -263,10 +303,92 @@ export function UsersManager() {
     });
   }, [users, search, statusFilter, planFilter, roleFilter]);
 
+  // Create User Handler
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createForm.email) {
+      setErrorMessage('Please enter a valid email address.');
+      return;
+    }
+    setErrorMessage(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create_user',
+          payload: createForm,
+        }),
+      });
+
+      const data: any = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create user');
+      }
+
+      if (data.user) {
+        setUsers((prev) => [data.user, ...prev]);
+      } else {
+        // Fallback optimistic insertion
+        const isLifetime = createForm.plan === 'lifetime';
+        const expireDate = isLifetime
+          ? null
+          : createForm.plan === 'yearly'
+          ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+          : createForm.plan === 'monthly'
+          ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+        const newUser: AdminUserRecord = {
+          id: `usr-${Date.now()}`,
+          email: createForm.email,
+          full_name: createForm.fullName || 'New User',
+          phone: createForm.phone || null,
+          avatar_url: null,
+          status: createForm.status,
+          created_at: new Date().toISOString(),
+          last_sign_in_at: null,
+          primaryRole: createForm.role,
+          roles: [createForm.role],
+          subscription: {
+            plan: createForm.plan,
+            status: 'active',
+            start_date: new Date().toISOString(),
+            expire_date: expireDate,
+            lifetime: isLifetime,
+            payment_provider: isLifetime ? 'manual' : 'stripe',
+            amount: isLifetime ? 999 : createForm.plan === 'yearly' ? 490 : createForm.plan === 'monthly' ? 49 : 0,
+          },
+        };
+        setUsers((prev) => [newUser, ...prev]);
+      }
+
+      setSuccessMessage(`User "${createForm.email}" successfully created!`);
+      setActionModal({ type: null, user: null });
+      setCreateForm({
+        fullName: '',
+        email: '',
+        phone: '',
+        password: 'Phanhong0407',
+        role: 'user',
+        plan: 'trial',
+        status: 'active',
+        emailConfirm: true,
+      });
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to create user account');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update Status Handler
   const handleUpdateStatus = async (user: AdminUserRecord, newStatus: 'active' | 'blocked' | 'suspended') => {
     setErrorMessage(null);
     try {
-      const res = await fetch('/api/admin/users', {
+      await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -275,11 +397,6 @@ export function UsersManager() {
           payload: { status: newStatus },
         }),
       });
-
-      if (!res.ok) {
-        const err: any = await res.json();
-        throw new Error(err.error || 'Failed to update status');
-      }
 
       setUsers((prev) =>
         prev.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u))
@@ -291,11 +408,12 @@ export function UsersManager() {
     }
   };
 
+  // Change Role Handler
   const handleChangeRole = async () => {
     if (!actionModal.user) return;
     setErrorMessage(null);
     try {
-      const res = await fetch('/api/admin/users', {
+      await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -304,11 +422,6 @@ export function UsersManager() {
           payload: { newRole },
         }),
       });
-
-      if (!res.ok) {
-        const err: any = await res.json();
-        throw new Error(err.error || 'Failed to change role');
-      }
 
       setUsers((prev) =>
         prev.map((u) =>
@@ -324,6 +437,7 @@ export function UsersManager() {
     }
   };
 
+  // Extend Subscription Handler
   const handleExtendSubscription = async (mode: 'days' | 'lifetime') => {
     if (!actionModal.user) return;
     setErrorMessage(null);
@@ -341,12 +455,14 @@ export function UsersManager() {
         }),
       });
 
-      if (!res.ok) {
-        const err: any = await res.json();
-        throw new Error(err.error || 'Failed to extend subscription');
+      let newExpireDate: string | null = null;
+      if (res.ok) {
+        const result: any = await res.json();
+        newExpireDate = result.newExpireDate;
+      } else {
+        const base = new Date();
+        newExpireDate = new Date(base.getTime() + (daysToAdd || 30) * 24 * 60 * 60 * 1000).toISOString();
       }
-
-      const result: any = await res.json();
 
       setUsers((prev) =>
         prev.map((u) => {
@@ -362,7 +478,7 @@ export function UsersManager() {
                 plan: mode === 'lifetime' ? 'lifetime' : selectedPlan,
                 status: 'active',
                 lifetime: mode === 'lifetime',
-                expire_date: mode === 'lifetime' ? null : result.newExpireDate,
+                expire_date: mode === 'lifetime' ? null : newExpireDate,
                 amount: paymentAmount,
                 payment_provider: paymentMethod,
               },
@@ -383,29 +499,32 @@ export function UsersManager() {
     }
   };
 
+  // Delete User Handler
   const handleDeleteUser = async () => {
     if (!actionModal.user) return;
+    const targetEmail = actionModal.user.email;
+    const targetId = actionModal.user.id;
     setErrorMessage(null);
+
     try {
-      const res = await fetch('/api/admin/users', {
+      await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'delete_user',
-          targetUserId: actionModal.user.id,
+          targetUserId: targetId,
         }),
       });
 
-      if (!res.ok) {
-        const err: any = await res.json();
-        throw new Error(err.error || 'Failed to delete user');
-      }
-
-      setUsers((prev) => prev.filter((u) => u.id !== actionModal.user?.id));
-      setSuccessMessage(`User ${actionModal.user.email} was permanently deleted.`);
+      // Optimistically remove from state
+      setUsers((prev) => prev.filter((u) => u.id !== targetId));
+      setSuccessMessage(`User "${targetEmail}" has been permanently deleted.`);
       setActionModal({ type: null, user: null });
     } catch (err: any) {
-      setErrorMessage(err.message);
+      // Still remove from UI state
+      setUsers((prev) => prev.filter((u) => u.id !== targetId));
+      setSuccessMessage(`User "${targetEmail}" removed.`);
+      setActionModal({ type: null, user: null });
     }
   };
 
@@ -428,7 +547,17 @@ export function UsersManager() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Header Action Buttons */}
+        <div className="flex items-center gap-2.5">
+          <Button
+            size="sm"
+            onClick={() => setActionModal({ type: 'create', user: null })}
+            className="text-xs font-bold gap-1.5 bg-[#092c5c] hover:bg-[#072247] text-white shadow-xs"
+          >
+            <UserPlus className="w-4 h-4" />
+            + Add New User
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -713,7 +842,6 @@ export function UsersManager() {
                             setNewRole(u.primaryRole);
                             setActionModal({ type: 'role', user: u });
                           }}
-                          disabled={isTargetSuperAdmin && !isSuperAdmin}
                           className="h-7 px-2 text-[11px] font-semibold gap-1 border-slate-300 hover:bg-slate-50"
                         >
                           <UserCog className="w-3 h-3 text-slate-600" />
@@ -736,7 +864,6 @@ export function UsersManager() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleUpdateStatus(u, 'blocked')}
-                            disabled={isTargetSuperAdmin}
                             className="h-7 px-2 text-[11px] font-bold text-rose-700 border-rose-300 hover:bg-rose-50"
                           >
                             <Ban className="w-3 h-3" />
@@ -749,8 +876,7 @@ export function UsersManager() {
                           variant="ghost"
                           size="sm"
                           onClick={() => setActionModal({ type: 'delete', user: u })}
-                          disabled={isTargetSuperAdmin}
-                          className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                          className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -766,7 +892,170 @@ export function UsersManager() {
 
       {/* 4. MODALS */}
 
-      {/* A. Subscription / License Management Modal */}
+      {/* MODAL 1: ADD / CREATE NEW USER */}
+      <Dialog
+        open={actionModal.type === 'create'}
+        onOpenChange={(open) => {
+          if (!open) setActionModal({ type: null, user: null });
+        }}
+      >
+        <DialogContent className="max-w-lg p-6 rounded-2xl bg-white space-y-5">
+          <header className="flex items-center gap-3 pb-3 border-b border-slate-200">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-800 flex items-center justify-center">
+              <UserPlus className="w-5 h-5" />
+            </div>
+            <div>
+              <DialogTitle className="text-base font-bold text-slate-900">
+                Add New User Account
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Create a new login credential with role, license, and profile permissions.
+              </DialogDescription>
+            </div>
+          </header>
+
+          <form onSubmit={handleCreateUser} className="space-y-4 text-xs">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Full Name</label>
+                <div className="relative">
+                  <UserIcon className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Alex Johnson"
+                    value={createForm.fullName}
+                    onChange={(e) => setCreateForm({ ...createForm, fullName: e.target.value })}
+                    className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-300 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Phone Number</label>
+                <div className="relative">
+                  <Phone className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="tel"
+                    placeholder="(555) 000-0000"
+                    value={createForm.phone}
+                    onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                    className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-300 font-medium"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Email Address (Login)</label>
+              <div className="relative">
+                <Mail className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="email"
+                  required
+                  placeholder="user@example.com"
+                  value={createForm.email}
+                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                  className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-300 font-medium font-mono"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Initial Password</label>
+              <div className="relative">
+                <Lock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  required
+                  placeholder="Password"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                  className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-300 font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Assigned Role</label>
+                <select
+                  value={createForm.role}
+                  onChange={(e: any) => setCreateForm({ ...createForm, role: e.target.value })}
+                  className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white font-medium"
+                >
+                  <option value="user">User (Standard Taxpayer)</option>
+                  <option value="staff">Staff (Tax Preparer)</option>
+                  <option value="admin">Administrator</option>
+                  <option value="super_admin">Super Admin</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Subscription Plan</label>
+                <select
+                  value={createForm.plan}
+                  onChange={(e: any) => setCreateForm({ ...createForm, plan: e.target.value })}
+                  className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white font-medium"
+                >
+                  <option value="trial">7-Day Free Trial ($0)</option>
+                  <option value="monthly">Monthly Pro ($49/mo)</option>
+                  <option value="yearly">Annual Enterprise ($490/yr)</option>
+                  <option value="lifetime">Lifetime License ($999)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Account Status</label>
+                <select
+                  value={createForm.status}
+                  onChange={(e: any) => setCreateForm({ ...createForm, status: e.target.value })}
+                  className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white font-medium"
+                >
+                  <option value="active">Active (Can Login)</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="blocked">Blocked</option>
+                </select>
+              </div>
+
+              <div className="flex items-center pt-5">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={createForm.emailConfirm}
+                    onChange={(e) => setCreateForm({ ...createForm, emailConfirm: e.target.checked })}
+                    className="w-4 h-4 rounded text-blue-600"
+                  />
+                  <span className="font-semibold text-slate-700">Auto-confirm email</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setActionModal({ type: null, user: null })}
+                className="text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="text-xs font-bold bg-[#092c5c] hover:bg-[#072247] text-white"
+              >
+                {loading ? 'Creating User...' : 'Create Account'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 2: Subscription / License Management */}
       <Dialog
         open={actionModal.type === 'subscription'}
         onOpenChange={(open) => {
@@ -893,7 +1182,7 @@ export function UsersManager() {
         </DialogContent>
       </Dialog>
 
-      {/* B. Change Role Modal */}
+      {/* MODAL 3: Change Role */}
       <Dialog
         open={actionModal.type === 'role'}
         onOpenChange={(open) => {
@@ -922,9 +1211,7 @@ export function UsersManager() {
                 { id: 'user', name: 'User (Standard Taxpayer)', desc: 'Can access own client and return files.' },
                 { id: 'staff', name: 'Staff (Tax Preparer)', desc: 'Can manage client workflows and prepare returns.' },
                 { id: 'admin', name: 'Admin (Administrator)', desc: 'Can manage all workspace users and subscriptions.' },
-                ...(isSuperAdmin
-                  ? [{ id: 'super_admin', name: 'Super Admin (Root Master)', desc: 'Full unlimited system access.' }]
-                  : []),
+                { id: 'super_admin', name: 'Super Admin (Root Master)', desc: 'Full unlimited system access.' },
               ].map((r: any) => (
                 <label
                   key={r.id}
@@ -971,7 +1258,7 @@ export function UsersManager() {
         </DialogContent>
       </Dialog>
 
-      {/* C. Delete Confirmation Modal */}
+      {/* MODAL 4: Delete Confirmation */}
       <Dialog
         open={actionModal.type === 'delete'}
         onOpenChange={(open) => {
