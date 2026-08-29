@@ -19,6 +19,8 @@ import {
   UsersRound,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useLanguage } from '@/lib/i18n/language-context';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { Button } from '@/components/ui/button';
 
 const workspace = [
@@ -87,6 +89,8 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
     ? 'Monthly Pro'
     : '7-Day Trial';
 
+  const { t } = useLanguage();
+
   return (
     <div className="route-shell">
       <aside className="route-sidebar">
@@ -97,8 +101,15 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
 
         {/* WORKSPACE SECTION */}
         <nav>
-          <p>WORKSPACE</p>
-          {workspace.map(([label, href, icon]) => (
+          <p>{t('nav_workspace')}</p>
+          {[
+            [t('nav_dashboard'), '/dashboard', '▦'],
+            [t('nav_clients'), '/clients', '♙'],
+            [t('nav_businesses'), '/businesses', '▣'],
+            [t('nav_tax_returns'), '/tax-returns', '▤'],
+            [t('nav_fees'), '/fees', '$'],
+            [t('nav_marketing_mail'), '/marketing', '✉'],
+          ].map(([label, href, icon]) => (
             <Link
               key={href}
               href={href}
@@ -113,8 +124,11 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
 
         {/* MANAGE SECTION */}
         <nav className="route-manage">
-          <p>MANAGE</p>
-          {manage.map(([label, href, icon]) => (
+          <p>{t('nav_manage')}</p>
+          {[
+            [t('nav_team'), '/team', '♚'],
+            [t('nav_settings'), '/settings', '⚙'],
+          ].map(([label, href, icon]) => (
             <Link
               key={href}
               href={href}
@@ -135,7 +149,7 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
               }`}
             >
               <span>🛡️</span>
-              Admin Dashboard
+              {t('nav_admin_dashboard')}
             </Link>
           )}
         </nav>
@@ -210,12 +224,14 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
             <input placeholder="Search clients, returns, EIN..." />
             <kbd>⌘ K</kbd>
           </label>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <LanguageSwitcher />
+
             {isAdmin && (
               <Link href="/admin">
                 <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 transition-colors">
                   <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
-                  Admin Panel
+                  {t('admin_panel')}
                 </span>
               </Link>
             )}

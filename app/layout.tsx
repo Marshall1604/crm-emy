@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { CrmShell } from '@/components/crm-shell';
 import { AuthProvider } from '@/lib/auth/auth-context';
+import { LanguageProvider } from '@/lib/i18n/language-context';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -30,9 +31,11 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <CrmShell>{children}</CrmShell>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <CrmShell>{children}</CrmShell>
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

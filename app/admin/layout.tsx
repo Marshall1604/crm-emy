@@ -19,6 +19,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { Button } from '@/components/ui/button';
 
 const adminNav = [
@@ -142,6 +143,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+
             <Link href="/dashboard">
               <Button variant="outline" size="sm" className="text-xs font-bold gap-1.5 border-slate-300">
                 <ArrowLeft className="w-3.5 h-3.5" />

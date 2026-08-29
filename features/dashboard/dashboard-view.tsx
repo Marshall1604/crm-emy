@@ -25,6 +25,7 @@ import {
   Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/lib/i18n/language-context';
 
 interface DashboardReturn {
   id: string;
@@ -143,9 +144,23 @@ const initialReturns: DashboardReturn[] = [
 ];
 
 export function DashboardView() {
+  const { t, language } = useLanguage();
   const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedType, setSelectedType] = useState<string>('ALL');
+
+  const statusLabels: Record<string, { en: string; vi: string }> = {
+    'Waiting Documents': { en: 'Waiting Docs', vi: 'Chờ Giấy Tờ' },
+    'In Preparation': { en: 'In Preparation', vi: 'Đang Soạn Hồ Sơ' },
+    Review: { en: 'Review', vi: 'Đang Kiểm Tra' },
+    'Ready to File': { en: 'Ready to File', vi: 'Sẵn Sàng Nộp' },
+    Completed: { en: 'Completed', vi: 'Đã Hoàn Tất' },
+    'E-Filed': { en: 'E-Filed', vi: 'Đã Nộp IRS' },
+  };
+
+  const getStatusText = (status: string) => {
+    return language === 'vi' ? (statusLabels[status]?.vi || status) : (statusLabels[status]?.en || status);
+  };
 
   const filteredReturns = useMemo(() => {
     return initialReturns.filter((item) => {
@@ -180,17 +195,17 @@ export function DashboardView() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">Tax CRM Workspace</span>
+            <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">{t('tax_crm_workspace')}</span>
             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Live Sync Active
+              {t('live_sync_active')}
             </span>
           </div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Dashboard Overview
+            {t('dashboard_title')}
           </h1>
           <p className="text-sm text-slate-600 mt-0.5">
-            Monitor client engagements, return pipeline, revenue, and deadlines in real time.
+            {t('dashboard_subtitle')}
           </p>
         </div>
 
@@ -201,7 +216,7 @@ export function DashboardView() {
               className="h-10 px-4 text-sm font-bold gap-2 border-slate-300 bg-white hover:bg-slate-50 hover:border-blue-400 text-slate-800 shadow-xs cursor-pointer"
             >
               <Users className="w-4 h-4 text-blue-700" />
-              Clients List
+              {t('btn_clients_list')}
             </Button>
           </Link>
 
@@ -211,7 +226,7 @@ export function DashboardView() {
               className="h-10 px-4 text-sm font-bold gap-2 border-slate-300 bg-white hover:bg-slate-50 hover:border-blue-400 text-slate-800 shadow-xs cursor-pointer"
             >
               <Building2 className="w-4 h-4 text-[#092c5c]" />
-              Business List
+              {t('btn_business_list')}
             </Button>
           </Link>
         </div>
@@ -222,7 +237,7 @@ export function DashboardView() {
         {/* Total Clients */}
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Active Clients</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('kpi_active_clients')}</span>
             <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
               <Users className="w-5 h-5" />
             </div>
@@ -231,7 +246,7 @@ export function DashboardView() {
             <div className="text-3xl font-extrabold text-slate-900">{totalClients}</div>
             <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-700">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>+15% from last tax season</span>
+              <span>{t('kpi_active_clients_sub')}</span>
             </div>
           </div>
         </div>
@@ -239,7 +254,7 @@ export function DashboardView() {
         {/* In Progress */}
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">In-Progress Returns</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('kpi_in_progress_returns')}</span>
             <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
               <Clock className="w-5 h-5" />
             </div>
@@ -248,7 +263,7 @@ export function DashboardView() {
             <div className="text-3xl font-extrabold text-slate-900">{inProgressReturns}</div>
             <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-500 font-medium">
               <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-              <span>{statusCounts['Waiting Documents']} waiting on documents</span>
+              <span>{statusCounts['Waiting Documents']} {t('kpi_in_progress_sub')}</span>
             </div>
           </div>
         </div>
@@ -256,7 +271,7 @@ export function DashboardView() {
         {/* Completed */}
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Completed & Filed</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('kpi_completed_filed')}</span>
             <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
               <CheckCircle2 className="w-5 h-5" />
             </div>
@@ -265,7 +280,7 @@ export function DashboardView() {
             <div className="text-3xl font-extrabold text-slate-900">{completedReturns}</div>
             <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-700">
               <Check className="w-3.5 h-3.5" />
-              <span>100% accepted by IRS</span>
+              <span>{t('kpi_completed_filed_sub')}</span>
             </div>
           </div>
         </div>
@@ -273,7 +288,7 @@ export function DashboardView() {
         {/* Revenue */}
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Preparation Fees</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('kpi_total_fees')}</span>
             <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
               <DollarSign className="w-5 h-5" />
             </div>
@@ -281,7 +296,7 @@ export function DashboardView() {
           <div className="mt-3">
             <div className="text-3xl font-extrabold text-slate-900">${totalRevenue.toLocaleString()}</div>
             <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-rose-600">
-              <span>Unpaid balance: ${totalBalance.toLocaleString()}</span>
+              <span>{t('kpi_unpaid_balance')} ${totalBalance.toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -291,15 +306,15 @@ export function DashboardView() {
       <section className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Tax Return Pipeline</h2>
-            <p className="text-xs text-slate-500">Click any workflow stage to filter the returns table below</p>
+            <h2 className="text-base font-bold text-slate-900">{t('pipeline_title')}</h2>
+            <p className="text-xs text-slate-500">{t('pipeline_subtitle')}</p>
           </div>
           {selectedStatus !== 'ALL' && (
             <button
               onClick={() => setSelectedStatus('ALL')}
               className="text-xs font-semibold text-blue-700 hover:text-blue-900 cursor-pointer self-start sm:self-auto"
             >
-              Clear filter (Show All)
+              {language === 'vi' ? 'Bỏ lọc (Hiện tất cả)' : 'Clear filter (Show All)'}
             </button>
           )}
         </div>
@@ -315,12 +330,12 @@ export function DashboardView() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-900">Waiting Docs</span>
+              <span className="text-xs font-bold text-amber-900">{t('stage_waiting_docs')}</span>
               <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-amber-200/80 text-amber-900">
                 {statusCounts['Waiting Documents']}
               </span>
             </div>
-            <p className="text-[11px] text-amber-700/90 mt-1 font-medium">Pending client files</p>
+            <p className="text-[11px] text-amber-700/90 mt-1 font-medium">{t('stage_waiting_docs_desc')}</p>
           </button>
 
           {/* In Preparation */}
@@ -333,12 +348,12 @@ export function DashboardView() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-blue-900">In Preparation</span>
+              <span className="text-xs font-bold text-blue-900">{t('stage_in_prep')}</span>
               <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-blue-200/80 text-blue-900">
                 {statusCounts['In Preparation']}
               </span>
             </div>
-            <p className="text-[11px] text-blue-700/90 mt-1 font-medium">Being prepared</p>
+            <p className="text-[11px] text-blue-700/90 mt-1 font-medium">{t('stage_in_prep_desc')}</p>
           </button>
 
           {/* Review */}
@@ -351,12 +366,12 @@ export function DashboardView() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-purple-900">Review</span>
+              <span className="text-xs font-bold text-purple-900">{t('stage_review')}</span>
               <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-purple-200/80 text-purple-900">
                 {statusCounts.Review}
               </span>
             </div>
-            <p className="text-[11px] text-purple-700/90 mt-1 font-medium">Internal QA check</p>
+            <p className="text-[11px] text-purple-700/90 mt-1 font-medium">{t('stage_review_desc')}</p>
           </button>
 
           {/* Ready to File */}
@@ -369,12 +384,12 @@ export function DashboardView() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-indigo-900">Ready to File</span>
+              <span className="text-xs font-bold text-indigo-900">{t('stage_ready_to_file')}</span>
               <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-indigo-200/80 text-indigo-900">
                 {statusCounts['Ready to File']}
               </span>
             </div>
-            <p className="text-[11px] text-indigo-700/90 mt-1 font-medium">Signatures collected</p>
+            <p className="text-[11px] text-indigo-700/90 mt-1 font-medium">{t('stage_ready_to_file_desc')}</p>
           </button>
 
           {/* Completed */}
@@ -387,12 +402,12 @@ export function DashboardView() {
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-900">Completed</span>
+              <span className="text-xs font-bold text-emerald-900">{t('stage_completed')}</span>
               <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-emerald-200/80 text-emerald-900">
                 {statusCounts.Completed}
               </span>
             </div>
-            <p className="text-[11px] text-emerald-700/90 mt-1 font-medium">Accepted & done</p>
+            <p className="text-[11px] text-emerald-700/90 mt-1 font-medium">{t('stage_completed_desc')}</p>
           </button>
         </div>
       </section>
@@ -404,12 +419,12 @@ export function DashboardView() {
           <header className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900">Active Return Engagements</h2>
+                <h2 className="text-base font-bold text-slate-900">{t('table_active_returns')}</h2>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
                   {filteredReturns.length}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">Manage and track progress across client tax returns</p>
+              <p className="text-xs text-slate-500 mt-0.5">{t('table_subtitle')}</p>
             </div>
 
             {/* Filter pills */}
@@ -418,7 +433,7 @@ export function DashboardView() {
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search returns..."
+                  placeholder={t('search_placeholder')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="h-9 pl-9 pr-3 rounded-lg border border-slate-300 text-xs w-44 sm:w-52 focus:outline-none focus:border-blue-500"
@@ -430,9 +445,9 @@ export function DashboardView() {
                 onChange={(e) => setSelectedType(e.target.value)}
                 className="h-9 px-2.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 bg-white cursor-pointer outline-none"
               >
-                <option value="ALL">All Types</option>
-                <option value="Individual">Individual</option>
-                <option value="Business">Business</option>
+                <option value="ALL">{t('filter_all_types')}</option>
+                <option value="Individual">{t('filter_individuals')}</option>
+                <option value="Business">{t('filter_businesses')}</option>
               </select>
             </div>
           </header>
@@ -441,13 +456,13 @@ export function DashboardView() {
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3 px-4">Client / Business</th>
-                  <th className="py-3 px-3">Return</th>
-                  <th className="py-3 px-3">Tax Year</th>
-                  <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3">Preparer</th>
-                  <th className="py-3 px-4 text-right">Fee / Balance</th>
-                  <th className="py-3 px-3 text-center">Action</th>
+                  <th className="py-3 px-4">{t('th_client_business')}</th>
+                  <th className="py-3 px-3">{t('th_return')}</th>
+                  <th className="py-3 px-3">{t('th_tax_year')}</th>
+                  <th className="py-3 px-3">{t('th_status')}</th>
+                  <th className="py-3 px-3">{t('th_preparer')}</th>
+                  <th className="py-3 px-4 text-right">{t('th_fee_balance')}</th>
+                  <th className="py-3 px-3 text-center">{t('th_action')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
@@ -468,7 +483,7 @@ export function DashboardView() {
                           <div className="font-bold text-slate-900 group-hover:text-blue-700 text-[13.5px]">
                             {r.name}
                           </div>
-                          <div className="text-xs text-slate-500 font-medium">{r.type}</div>
+                          <div className="text-xs text-slate-500 font-medium">{r.type === 'Business' ? (language === 'vi' ? 'Doanh nghiệp' : 'Business') : (language === 'vi' ? 'Cá nhân' : 'Individual')}</div>
                         </div>
                       </Link>
                     </td>
@@ -508,7 +523,7 @@ export function DashboardView() {
                               : 'bg-emerald-600'
                           }`}
                         ></span>
-                        {r.status}
+                        {getStatusText(r.status)}
                       </span>
                     </td>
 
@@ -525,17 +540,17 @@ export function DashboardView() {
                       <div className="font-bold text-slate-900 text-xs">${r.fee.toLocaleString()}</div>
                       {r.balance > 0 ? (
                         <div className="text-[11px] font-semibold text-rose-600">
-                          Due: ${r.balance.toLocaleString()}
+                          {t('due_label')} ${r.balance.toLocaleString()}
                         </div>
                       ) : (
-                        <div className="text-[11px] font-semibold text-emerald-600">Paid in full</div>
+                        <div className="text-[11px] font-semibold text-emerald-600">{t('paid_in_full')}</div>
                       )}
                     </td>
 
                     <td className="py-3.5 px-3 text-center">
                       <Link href={r.link}>
                         <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-blue-700 hover:text-blue-900">
-                          View <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                          {t('btn_view')} <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                         </Button>
                       </Link>
                     </td>
@@ -547,16 +562,16 @@ export function DashboardView() {
             {filteredReturns.length === 0 && (
               <div className="p-8 text-center text-slate-500">
                 <Search className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                <p className="text-sm font-semibold">No returns match your filter</p>
-                <p className="text-xs mt-1">Try changing your search term or filter options.</p>
+                <p className="text-sm font-semibold">{language === 'vi' ? 'Không tìm thấy hồ sơ phù hợp' : 'No returns match your filter'}</p>
+                <p className="text-xs mt-1">{language === 'vi' ? 'Hãy thử thay đổi từ khóa hoặc bộ lọc.' : 'Try changing your search term or filter options.'}</p>
               </div>
             )}
           </div>
 
           <footer className="p-4 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
-            <span>Showing {filteredReturns.length} of {initialReturns.length} engagements</span>
+            <span>{language === 'vi' ? `Hiển thị ${filteredReturns.length} trên ${initialReturns.length} hồ sơ` : `Showing ${filteredReturns.length} of ${initialReturns.length} engagements`}</span>
             <Link href="/tax-returns" className="font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1">
-              View all returns in detail <ArrowUpRight className="w-3.5 h-3.5" />
+              {language === 'vi' ? 'Xem chi tiết tất cả tờ khai' : 'View all returns in detail'} <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
           </footer>
         </section>
@@ -571,12 +586,12 @@ export function DashboardView() {
                   <Calendar className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Upcoming Deadlines</h3>
-                  <p className="text-[11px] text-slate-500">Filing calendar reminders</p>
+                  <h3 className="text-sm font-bold text-slate-900">{t('deadlines_title')}</h3>
+                  <p className="text-[11px] text-slate-500">{t('deadlines_subtitle')}</p>
                 </div>
               </div>
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">
-                Critical
+                {t('deadline_critical')}
               </span>
             </div>
 
@@ -588,10 +603,10 @@ export function DashboardView() {
                   <span className="text-base font-extrabold leading-none mt-0.5">15</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-slate-900">Partnership & S-Corp Extensions</div>
-                  <p className="text-[11px] text-slate-600 mt-0.5">Form 1065 & Form 1120-S extended returns due</p>
+                  <div className="text-xs font-bold text-slate-900">{t('deadline_1_title')}</div>
+                  <p className="text-[11px] text-slate-600 mt-0.5">{t('deadline_1_desc')}</p>
                   <span className="inline-block mt-1 text-[10px] font-bold text-rose-700">
-                    ⏳ 17 days remaining
+                    ⏳ 17 {t('days_remaining')}
                   </span>
                 </div>
               </div>
@@ -603,10 +618,10 @@ export function DashboardView() {
                   <span className="text-base font-extrabold leading-none mt-0.5">15</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-slate-900">Individual Extension Final Date</div>
-                  <p className="text-[11px] text-slate-600 mt-0.5">Form 1040 extended tax returns deadline</p>
+                  <div className="text-xs font-bold text-slate-900">{t('deadline_2_title')}</div>
+                  <p className="text-[11px] text-slate-600 mt-0.5">{t('deadline_2_desc')}</p>
                   <span className="inline-block mt-1 text-[10px] font-semibold text-slate-500">
-                    47 days remaining
+                    47 {t('days_remaining')}
                   </span>
                 </div>
               </div>
@@ -617,11 +632,11 @@ export function DashboardView() {
           <section className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Preparer Workload</h3>
-                <p className="text-[11px] text-slate-500">Active assignments by staff</p>
+                <h3 className="text-sm font-bold text-slate-900">{t('workload_title')}</h3>
+                <p className="text-[11px] text-slate-500">{t('workload_subtitle')}</p>
               </div>
               <Link href="/team" className="text-xs font-semibold text-blue-700 hover:text-blue-900">
-                Manage Team
+                {t('manage_team')}
               </Link>
             </div>
 
