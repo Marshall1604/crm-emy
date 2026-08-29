@@ -58,30 +58,39 @@
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DARK THEME SYSTEM - EXACT TONE #1D2128 (CHARCOAL DARK GRAY)
+   Full Screen Coverage, Zero White Spaces, High Contrast Text & Forms
    ═══════════════════════════════════════════════════════════════════════════ */
 
 html.dark {
   color-scheme: dark;
+  background-color: #1D2128 !important;
 }
 
-html.dark,
 html.dark body {
   background-color: #1D2128 !important;
   color: #F3F4F6 !important;
+  min-height: 100vh !important;
 }
 
-/* 1. Shell, Sidebars & Topbars */
+/* 1. Global Shell, Sidebars & Topbars - FULL 100vh COVERAGE */
 html.dark .app-shell,
+html.dark .route-shell,
 html.dark .tax-dashboard-shell,
 html.dark .detail-shell,
 html.dark .content,
+html.dark .route-content,
 html.dark .tax-main,
 html.dark .detail-main,
-html.dark .route-content,
 html.dark .workspace-page,
+html.dark .returns-page,
+html.dark .fees-page,
+html.dark .team-page,
+html.dark .form-page,
+html.dark .page,
 html.dark main {
   background-color: #1D2128 !important;
   color: #F3F4F6 !important;
+  min-height: 100vh !important;
 }
 
 html.dark .sidebar,
@@ -102,7 +111,8 @@ html.dark .route-topbar {
 
 html.dark .brand,
 html.dark .tax-brand,
-html.dark .detail-brand {
+html.dark .detail-brand,
+html.dark .route-brand {
   background-color: #161A20 !important;
   border-color: #2A303C !important;
   color: #FFFFFF !important;
@@ -112,7 +122,7 @@ html.dark .detail-brand {
 html.dark .nav-item,
 html.dark .detail-sidebar nav a,
 html.dark .tax-sidebar nav a,
-html.dark .route-nav a,
+html.dark .route-sidebar nav a,
 html.dark .tax-sidebar nav button {
   color: #9AA5B5 !important;
 }
@@ -123,8 +133,8 @@ html.dark .detail-sidebar nav a:hover,
 html.dark .detail-sidebar nav a.selected,
 html.dark .tax-sidebar nav a:hover,
 html.dark .tax-sidebar nav a.selected,
-html.dark .route-nav a:hover,
-html.dark .route-nav a.selected {
+html.dark .route-sidebar nav a:hover,
+html.dark .route-sidebar nav a.active {
   background-color: #262D38 !important;
   color: #60A5FA !important;
 }
@@ -171,7 +181,51 @@ html.dark .partner-cards article > header {
   border-color: #313845 !important;
 }
 
-/* 4. Text and Headings High Contrast */
+/* 4. Filter Bars in /tax-returns, /fees, /clients, /businesses */
+html.dark .returns-filters,
+html.dark .fee-filters {
+  background-color: #242A34 !important;
+  border-color: #313845 !important;
+  color: #F3F4F6 !important;
+}
+
+html.dark .returns-filters > div b,
+html.dark .fee-filters > div b {
+  color: #FFFFFF !important;
+}
+
+html.dark .returns-filters > div span,
+html.dark .fee-filters > div span {
+  color: #9AA5B5 !important;
+}
+
+html.dark .return-filter,
+html.dark .fee-filter {
+  color: #9AA5B5 !important;
+}
+
+html.dark .return-filter > span,
+html.dark .fee-filter > span {
+  color: #9AA5B5 !important;
+}
+
+html.dark .return-filter select,
+html.dark .fee-filter select,
+html.dark .returns-filters select,
+html.dark .fee-filters select {
+  background-color: #2A313D !important;
+  border-color: #3B4454 !important;
+  color: #FFFFFF !important;
+}
+
+html.dark .returns-search,
+html.dark .returns-search input {
+  background-color: #2A313D !important;
+  border-color: #3B4454 !important;
+  color: #FFFFFF !important;
+}
+
+/* 5. Text and Headings High Contrast */
 html.dark h1,
 html.dark h2,
 html.dark h3,
@@ -204,7 +258,7 @@ html.dark .page-heading p {
   color: #9AA5B5 !important;
 }
 
-/* 5. Inputs, Selects, Search Bars */
+/* 6. Inputs, Selects, Search Bars & Textareas */
 html.dark input,
 html.dark select,
 html.dark textarea,
@@ -231,7 +285,6 @@ html.dark .search,
 html.dark .detail-topbar > label,
 html.dark .tax-topbar > label,
 html.dark .route-topbar > label,
-html.dark .returns-search,
 html.dark .filter-search input {
   background-color: #272E3A !important;
   border-color: #3B4454 !important;
@@ -247,7 +300,7 @@ html.dark .route-topbar kbd {
   color: #9AA5B5 !important;
 }
 
-/* 6. Tables, Thead, Tbody, Tr, Th, Td */
+/* 7. Tables, Thead, Tbody, Tr, Th, Td */
 html.dark table thead tr,
 html.dark table th,
 html.dark .return-head,
@@ -296,7 +349,7 @@ html.dark .bg-slate-100 {
   color: #E5E7EB !important;
 }
 
-/* 7. Record Header & Tabs */
+/* 8. Record Header & Tabs */
 html.dark .record-head,
 html.dark .record-tabs {
   background-color: #181C23 !important;
@@ -331,7 +384,7 @@ html.dark .record-meta select {
   color: #FFFFFF !important;
 }
 
-/* 8. Modals & Dialogs */
+/* 9. Modals & Dialogs */
 html.dark [data-slot="dialog-content"],
 html.dark .DialogContent,
 html.dark .business-modal,
@@ -384,7 +437,7 @@ html.dark .balance-card small {
   color: #9AA5B5 !important;
 }
 
-/* 9. Dashboard Pipeline Buttons Dark Mode */
+/* 10. Dashboard Pipeline Buttons Dark Mode */
 html.dark .bg-amber-50\/70 {
   background-color: rgba(245, 158, 11, 0.15) !important;
   border-color: rgba(245, 158, 11, 0.35) !important;
@@ -475,7 +528,34 @@ html.dark .bg-emerald-200\/80 {
   color: #ECFDF5 !important;
 }
 
-/* Deadlines & Workload card dark mode */
+/* 11. Marketing Suite Dark Enhancements (Image 5) */
+html.dark .bg-purple-50 {
+  background-color: rgba(168, 85, 247, 0.15) !important;
+  border-color: rgba(168, 85, 247, 0.35) !important;
+  color: #D8B4FE !important;
+}
+
+html.dark .from-slate-50.to-white,
+html.dark .bg-gradient-to-b.from-slate-50.to-white {
+  background: #181C23 !important;
+  border-color: #313845 !important;
+}
+
+html.dark .from-slate-50.to-white .text-slate-900,
+html.dark .from-slate-50.to-white .text-slate-800 {
+  color: #FFFFFF !important;
+}
+
+html.dark .from-slate-50.to-white .text-slate-500,
+html.dark .from-slate-50.to-white .text-slate-600 {
+  color: #9AA5B5 !important;
+}
+
+html.dark .from-slate-50.to-white .border-slate-200 {
+  border-color: #2E3542 !important;
+}
+
+/* 12. Deadlines & Workload card dark mode */
 html.dark .bg-rose-50\/40, html.dark .bg-rose-50 {
   background-color: rgba(244, 63, 94, 0.12) !important;
   border-color: rgba(244, 63, 94, 0.3) !important;
@@ -509,7 +589,7 @@ html.dark .bg-rose-100 {
   background-color: rgba(244, 63, 94, 0.25) !important;
 }
 
-/* 10. Miscellaneous widgets */
+/* 13. Miscellaneous widgets */
 html.dark .date {
   background-color: #2A313D !important;
   border-color: #353E4D !important;
