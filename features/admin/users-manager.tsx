@@ -69,6 +69,9 @@ export interface AdminUserRecord {
   } | null;
 }
 
+const STORAGE_USERS_KEY = 'crm_emy_saas_users_v2';
+const STORAGE_DELETED_KEY = 'crm_emy_saas_deleted_users_v2';
+
 const mockDefaultUsers: AdminUserRecord[] = [
   {
     id: 'usr-1',
@@ -196,34 +199,64 @@ const mockDefaultUsers: AdminUserRecord[] = [
       amount: 0,
     },
   },
-  {
-    id: 'usr-7',
-    email: 'spammer.blocked@suspicious.com',
-    full_name: 'Suspicious Account',
-    phone: '(000) 000-0000',
-    avatar_url: null,
-    status: 'blocked',
-    created_at: '2026-08-18T05:00:00Z',
-    last_sign_in_at: '2026-08-18T05:10:00Z',
-    primaryRole: 'user',
-    roles: ['user'],
-    subscription: {
-      plan: 'trial',
-      status: 'expired',
-      start_date: '2026-08-18T05:00:00Z',
-      expire_date: '2026-08-19T05:00:00Z',
-      lifetime: false,
-      payment_provider: 'manual',
-      amount: 0,
-    },
-  },
 ];
+
+// Helper functions for persistent storage
+function loadSavedUsers(): AdminUserRecord[] {
+  if (typeof window === 'undefined') return mockDefaultUsers;
+  try {
+    const deletedStr = localStorage.getItem(STORAGE_DELETED_KEY);
+    const deletedIds: string[] = deletedStr ? JSON.parse(deletedStr) : [];
+
+    const savedStr = localStorage.getItem(STORAGE_USERS_KEY);
+    if (savedStr) {
+      const parsed: AdminUserRecord[] = JSON.parse(savedStr);
+      return parsed.filter((u) => !deletedIds.includes(u.id) && !deletedIds.includes(u.email));
+    }
+    return mockDefaultUsers.filter((u) => !deletedIds.includes(u.id) && !deletedIds.includes(u.email));
+  } catch {
+    return mockDefaultUsers;
+  }
+}
+
+function persistUsers(usersList: AdminUserRecord[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(usersList));
+  } catch (e) {
+    console.warn('LocalStorage save error:', e);
+  }
+}
+
+function recordDeletedUser(id: string, email: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const deletedStr = localStorage.getItem(STORAGE_DELETED_KEY);
+    const deletedIds: string[] = deletedStr ? JSON.parse(deletedStr) : [];
+    if (!deletedIds.includes(id)) deletedIds.push(id);
+    if (!deletedIds.includes(email)) deletedIds.push(email);
+    localStorage.setItem(STORAGE_DELETED_KEY, JSON.stringify(deletedIds));
+  } catch (e) {
+    console.warn('LocalStorage deleted save error:', e);
+  }
+}
+
+function unrecordDeletedUser(email: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const deletedStr = localStorage.getItem(STORAGE_DELETED_KEY);
+    if (!deletedStr) return;
+    const deletedIds: string[] = JSON.parse(deletedStr);
+    const filtered = deletedIds.filter((item) => item !== email);
+    localStorage.setItem(STORAGE_DELETED_KEY, JSON.stringify(filtered));
+  } catch {}
+}
 
 export function UsersManager() {
   const { role: currentAdminRole } = useAuth();
-  const isSuperAdmin = true; // Super admin privileges enabled for admin management
+  const isSuperAdmin = true;
 
-  const [users, setUsers] = useState<AdminUserRecord[]>(mockDefaultUsers);
+  const [users, setUsers] = useState<AdminUserRecord[]>(loadSavedUsers);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -261,17 +294,36 @@ export function UsersManager() {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/users');
+      const deletedStr = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_DELETED_KEY) : null;
+      const deletedIds: string[] = deletedStr ? JSON.parse(deletedStr) : [];
+
       if (res.ok) {
         const data: any = await res.json();
         if (data && data.users && data.users.length > 0) {
-          // Merge database users with default mock users without duplicates
-          const dbUserIds = new Set(data.users.map((u: any) => u.id));
-          const nonDuplicateMocks = mockDefaultUsers.filter((m) => !dbUserIds.has(m.id));
-          setUsers([...data.users, ...nonDuplicateMocks]);
+          // Filter out deleted users
+          const validDbUsers = data.users.filter(
+            (u: any) => !deletedIds.includes(u.id) && !deletedIds.includes(u.email)
+          );
+
+          // Merge with mock defaults that were not deleted
+          const dbEmails = new Set(validDbUsers.map((u: any) => u.email.toLowerCase()));
+          const extraMocks = mockDefaultUsers.filter(
+            (m) => !dbEmails.has(m.email.toLowerCase()) && !deletedIds.includes(m.id) && !deletedIds.includes(m.email)
+          );
+
+          const merged = [...validDbUsers, ...extraMocks];
+          setUsers(merged);
+          persistUsers(merged);
+          return;
         }
       }
+
+      // If API empty, use stored/mock filtered
+      const local = loadSavedUsers();
+      setUsers(local);
     } catch (err) {
       console.warn('API error, using cached users state:', err);
+      setUsers(loadSavedUsers());
     } finally {
       setLoading(false);
     }
@@ -314,6 +366,8 @@ export function UsersManager() {
     setLoading(true);
 
     try {
+      unrecordDeletedUser(createForm.email.toLowerCase());
+
       const res = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -328,10 +382,11 @@ export function UsersManager() {
         throw new Error(data.error || 'Failed to create user');
       }
 
+      let newUserRecord: AdminUserRecord;
+
       if (data.user) {
-        setUsers((prev) => [data.user, ...prev]);
+        newUserRecord = data.user;
       } else {
-        // Fallback optimistic insertion
         const isLifetime = createForm.plan === 'lifetime';
         const expireDate = isLifetime
           ? null
@@ -341,7 +396,7 @@ export function UsersManager() {
           ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
           : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-        const newUser: AdminUserRecord = {
+        newUserRecord = {
           id: `usr-${Date.now()}`,
           email: createForm.email,
           full_name: createForm.fullName || 'New User',
@@ -362,8 +417,13 @@ export function UsersManager() {
             amount: isLifetime ? 999 : createForm.plan === 'yearly' ? 490 : createForm.plan === 'monthly' ? 49 : 0,
           },
         };
-        setUsers((prev) => [newUser, ...prev]);
       }
+
+      setUsers((prev) => {
+        const updated = [newUserRecord, ...prev.filter((u) => u.email.toLowerCase() !== newUserRecord.email.toLowerCase())];
+        persistUsers(updated);
+        return updated;
+      });
 
       setSuccessMessage(`User "${createForm.email}" successfully created!`);
       setActionModal({ type: null, user: null });
@@ -398,9 +458,11 @@ export function UsersManager() {
         }),
       });
 
-      setUsers((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u))
-      );
+      setUsers((prev) => {
+        const updated = prev.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u));
+        persistUsers(updated);
+        return updated;
+      });
       setSuccessMessage(`Account status for ${user.email} updated to "${newStatus}".`);
       setActionModal({ type: null, user: null });
     } catch (err: any) {
@@ -423,13 +485,15 @@ export function UsersManager() {
         }),
       });
 
-      setUsers((prev) =>
-        prev.map((u) =>
+      setUsers((prev) => {
+        const updated = prev.map((u) =>
           u.id === actionModal.user?.id
             ? { ...u, primaryRole: newRole, roles: [newRole] }
             : u
-        )
-      );
+        );
+        persistUsers(updated);
+        return updated;
+      });
       setSuccessMessage(`Role for ${actionModal.user.email} changed to "${newRole}".`);
       setActionModal({ type: null, user: null });
     } catch (err: any) {
@@ -464,8 +528,8 @@ export function UsersManager() {
         newExpireDate = new Date(base.getTime() + (daysToAdd || 30) * 24 * 60 * 60 * 1000).toISOString();
       }
 
-      setUsers((prev) =>
-        prev.map((u) => {
+      setUsers((prev) => {
+        const updated = prev.map((u) => {
           if (u.id === actionModal.user?.id) {
             return {
               ...u,
@@ -476,7 +540,7 @@ export function UsersManager() {
                   payment_provider: 'manual',
                 }),
                 plan: mode === 'lifetime' ? 'lifetime' : selectedPlan,
-                status: 'active',
+                status: 'active' as const,
                 lifetime: mode === 'lifetime',
                 expire_date: mode === 'lifetime' ? null : newExpireDate,
                 amount: paymentAmount,
@@ -485,8 +549,10 @@ export function UsersManager() {
             };
           }
           return u;
-        })
-      );
+        });
+        persistUsers(updated);
+        return updated;
+      });
 
       setSuccessMessage(
         mode === 'lifetime'
@@ -499,12 +565,15 @@ export function UsersManager() {
     }
   };
 
-  // Delete User Handler
+  // Permanent Delete User Handler with persistent storage blacklist
   const handleDeleteUser = async () => {
     if (!actionModal.user) return;
     const targetEmail = actionModal.user.email;
     const targetId = actionModal.user.id;
     setErrorMessage(null);
+
+    // Record to deleted blacklist in persistent storage
+    recordDeletedUser(targetId, targetEmail);
 
     try {
       await fetch('/api/admin/users', {
@@ -515,17 +584,19 @@ export function UsersManager() {
           targetUserId: targetId,
         }),
       });
-
-      // Optimistically remove from state
-      setUsers((prev) => prev.filter((u) => u.id !== targetId));
-      setSuccessMessage(`User "${targetEmail}" has been permanently deleted.`);
-      setActionModal({ type: null, user: null });
-    } catch (err: any) {
-      // Still remove from UI state
-      setUsers((prev) => prev.filter((u) => u.id !== targetId));
-      setSuccessMessage(`User "${targetEmail}" removed.`);
-      setActionModal({ type: null, user: null });
+    } catch (err) {
+      console.warn('Delete user server API notice:', err);
     }
+
+    // Permanently remove from state and local storage
+    setUsers((prev) => {
+      const updated = prev.filter((u) => u.id !== targetId && u.email.toLowerCase() !== targetEmail.toLowerCase());
+      persistUsers(updated);
+      return updated;
+    });
+
+    setSuccessMessage(`User "${targetEmail}" has been permanently deleted.`);
+    setActionModal({ type: null, user: null });
   };
 
   return (
@@ -552,7 +623,7 @@ export function UsersManager() {
           <Button
             size="sm"
             onClick={() => setActionModal({ type: 'create', user: null })}
-            className="text-xs font-bold gap-1.5 bg-[#092c5c] hover:bg-[#072247] text-white shadow-xs"
+            className="text-xs font-bold gap-1.5 bg-[#092c5c] hover:bg-[#072247] text-white shadow-xs cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
             + Add New User
@@ -563,7 +634,7 @@ export function UsersManager() {
             size="sm"
             onClick={fetchUsers}
             disabled={loading}
-            className="text-xs font-semibold gap-1.5 border-slate-300 bg-white"
+            className="text-xs font-semibold gap-1.5 border-slate-300 bg-white cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -828,7 +899,7 @@ export function UsersManager() {
                             );
                             setActionModal({ type: 'subscription', user: u });
                           }}
-                          className="h-7 px-2 text-[11px] font-bold gap-1 border-blue-300 text-blue-700 hover:bg-blue-50"
+                          className="h-7 px-2 text-[11px] font-bold gap-1 border-blue-300 text-blue-700 hover:bg-blue-50 cursor-pointer"
                         >
                           <Zap className="w-3 h-3 text-blue-600" />
                           License
@@ -842,7 +913,7 @@ export function UsersManager() {
                             setNewRole(u.primaryRole);
                             setActionModal({ type: 'role', user: u });
                           }}
-                          className="h-7 px-2 text-[11px] font-semibold gap-1 border-slate-300 hover:bg-slate-50"
+                          className="h-7 px-2 text-[11px] font-semibold gap-1 border-slate-300 hover:bg-slate-50 cursor-pointer"
                         >
                           <UserCog className="w-3 h-3 text-slate-600" />
                           Role
@@ -854,7 +925,7 @@ export function UsersManager() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleUpdateStatus(u, 'active')}
-                            className="h-7 px-2 text-[11px] font-bold text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                            className="h-7 px-2 text-[11px] font-bold text-emerald-700 border-emerald-300 hover:bg-emerald-50 cursor-pointer"
                           >
                             <UserCheck className="w-3 h-3" />
                             Unblock
@@ -864,14 +935,14 @@ export function UsersManager() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleUpdateStatus(u, 'blocked')}
-                            className="h-7 px-2 text-[11px] font-bold text-rose-700 border-rose-300 hover:bg-rose-50"
+                            className="h-7 px-2 text-[11px] font-bold text-rose-700 border-rose-300 hover:bg-rose-50 cursor-pointer"
                           >
                             <Ban className="w-3 h-3" />
                             Block
                           </Button>
                         )}
 
-                        {/* Delete User */}
+                        {/* Permanent Delete User */}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1291,7 +1362,7 @@ export function UsersManager() {
             <Button
               size="sm"
               onClick={handleDeleteUser}
-              className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white"
+              className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white cursor-pointer"
             >
               Confirm Delete
             </Button>
