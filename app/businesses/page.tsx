@@ -1,2 +1,5 @@
-import { RoutePage } from '@/components/route-page';
-export default function Page(){return <RoutePage kind="businesses"/>}
+import { BusinessesList } from '@/features/businesses/businesses-list';
+
+export default function Page() {
+  return <BusinessesList />;
+}

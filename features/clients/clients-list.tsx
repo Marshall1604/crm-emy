@@ -5,16 +5,24 @@ import Link from 'next/link';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import {
   AlertTriangle,
+  Building2,
+  Check,
+  CheckCircle2,
   CheckSquare,
   ChevronDown,
+  Clock,
+  DollarSign,
   Download,
   ExternalLink,
+  FileSpreadsheet,
+  FileText,
   MoreHorizontal,
   Plus,
   RotateCcw,
   Search,
   Square,
   Trash2,
+  TrendingUp,
   UsersRound,
   X,
 } from 'lucide-react';
@@ -25,7 +33,6 @@ import {
 } from '@/lib/supabase/sync-service';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -98,20 +105,21 @@ const defaultSampleClients: ClientRecord[] = [
   },
   {
     id: 'sophia-garcia',
-    name: 'Sophia Garcia',      initials: 'SG',   updated: 'Aug 24, 2026',
-    firstName: 'Sophia',        lastName: 'Garcia', middleName: '',
-    ssn: '602-55-7890',         dob: '1975-12-01',   filingStatus: 'married_separately',
-    phone: '(602) 555-0141',    email: 'sophia.g@example.com',
-    address: '654 Desert Rd',   city: 'Phoenix', state: 'AZ', zip: '85001',
-    spouseFirstName: 'Carlos', spouseLastName: 'Garcia', spouseSsn: '602-55-7891', spouseDob: '1973-06-15',
-    year: '2025', returnType: '1040', status: 'Completed', staff: 'Daniel Lee',
-    federalTax: 4200, fee: 600, amountPaid: 600, balance: 0,
-    stateTaxes: [{ state: 'AZ', amount: 630 }],
+    name: 'Sophia Garcia',      initials: 'SG',   updated: 'Aug 25, 2026',
+    firstName: 'Sophia',        lastName: 'Garcia', middleName: 'L',
+    ssn: '305-66-7890',         dob: '1987-12-03',  filingStatus: 'single',
+    phone: '(305) 555-0144',    email: 'sophia.g@example.com',
+    address: '888 Brickell Ave', city: 'Miami', state: 'FL', zip: '33131',
+    spouseFirstName: '', spouseLastName: '', spouseSsn: '', spouseDob: '',
+    year: '2025', returnType: '1040', status: 'Completed', staff: 'Sarah Kim',
+    federalTax: 4400, fee: 600, amountPaid: 600, balance: 0,
+    stateTaxes: [],
     dependents: [],
-    notes: 'Filing separately per client request. All docs received.',
+    notes: 'Return accepted by IRS on Aug 25.',
   },
 ];
 
+const returnTypes = ['1040', '1040-SR', '1040-NR', 'Schedule C'];
 const statuses = [
   'New',
   'Waiting Documents',
@@ -123,37 +131,44 @@ const statuses = [
   'Ready to File',
   'E-Filed',
   'Accepted',
-  'Rejected',
-  'Extension Filed',
   'Completed',
 ];
 
+const LOCAL_STORAGE_KEY = 'crm_emy_clients_list';
+
 export function ClientsList() {
-  const [clientList, setClientList] = useState<ClientRecord[]>(defaultSampleClients);
+  const [clientList, setClientList] = useState<ClientRecord[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load clients from localStorage:', err);
+      }
+    }
+    return defaultSampleClients;
+  });
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [year, setYear] = useState('');
+  const [returnTypeFilter, setReturnTypeFilter] = useState('');
   const [status, setStatus] = useState('');
   const [staff, setStaff] = useState('');
-
-  // Dropdown action menu state
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  // Selected IDs for batch operations
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteTarget, setDeleteTarget] = useState<{ mode: 'single' | 'batch'; client?: ClientRecord } | null>(null);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
-  // Delete modal state
-  const [deleteTarget, setDeleteTarget] = useState<{
-    type: 'single' | 'batch';
-    client?: ClientRecord;
-    count?: number;
-  } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close action dropdown on click outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setActiveMenuId(null);
       }
     };
@@ -161,32 +176,83 @@ export function ClientsList() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    async function loadFromSupabase() {
+      if (isSupabaseConfigured) {
+        try {
+          const remoteClients = await fetchClientsFromSupabase();
+          if (isMounted && remoteClients && remoteClients.length > 0) {
+            setClientList(remoteClients);
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(remoteClients));
+          }
+        } catch (err) {
+          console.warn('Could not sync with Supabase, using local data:', err);
+        }
+      }
+    }
+    loadFromSupabase();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const saveClients = (newList: ClientRecord[]) => {
+    setClientList(newList);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newList));
+    }
+  };
+
   const filtered = useMemo(
     () =>
       clientList.filter(
         (c) =>
-          (!search || c.name.toLowerCase().includes(search.toLowerCase())) &&
+          (!search ||
+            c.name.toLowerCase().includes(search.toLowerCase()) ||
+            c.email.toLowerCase().includes(search.toLowerCase()) ||
+            c.phone.includes(search) ||
+            (c.ssn && c.ssn.includes(search))) &&
           (!year || c.year === year) &&
+          (!returnTypeFilter || c.returnType === returnTypeFilter) &&
           (!status || c.status === status) &&
           (!staff || c.staff === staff)
       ),
-    [clientList, search, year, status, staff]
+    [clientList, search, year, returnTypeFilter, status, staff]
   );
 
-  const allFilteredSelected =
-    filtered.length > 0 && filtered.every((c) => selectedIds.has(c.id));
-  const someFilteredSelected =
-    filtered.some((c) => selectedIds.has(c.id)) && !allFilteredSelected;
+  const reset = () => {
+    setSearch('');
+    setYear('');
+    setReturnTypeFilter('');
+    setStatus('');
+    setStaff('');
+  };
+
+  const handleClientCreated = async (newClient: ClientRecord) => {
+    const updated = [newClient, ...clientList];
+    saveClients(updated);
+    if (isSupabaseConfigured) {
+      try {
+        await saveClientToSupabase(newClient);
+      } catch (err) {
+        console.error('Failed to sync new client to Supabase:', err);
+      }
+    }
+  };
+
+  const restoreDefaultSample = () => {
+    saveClients(defaultSampleClients);
+    setSelectedIds(new Set());
+  };
 
   const toggleSelectAll = () => {
-    if (allFilteredSelected) {
-      const next = new Set(selectedIds);
-      filtered.forEach((c) => next.delete(c.id));
-      setSelectedIds(next);
+    const filteredIds = filtered.map((c) => c.id);
+    const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedIds.has(id));
+    if (allSelected) {
+      setSelectedIds(new Set());
     } else {
-      const next = new Set(selectedIds);
-      filtered.forEach((c) => next.add(c.id));
-      setSelectedIds(next);
+      setSelectedIds(new Set(filteredIds));
     }
   };
 
@@ -200,247 +266,271 @@ export function ClientsList() {
     setSelectedIds(next);
   };
 
-  const reset = () => {
-    setSearch('');
-    setYear('');
-    setStatus('');
-    setStaff('');
-  };
-
-  // Load from Supabase on mount if configured
-  useEffect(() => {
-    async function loadSupabaseData() {
-      if (!isSupabaseConfigured) return;
-      const remoteClients = await fetchClientsFromSupabase();
-      if (remoteClients && remoteClients.length > 0) {
-        setClientList(remoteClients);
-      }
-    }
-    loadSupabaseData();
-  }, []);
-
-  const handleClientCreated = (newClient: ClientRecord) => {
-    setClientList((prev) => [newClient, ...prev]);
-    if (isSupabaseConfigured) {
-      saveClientToSupabase(newClient);
-    }
-  };
-
   const openDeleteSingle = (client: ClientRecord) => {
     setActiveMenuId(null);
-    setDeleteTarget({ type: 'single', client });
+    setDeleteTarget({ mode: 'single', client });
   };
 
   const openDeleteBatch = () => {
-    setDeleteTarget({ type: 'batch', count: selectedIds.size });
+    setDeleteTarget({ mode: 'batch' });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
 
-    if (deleteTarget.type === 'single' && deleteTarget.client) {
+    if (deleteTarget.mode === 'single' && deleteTarget.client) {
       const targetId = deleteTarget.client.id;
-      setClientList((prev) => prev.filter((c) => c.id !== targetId));
-      if (isSupabaseConfigured) {
-        deleteClientFromSupabase(targetId);
-      }
+      const updated = clientList.filter((c) => c.id !== targetId);
+      saveClients(updated);
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(targetId);
         return next;
       });
-    } else if (deleteTarget.type === 'batch') {
-      const toDelete = Array.from(selectedIds);
-      setClientList((prev) => prev.filter((c) => !selectedIds.has(c.id)));
       if (isSupabaseConfigured) {
-        toDelete.forEach((id) => deleteClientFromSupabase(id));
+        try {
+          await deleteClientFromSupabase(targetId);
+        } catch (err) {
+          console.error('Failed to delete from Supabase:', err);
+        }
       }
+    } else if (deleteTarget.mode === 'batch') {
+      const idsToDelete = Array.from(selectedIds);
+      const updated = clientList.filter((c) => !selectedIds.has(c.id));
+      saveClients(updated);
       setSelectedIds(new Set());
+      if (isSupabaseConfigured) {
+        for (const id of idsToDelete) {
+          try {
+            await deleteClientFromSupabase(id);
+          } catch (err) {
+            console.error('Failed to delete from Supabase:', err);
+          }
+        }
+      }
     }
 
     setDeleteTarget(null);
   };
 
-  const restoreDefaultSample = () => {
-    setClientList(defaultSampleClients);
-    setSelectedIds(new Set());
-  };
+  const allFilteredSelected = filtered.length > 0 && filtered.every((c) => selectedIds.has(c.id));
+  const someFilteredSelected = filtered.some((c) => selectedIds.has(c.id)) && !allFilteredSelected;
 
   const exportToExcel = () => {
-    const filingStatusLabel: Record<string, string> = {
-      single: 'Single',
-      married_jointly: 'Married Filing Jointly',
-      married_separately: 'Married Filing Separately',
-      head_of_household: 'Head of Household',
-      qualifying_surviving_spouse: 'Qualifying Surviving Spouse',
-    };
+    const dataToExport = selectedIds.size > 0 ? filtered.filter((c) => selectedIds.has(c.id)) : filtered;
+    if (dataToExport.length === 0) return;
 
-    const rows = filtered.map((c) => {
-      // Flatten stateTaxes into up to 5 columns
-      const stateCols: Record<string, string | number> = {};
-      (c.stateTaxes ?? []).forEach((st, i) => {
-        stateCols[`State Tax ${i + 1} - State`]  = st.state;
-        stateCols[`State Tax ${i + 1} - Amount`] = st.amount;
-      });
-
-      return {
-        // ── Identity ──────────────────────────────
-        'Full Name':            c.name,
-        'First Name':           c.firstName,
-        'Middle Name':          c.middleName || '',
-        'Last Name':            c.lastName,
-        'SSN':                  c.ssn,
-        'Date of Birth':        c.dob,
-        'Filing Status':        filingStatusLabel[c.filingStatus] ?? c.filingStatus,
-
-        // ── Contact ───────────────────────────────
-        'Phone':                c.phone,
-        'Email':                c.email,
-
-        // ── Address ───────────────────────────────
-        'Street Address':       c.address,
-        'City':                 c.city,
-        'State':                c.state,
-        'ZIP Code':             c.zip,
-
-        // ── Spouse ────────────────────────────────
-        'Spouse First Name':    c.spouseFirstName || '',
-        'Spouse Last Name':     c.spouseLastName  || '',
-        'Spouse SSN':           c.spouseSsn       || '',
-        'Spouse Date of Birth': c.spouseDob       || '',
-
-        // ── Tax Case ──────────────────────────────
-        'Tax Year':             c.year,
-        'Return Type':          c.returnType,
-        'Workflow Status':      c.status,
-        'Assigned Staff':       c.staff,
-
-        // ── Financials ────────────────────────────
-        'Federal Tax ($)':      c.federalTax ?? 0,
-        'Preparation Fee ($)':  c.fee,
-        'Amount Paid ($)':      c.amountPaid ?? 0,
-        'Balance Due ($)':      c.balance,
-
-        // ── State Taxes (dynamic) ─────────────────
-        ...stateCols,
-
-        // ── Notes ─────────────────────────────────
-        'Internal Notes':       c.notes || '',
-
-        // ── Meta ──────────────────────────────────
-        'Last Updated':         c.updated,
-      };
-    });
-
-    const ws = XLSX.utils.json_to_sheet(rows);
-
-    // Auto column widths
-    const allKeys = rows.length > 0 ? Object.keys(rows[0]) : [];
-    ws['!cols'] = allKeys.map((key) => ({
-      wch: Math.max(key.length, ...rows.map((r) => String(r[key as keyof typeof r] ?? '').length)) + 2,
+    const rows = dataToExport.map((c) => ({
+      'Client ID': c.id,
+      'Full Name': c.name,
+      'Phone': c.phone,
+      'Email': c.email,
+      'SSN/ITIN': c.ssn,
+      'Date of Birth': c.dob,
+      'Filing Status': c.filingStatus,
+      'Address': `${c.address}, ${c.city}, ${c.state} ${c.zip}`,
+      'Tax Year': c.year,
+      'Return Type': c.returnType,
+      'Status': c.status,
+      'Assigned Staff': c.staff,
+      'Federal Tax ($)': c.federalTax,
+      'Preparation Fee ($)': c.fee,
+      'Amount Paid ($)': c.amountPaid,
+      'Balance Due ($)': c.balance,
+      'Last Updated': c.updated,
     }));
 
+    const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Clients');
-
     const date = new Date().toISOString().slice(0, 10);
     XLSX.writeFile(wb, `CRM-EMY-Clients-${date}.xlsx`);
   };
 
+  const totalClients = clientList.length;
+  const inPrepCount = clientList.filter((c) => c.status === 'In Preparation').length;
+  const waitingCount = clientList.filter((c) => c.status === 'Waiting Documents').length;
+  const totalBilled = clientList.reduce((s, c) => s + c.fee, 0);
 
   return (
-    <main className="clients-page">
-      <header className="clients-head">
+    <main className="p-6 md:p-8 max-w-[1480px] mx-auto space-y-6">
+      {/* 1. HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
-          <span>
-            <UsersRound size={19} />
-          </span>
-          <div>
-            <p>TAX CRM</p>
-            <h1>Clients</h1>
-            <small>Manage individual taxpayers and their annual returns.</small>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">Tax Office Practice</span>
+            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+              {totalClients} Registered Taxpayers
+            </span>
           </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Individual Clients
+          </h1>
+          <p className="text-sm text-slate-600 mt-0.5">
+            Manage individual taxpayers, annual return engagements, and filing records.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+
+        <div className="flex items-center gap-3">
+          <Link href="/businesses">
+            <Button
+              variant="outline"
+              className="h-10 px-4 text-sm font-bold gap-2 border-slate-300 bg-white hover:bg-slate-50 hover:border-blue-400 text-slate-800 shadow-xs cursor-pointer"
+            >
+              <Building2 className="w-4 h-4 text-[#092c5c]" />
+              Business List
+            </Button>
+          </Link>
+
           {clientList.length < defaultSampleClients.length && (
-            <Button variant="outline" onClick={restoreDefaultSample} title="Restore default sample clients">
-              <RotateCcw size={13} />
+            <Button
+              variant="outline"
+              onClick={restoreDefaultSample}
+              className="h-10 text-sm font-semibold gap-1.5 border-slate-300"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
               Restore Samples
             </Button>
           )}
-          <Button onClick={() => setIsAddModalOpen(true)}>
-            <Plus size={14} />
+
+          <Button
+            onClick={() => setIsAddModalOpen(true)}
+            className="h-10 text-sm font-bold gap-2 bg-[#092c5c] hover:bg-[#072247] text-white shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
             Add Client
           </Button>
         </div>
-      </header>
+      </div>
 
-      <section className="clients-filter">
-        <label className="clients-search">
-          <Search size={14} />
-          <Input
+      {/* 2. STATS ROW (4 KPI CARDS) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Clients</span>
+            <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+              <UsersRound className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="text-3xl font-extrabold text-slate-900 mt-3">{totalClients}</div>
+          <p className="text-xs text-slate-500 font-medium mt-1">Individual Taxpayers</p>
+        </div>
+
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">In Preparation</span>
+            <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+              <Clock className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="text-3xl font-extrabold text-slate-900 mt-3">{inPrepCount}</div>
+          <p className="text-xs text-slate-500 font-medium mt-1">Active return workflows</p>
+        </div>
+
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Waiting Documents</span>
+            <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+              <FileText className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="text-3xl font-extrabold text-slate-900 mt-3">{waitingCount}</div>
+          <p className="text-xs text-amber-700 font-semibold mt-1">Pending W-2s / 1099s</p>
+        </div>
+
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Billed Fees</span>
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <DollarSign className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="text-3xl font-extrabold text-slate-900 mt-3">${totalBilled.toLocaleString()}</div>
+          <p className="text-xs text-emerald-700 font-semibold mt-1">Individual tax returns</p>
+        </div>
+      </div>
+
+      {/* 3. FILTER BAR */}
+      <section className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search client name, phone, email, SSN..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name..."
+            className="w-full h-10 pl-10 pr-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500 bg-slate-50/50"
           />
-        </label>
-        <Select label="Tax Year" value={year} setValue={setYear} options={['2026', '2025', '2024']} />
-        <Select label="Status" value={status} setValue={setStatus} options={statuses} />
-        <Select
-          label="Assigned Staff"
+        </div>
+
+        <select
+          value={year}
+          onChange={(e) => setYear(e.target.value)}
+          className="h-10 px-3 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 bg-white cursor-pointer outline-none"
+        >
+          <option value="">All Tax Years</option>
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+          <option value="2024">2024</option>
+        </select>
+
+        <select
+          value={returnTypeFilter}
+          onChange={(e) => setReturnTypeFilter(e.target.value)}
+          className="h-10 px-3 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 bg-white cursor-pointer outline-none"
+        >
+          <option value="">All Return Types</option>
+          {returnTypes.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="h-10 px-3 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 bg-white cursor-pointer outline-none"
+        >
+          <option value="">All Statuses</option>
+          {statuses.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+
+        <select
           value={staff}
-          setValue={setStaff}
-          options={['Amy Tran', 'Daniel Lee', 'Sarah Kim']}
-        />
-        <Button variant="ghost" size="sm" onClick={reset}>
-          <RotateCcw size={13} />
+          onChange={(e) => setStaff(e.target.value)}
+          className="h-10 px-3 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 bg-white cursor-pointer outline-none"
+        >
+          <option value="">All Preparers</option>
+          <option value="Amy Tran">Amy Tran</option>
+          <option value="Daniel Lee">Daniel Lee</option>
+          <option value="Sarah Kim">Sarah Kim</option>
+        </select>
+
+        <Button variant="ghost" size="sm" onClick={reset} className="h-10 text-slate-600 gap-1.5">
+          <RotateCcw className="w-3.5 h-3.5" />
           Reset
         </Button>
       </section>
 
-      <section className="clients-table-card">
+      {/* 4. CLIENTS TABLE CARD */}
+      <section className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         {selectedIds.size > 0 ? (
-          <div
-            style={{
-              height: '46px',
-              padding: '0 16px',
-              backgroundColor: '#fff5f5',
-              borderBottom: '1px solid #fed7aa',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span
-                style={{
-                  color: '#991b1b',
-                  fontWeight: 600,
-                  fontSize: '11px',
-                  letterSpacing: '0.2px',
-                }}
-              >
-                Selected <b style={{ color: '#b91c1c' }}>{selectedIds.size}</b> of {clientList.length} clients
+          <div className="h-12 px-5 bg-rose-50/80 border-b border-rose-200 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-rose-900">
+                Selected <b className="text-rose-700">{selectedIds.size}</b> of {clientList.length} clients
               </span>
               <button
                 type="button"
                 onClick={() => setSelectedIds(new Set())}
-                style={{
-                  border: '1px solid #e2e8f0',
-                  backgroundColor: '#ffffff',
-                  color: '#64748b',
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  borderRadius: '4px',
-                  padding: '3px 8px',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  lineHeight: 1,
-                }}
+                className="px-2 py-1 rounded bg-white border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-1 cursor-pointer"
               >
-                <X size={11} />
+                <X className="w-3 h-3" />
                 Deselect
               </button>
             </div>
@@ -449,73 +539,69 @@ export function ClientsList() {
               variant="destructive"
               size="sm"
               onClick={openDeleteBatch}
-              style={{
-                backgroundColor: '#dc2626',
-                color: '#ffffff',
-                height: '30px',
-                padding: '0 12px',
-                fontSize: '11px',
-                fontWeight: 600,
-                borderRadius: '6px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-              }}
+              className="h-8 px-3 text-xs font-bold gap-1.5 bg-rose-600 hover:bg-rose-700 text-white"
             >
-              <Trash2 size={12} />
+              <Trash2 className="w-3.5 h-3.5" />
               Delete ({selectedIds.size}) Selected
             </Button>
           </div>
         ) : (
-          <header>
+          <header className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
             <div>
-              <b>Individual Tax Clients</b>
-              <span>{filtered.length} clients</span>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900">Individual Tax Clients</h2>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                  {filtered.length}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">Click any client to open their return history and records</p>
             </div>
-            <Button variant="outline" size="sm" onClick={exportToExcel} disabled={filtered.length === 0}>
-              <Download size={13} /> Export
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToExcel}
+              disabled={filtered.length === 0}
+              className="h-9 text-xs font-semibold gap-1.5"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export Excel
             </Button>
           </header>
         )}
 
-        <div className="clients-table-wrap" ref={menuRef}>
-          <table>
+        <div className="overflow-x-auto" ref={menuRef}>
+          <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
-              <tr>
-                <th style={{ width: '36px', paddingLeft: '14px', paddingRight: '6px', textAlign: 'center' }}>
+              <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <th className="py-3.5 px-3 w-10 text-center">
                   <button
                     type="button"
                     onClick={toggleSelectAll}
-                    style={{
-                      border: 0,
-                      background: 'none',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: allFilteredSelected ? '#092c5c' : someFilteredSelected ? '#2563eb' : '#94a3b8',
-                      padding: 0,
-                    }}
+                    className="p-1 rounded hover:bg-slate-200/50 cursor-pointer inline-flex items-center justify-center text-slate-500"
                     title={allFilteredSelected ? 'Deselect all' : 'Select all'}
                     aria-label="Select all rows"
                   >
-                    {allFilteredSelected ? <CheckSquare size={15} /> : <Square size={15} />}
+                    {allFilteredSelected ? (
+                      <CheckSquare className="w-4 h-4 text-[#092c5c]" />
+                    ) : someFilteredSelected ? (
+                      <Square className="w-4 h-4 text-blue-600" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400" />
+                    )}
                   </button>
                 </th>
-                <th>CLIENT NAME</th>
-                <th>PHONE</th>
-                <th>EMAIL</th>
-                <th>TAX YEAR</th>
-                <th>RETURN TYPE</th>
-                <th>STATUS</th>
-                <th>ASSIGNED STAFF</th>
-                <th>PREPARATION FEE</th>
-                <th>BALANCE</th>
-                <th>LAST UPDATED</th>
-                <th style={{ width: '48px', textAlign: 'center' }}>ACTIONS</th>
+                <th className="py-3.5 px-3">Client Name</th>
+                <th className="py-3.5 px-3">Contact</th>
+                <th className="py-3.5 px-3">Tax Year</th>
+                <th className="py-3.5 px-3">Return Type</th>
+                <th className="py-3.5 px-3">Status</th>
+                <th className="py-3.5 px-3">Assigned Staff</th>
+                <th className="py-3.5 px-4 text-right">Fee / Balance</th>
+                <th className="py-3.5 px-3 text-center w-12">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
               {filtered.map((c) => {
                 const isSelected = selectedIds.has(c.id);
                 const isMenuOpen = activeMenuId === c.id;
@@ -523,81 +609,109 @@ export function ClientsList() {
                 return (
                   <tr
                     key={c.id}
-                    style={{
-                      backgroundColor: isSelected ? '#f8fafc' : undefined,
-                      transition: 'background-color 0.15s ease',
-                    }}
+                    className={`transition-colors ${isSelected ? 'bg-slate-50/90' : 'hover:bg-slate-50/70'}`}
                   >
-                    <td style={{ width: '36px', paddingLeft: '14px', paddingRight: '6px', textAlign: 'center' }}>
+                    <td className="py-3.5 px-3 text-center">
                       <button
                         type="button"
                         onClick={() => toggleSelectOne(c.id)}
-                        style={{
-                          border: 0,
-                          background: 'none',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: isSelected ? '#092c5c' : '#cbd5e1',
-                          padding: 0,
-                        }}
+                        className="p-1 rounded hover:bg-slate-200/50 cursor-pointer inline-flex items-center justify-center"
                         aria-label={`Select ${c.name}`}
                       >
-                        {isSelected ? <CheckSquare size={15} /> : <Square size={15} />}
+                        {isSelected ? (
+                          <CheckSquare className="w-4 h-4 text-[#092c5c]" />
+                        ) : (
+                          <Square className="w-4 h-4 text-slate-300" />
+                        )}
                       </button>
                     </td>
-                    <td>
-                      <Link
-                        href={`/clients/${c.id}`}
-                        style={{
-                          textDecoration: 'none',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <b
-                          style={{
-                            fontSize: '13.5px',
-                            fontWeight: 700,
-                            color: '#092c5c',
-                          }}
-                        >
-                          {c.name}
-                        </b>
+
+                    <td className="py-3.5 px-3">
+                      <Link href={`/clients/${c.id}`} className="flex items-center gap-3 group">
+                        <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-800 font-extrabold text-xs flex items-center justify-center shrink-0 border border-blue-100">
+                          {c.initials}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900 group-hover:text-blue-700 text-[13.5px]">
+                            {c.name}
+                          </div>
+                          <div className="text-[11px] text-slate-500 capitalize">{c.filingStatus.replace('_', ' ')}</div>
+                        </div>
                       </Link>
                     </td>
-                    <td>{c.phone}</td>
-                    <td>{c.email}</td>
-                    <td>
-                      <b>{c.year}</b>
+
+                    <td className="py-3.5 px-3">
+                      <div className="text-xs font-semibold text-slate-800">{c.phone}</div>
+                      <div className="text-[11px] text-slate-500">{c.email}</div>
                     </td>
-                    <td>
-                      <span className="client-return">{c.returnType}</span>
+
+                    <td className="py-3.5 px-3 font-bold text-slate-900">{c.year}</td>
+
+                    <td className="py-3.5 px-3">
+                      <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                        {c.returnType}
+                      </span>
                     </td>
-                    <td>
-                      <span className={`tax-status ${c.status.toLowerCase().replaceAll(' ', '-')}`}>
-                        <i />
+
+                    <td className="py-3.5 px-3">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                          c.status === 'Waiting Documents' || c.status === 'Missing Information'
+                            ? 'bg-amber-100 text-amber-800'
+                            : c.status === 'In Preparation'
+                            ? 'bg-blue-100 text-blue-800'
+                            : c.status === 'Review' || c.status === 'Signature Pending'
+                            ? 'bg-purple-100 text-purple-800'
+                            : c.status === 'Ready to File'
+                            ? 'bg-indigo-100 text-indigo-800'
+                            : c.status === 'Completed' || c.status === 'Accepted'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            c.status === 'Waiting Documents' || c.status === 'Missing Information'
+                              ? 'bg-amber-600'
+                              : c.status === 'In Preparation'
+                              ? 'bg-blue-600'
+                              : c.status === 'Review' || c.status === 'Signature Pending'
+                              ? 'bg-purple-600'
+                              : c.status === 'Ready to File'
+                              ? 'bg-indigo-600'
+                              : c.status === 'Completed' || c.status === 'Accepted'
+                              ? 'bg-emerald-600'
+                              : 'bg-slate-400'
+                          }`}
+                        ></span>
                         {c.status}
                       </span>
                     </td>
-                    <td>
-                      <span className="staff-mini">
-                        {c.staff
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')}
-                      </span>
-                      {c.staff}
+
+                    <td className="py-3.5 px-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center justify-center border border-slate-200">
+                          {c.staff
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')}
+                        </span>
+                        <span className="text-xs font-medium text-slate-700">{c.staff}</span>
+                      </div>
                     </td>
-                    <td>
-                      <b>${c.fee.toLocaleString()}</b>
+
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="font-bold text-slate-900 text-xs">${c.fee.toLocaleString()}</div>
+                      {c.balance > 0 ? (
+                        <div className="text-[11px] font-semibold text-rose-600">
+                          Due: ${c.balance.toLocaleString()}
+                        </div>
+                      ) : (
+                        <div className="text-[11px] font-semibold text-emerald-600">Paid</div>
+                      )}
                     </td>
-                    <td className={c.balance ? 'client-balance' : ''}>
-                      ${c.balance.toLocaleString()}
-                    </td>
-                    <td>{c.updated}</td>
-                    <td style={{ position: 'relative', textAlign: 'center' }}>
+
+                    <td className="py-3.5 px-3 text-center relative">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -605,76 +719,32 @@ export function ClientsList() {
                           e.stopPropagation();
                           setActiveMenuId(isMenuOpen ? null : c.id);
                         }}
+                        className="h-8 w-8 text-slate-500 hover:text-slate-800"
                         aria-label="Row actions"
-                        style={{
-                          backgroundColor: isMenuOpen ? '#f1f5f9' : undefined,
-                        }}
                       >
-                        <MoreHorizontal size={15} />
+                        <MoreHorizontal className="w-4 h-4" />
                       </Button>
 
                       {/* Dropdown Action Menu */}
                       {isMenuOpen && (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            right: '12px',
-                            top: '42px',
-                            zIndex: 50,
-                            minWidth: '160px',
-                            backgroundColor: '#ffffff',
-                            borderRadius: '8px',
-                            border: '1px solid #e2e8f0',
-                            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                            padding: '4px',
-                            textAlign: 'left',
-                          }}
-                        >
+                        <div className="absolute right-2 top-9 z-50 min-w-[150px] bg-white rounded-lg border border-slate-200 shadow-lg p-1 text-left">
                           <Link
                             href={`/clients/${c.id}`}
                             onClick={() => setActiveMenuId(null)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '8px 12px',
-                              fontSize: '12px',
-                              color: '#334155',
-                              textDecoration: 'none',
-                              borderRadius: '6px',
-                              fontWeight: 500,
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 rounded-md hover:bg-slate-50"
                           >
-                            <ExternalLink size={14} color="#64748b" />
+                            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
                             <span>View Details</span>
                           </Link>
 
-                          <div style={{ height: '1px', backgroundColor: '#f1f5f9', margin: '4px 0' }} />
+                          <div className="h-px bg-slate-100 my-1" />
 
                           <button
                             type="button"
                             onClick={() => openDeleteSingle(c)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              width: '100%',
-                              padding: '8px 12px',
-                              fontSize: '12px',
-                              color: '#e11d48',
-                              border: 0,
-                              background: 'none',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontWeight: 600,
-                              textAlign: 'left',
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fff1f2')}
-                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-rose-600 rounded-md hover:bg-rose-50 cursor-pointer"
                           >
-                            <Trash2 size={14} color="#e11d48" />
+                            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                             <span>Delete Client</span>
                           </button>
                         </div>
@@ -687,33 +757,19 @@ export function ClientsList() {
           </table>
 
           {!filtered.length && (
-            <div className="clients-empty" style={{ padding: '48px 24px', textAlign: 'center' }}>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  backgroundColor: '#f1f5f9',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '12px',
-                  color: '#64748b',
-                }}
-              >
-                <Search size={24} />
+            <div className="p-10 text-center text-slate-500">
+              <div className="w-12 h-12 rounded-xl bg-slate-100 inline-flex items-center justify-center mb-3 text-slate-400">
+                <Search className="w-6 h-6" />
               </div>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 6px', color: '#1e293b' }}>
-                No clients found
-              </h3>
-              <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 16px' }}>
+              <h3 className="text-base font-bold text-slate-800 mb-1">No clients found</h3>
+              <p className="text-xs text-slate-500 mb-4">
                 {clientList.length === 0
                   ? 'All clients have been deleted. You can add new clients or restore sample data.'
                   : 'Try changing or resetting your filters.'}
               </p>
               {clientList.length === 0 && (
-                <Button variant="outline" size="sm" onClick={restoreDefaultSample}>
-                  <RotateCcw size={13} />
+                <Button variant="outline" size="sm" onClick={restoreDefaultSample} className="gap-1.5 text-xs">
+                  <RotateCcw className="w-3.5 h-3.5" />
                   Restore Sample Clients
                 </Button>
               )}
@@ -721,10 +777,6 @@ export function ClientsList() {
           )}
         </div>
       </section>
-
-      <p className="preview-note">
-        Preview records are shown because this project is not connected to a Supabase project yet.
-      </p>
 
       {/* Add Client Modal */}
       <CreateClientModal
@@ -740,121 +792,45 @@ export function ClientsList() {
           if (!open) setDeleteTarget(null);
         }}
       >
-        <DialogContent
-          className="max-w-md"
-          style={{
-            maxWidth: '440px',
-            padding: '24px',
-            borderRadius: '16px',
-            backgroundColor: '#ffffff',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '16px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
-                backgroundColor: '#ffe4e6',
-                display: 'grid',
-                placeItems: 'center',
-                color: '#e11d48',
-                flexShrink: 0,
-              }}
-            >
-              <AlertTriangle size={20} />
+        <DialogContent className="max-w-md p-6 rounded-2xl bg-white">
+          <div className="flex flex-col items-center text-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6" />
             </div>
-            <div>
-              <DialogTitle style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: '0 0 6px' }}>
-                {deleteTarget?.type === 'single'
-                  ? 'Delete Client Record?'
-                  : `Delete ${deleteTarget?.count} Clients?`}
-              </DialogTitle>
-              <DialogDescription style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                {deleteTarget?.type === 'single' ? (
-                  <>
-                    Are you sure you want to delete client{' '}
-                    <strong style={{ color: '#0f172a' }}>{deleteTarget.client?.name}</strong>? All associated
-                    tax filings, payment history, and contact records will be permanently removed.
-                  </>
-                ) : (
-                  <>
-                    Are you sure you want to delete the{' '}
-                    <strong style={{ color: '#0f172a' }}>{deleteTarget?.count} selected clients</strong>? This
-                    action will remove all selected individual tax accounts.
-                  </>
-                )}
-              </DialogDescription>
-            </div>
-          </div>
 
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '10px',
-              marginTop: '24px',
-              paddingTop: '16px',
-              borderTop: '1px solid #f1f5f9',
-            }}
-          >
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDeleteTarget(null)}
-              style={{ fontSize: '13px', height: '38px', borderRadius: '8px' }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={confirmDelete}
-              style={{
-                backgroundColor: '#e11d48',
-                color: '#ffffff',
-                border: 0,
-                fontSize: '13px',
-                height: '38px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontWeight: 600,
-              }}
-            >
-              <Trash2 size={14} />
-              {deleteTarget?.type === 'single' ? 'Delete Client' : `Delete (${deleteTarget?.count}) Clients`}
-            </Button>
+            <DialogTitle className="text-lg font-bold text-slate-900">
+              {deleteTarget?.mode === 'single'
+                ? `Delete ${deleteTarget.client?.name}?`
+                : `Delete ${selectedIds.size} clients?`}
+            </DialogTitle>
+
+            <DialogDescription className="text-xs text-slate-500 max-w-xs">
+              {deleteTarget?.mode === 'single'
+                ? 'This client and their associated tax records will be permanently removed.'
+                : 'All selected clients and their associated tax records will be permanently deleted.'}
+            </DialogDescription>
+
+            <div className="flex items-center gap-3 w-full justify-end mt-4 pt-2 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeleteTarget(null)}
+                className="h-9 px-4 text-xs font-semibold"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={confirmDelete}
+                className="h-9 px-4 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                Confirm Delete
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
     </main>
-  );
-}
-
-function Select({
-  label,
-  value,
-  setValue,
-  options,
-}: {
-  label: string;
-  value: string;
-  setValue: (v: string) => void;
-  options: string[] | readonly string[];
-}) {
-  return (
-    <label className="clients-select">
-      <span>{label}</span>
-      <select value={value} onChange={(e) => setValue(e.target.value)}>
-        <option value="">All</option>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
-      <ChevronDown size={12} />
-    </label>
   );
 }
