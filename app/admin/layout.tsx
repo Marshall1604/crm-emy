@@ -61,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div>
                 <b className="text-white text-sm font-extrabold tracking-tight block">
-                  CRM EMY <span className="text-amber-400 font-black">ADMIN</span>
+                  EMLY CUSTOMER LIST <span className="text-amber-400 font-black">ADMIN</span>
                 </b>
                 <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase block">
                   Root Control Center

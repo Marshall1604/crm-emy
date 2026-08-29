@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'CRM EMY — Tax Office SaaS',
+  title: 'EMLY CUSTOMER LIST — Tax Office Client Management',
   description: 'Modern tax preparation office client management SaaS with RBAC & subscription system.',
 };
 

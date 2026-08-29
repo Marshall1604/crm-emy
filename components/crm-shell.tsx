@@ -91,8 +91,8 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
     <div className="route-shell">
       <aside className="route-sidebar">
         <Link className="route-brand" href="/dashboard">
-          <span>C<i>✓</i></span>
-          <b>CRM <em>EMY</em></b>
+          <span>E<i>✓</i></span>
+          <b>EMLY <em>CUSTOMER LIST</em></b>
         </Link>
 
         {/* WORKSPACE SECTION */}
