@@ -33,6 +33,7 @@ import {
 } from '@/lib/supabase/sync-service';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/lib/i18n/language-context';
 import {
   Dialog,
   DialogContent,
@@ -347,10 +348,39 @@ export function ClientsList() {
     XLSX.writeFile(wb, `CRM-EMY-Clients-${date}.xlsx`);
   };
 
+  const { language } = useLanguage();
   const totalClients = clientList.length;
   const inPrepCount = clientList.filter((c) => c.status === 'In Preparation').length;
   const waitingCount = clientList.filter((c) => c.status === 'Waiting Documents').length;
   const totalBilled = clientList.reduce((s, c) => s + c.fee, 0);
+
+  const statusDisplayMapVi: Record<string, string> = {
+    'Waiting Documents': 'Chờ Giấy Tờ',
+    'In Preparation': 'Đang Soạn Hồ Sơ',
+    'Review': 'Đang Kiểm Tra',
+    'Ready to File': 'Sẵn Sàng Nộp',
+    'Completed': 'Đã Hoàn Tất',
+    'New': 'Mới Tạo',
+    'Missing Information': 'Thiếu Thông Tin',
+  };
+
+  const getStatusLabel = (st: string) => {
+    if (language === 'vi') return statusDisplayMapVi[st] || st;
+    return st;
+  };
+
+  const filingStatusMapVi: Record<string, string> = {
+    'single': 'Độc thân',
+    'married_jointly': 'Vợ chồng khai chung',
+    'married_separately': 'Vợ chồng khai riêng',
+    'head_of_household': 'Chủ hộ gia đình',
+    'qualifying_surviving_spouse': 'Góa phụ có người phụ thuộc',
+  };
+
+  const getFilingStatusLabel = (fs: string) => {
+    if (language === 'vi') return filingStatusMapVi[fs] || fs.replace('_', ' ');
+    return fs.replace('_', ' ');
+  };
 
   return (
     <main className="p-6 md:p-8 max-w-[1480px] mx-auto space-y-6">
@@ -358,16 +388,16 @@ export function ClientsList() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">Tax Office Practice</span>
+            <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">{language === 'vi' ? 'Văn Phòng Khai Thuế' : 'Tax Office Practice'}</span>
             <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-              {totalClients} Registered Taxpayers
+              {totalClients} {language === 'vi' ? 'Khách Hàng Đã Đăng Ký' : 'Registered Taxpayers'}
             </span>
           </div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Individual Clients
+            {language === 'vi' ? 'Khách Hàng Cá Nhân' : 'Individual Clients'}
           </h1>
           <p className="text-sm text-slate-600 mt-0.5">
-            Manage individual taxpayers, annual return engagements, and filing records.
+            {language === 'vi' ? 'Quản lý người nộp thuế cá nhân, hồ sơ khai thuế hàng năm (Form 1040) và tiến độ xử lý.' : 'Manage individual taxpayers, annual return engagements, and filing records.'}
           </p>
         </div>
 
@@ -378,16 +408,16 @@ export function ClientsList() {
               className="h-10 px-4 text-sm font-bold gap-2 border-slate-300 bg-white hover:bg-slate-50 hover:border-blue-400 text-slate-800 shadow-xs cursor-pointer"
             >
               <Building2 className="w-4 h-4 text-[#092c5c]" />
-              Business List
+              {language === 'vi' ? 'Danh Sách Doanh Nghiệp' : 'Business List'}
             </Button>
           </Link>
 
           <Button
             onClick={() => setIsAddModalOpen(true)}
-            className="h-10 text-sm font-bold gap-2 bg-[#092c5c] hover:bg-[#072247] text-white shadow-sm"
+            className="h-10 text-sm font-bold gap-2 bg-[#092c5c] hover:bg-[#072247] text-white shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            Add Client
+            {language === 'vi' ? 'Thêm Khách Hàng' : 'Add Client'}
           </Button>
         </div>
       </div>
@@ -396,46 +426,46 @@ export function ClientsList() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Clients</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{language === 'vi' ? 'TỔNG KHÁCH HÀNG' : 'Total Clients'}</span>
             <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
               <UsersRound className="w-5 h-5" />
             </div>
           </div>
           <div className="text-3xl font-extrabold text-slate-900 mt-3">{totalClients}</div>
-          <p className="text-xs text-slate-500 font-medium mt-1">Individual Taxpayers</p>
+          <p className="text-xs text-slate-500 font-medium mt-1">{language === 'vi' ? 'Người nộp thuế cá nhân' : 'Individual Taxpayers'}</p>
         </div>
 
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">In Preparation</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{language === 'vi' ? 'ĐANG SOẠN HỒ SƠ' : 'In Preparation'}</span>
             <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
               <Clock className="w-5 h-5" />
             </div>
           </div>
           <div className="text-3xl font-extrabold text-slate-900 mt-3">{inPrepCount}</div>
-          <p className="text-xs text-slate-500 font-medium mt-1">Active return workflows</p>
+          <p className="text-xs text-slate-500 font-medium mt-1">{language === 'vi' ? 'Hồ sơ đang xử lý' : 'Active return workflows'}</p>
         </div>
 
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Waiting Documents</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{language === 'vi' ? 'CHỜ BỔ SUNG GIẤY TỜ' : 'Waiting Documents'}</span>
             <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
               <FileText className="w-5 h-5" />
             </div>
           </div>
           <div className="text-3xl font-extrabold text-slate-900 mt-3">{waitingCount}</div>
-          <p className="text-xs text-amber-700 font-semibold mt-1">Pending W-2s / 1099s</p>
+          <p className="text-xs text-amber-700 font-semibold mt-1">{language === 'vi' ? 'Đang chờ W-2 / 1099' : 'Pending W-2s / 1099s'}</p>
         </div>
 
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Billed Fees</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{language === 'vi' ? 'TỔNG PHÍ ĐÃ LẬP HÓA ĐƠN' : 'Total Billed Fees'}</span>
             <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
           <div className="text-3xl font-extrabold text-slate-900 mt-3">${totalBilled.toLocaleString()}</div>
-          <p className="text-xs text-emerald-700 font-semibold mt-1">Individual tax returns</p>
+          <p className="text-xs text-emerald-700 font-semibold mt-1">{language === 'vi' ? 'Hồ sơ thuế cá nhân' : 'Individual tax returns'}</p>
         </div>
       </div>
 
@@ -445,7 +475,7 @@ export function ClientsList() {
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search client name, phone, email, SSN..."
+            placeholder={language === 'vi' ? 'Tìm kiếm tên khách, điện thoại, email, SSN...' : 'Search client name, phone, email, SSN...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full h-10 pl-10 pr-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500 bg-slate-50/50"
@@ -457,7 +487,7 @@ export function ClientsList() {
           onChange={(e) => setYear(e.target.value)}
           className="h-10 px-3 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 bg-white cursor-pointer outline-none"
         >
-          <option value="">All Tax Years</option>
+          <option value="">{language === 'vi' ? 'Tất cả năm thuế' : 'All Tax Years'}</option>
           <option value="2026">2026</option>
           <option value="2025">2025</option>
           <option value="2024">2024</option>
@@ -468,7 +498,7 @@ export function ClientsList() {
           onChange={(e) => setReturnTypeFilter(e.target.value)}
           className="h-10 px-3 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 bg-white cursor-pointer outline-none"
         >
-          <option value="">All Return Types</option>
+          <option value="">{language === 'vi' ? 'Tất cả loại tờ khai' : 'All Return Types'}</option>
           {returnTypes.map((t) => (
             <option key={t} value={t}>
               {t}
@@ -481,10 +511,10 @@ export function ClientsList() {
           onChange={(e) => setStatus(e.target.value)}
           className="h-10 px-3 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 bg-white cursor-pointer outline-none"
         >
-          <option value="">All Statuses</option>
+          <option value="">{language === 'vi' ? 'Tất cả trạng thái' : 'All Statuses'}</option>
           {statuses.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {getStatusLabel(s)}
             </option>
           ))}
         </select>
@@ -494,15 +524,15 @@ export function ClientsList() {
           onChange={(e) => setStaff(e.target.value)}
           className="h-10 px-3 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 bg-white cursor-pointer outline-none"
         >
-          <option value="">All Preparers</option>
+          <option value="">{language === 'vi' ? 'Tất cả nhân viên' : 'All Preparers'}</option>
           <option value="Amy Tran">Amy Tran</option>
           <option value="Daniel Lee">Daniel Lee</option>
           <option value="Sarah Kim">Sarah Kim</option>
         </select>
 
-        <Button variant="ghost" size="sm" onClick={reset} className="h-10 text-slate-600 gap-1.5">
+        <Button variant="ghost" size="sm" onClick={reset} className="h-10 text-slate-600 gap-1.5 cursor-pointer">
           <RotateCcw className="w-3.5 h-3.5" />
-          Reset
+          {language === 'vi' ? 'Đặt lại' : 'Reset'}
         </Button>
       </section>
 
@@ -512,7 +542,7 @@ export function ClientsList() {
           <div className="h-12 px-5 bg-rose-50/80 border-b border-rose-200 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold text-rose-900">
-                Selected <b className="text-rose-700">{selectedIds.size}</b> of {clientList.length} clients
+                {language === 'vi' ? `Đã chọn ${selectedIds.size} trên tổng số ${clientList.length} khách hàng` : `Selected ${selectedIds.size} of ${clientList.length} clients`}
               </span>
               <button
                 type="button"
@@ -520,7 +550,7 @@ export function ClientsList() {
                 className="px-2 py-1 rounded bg-white border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-1 cursor-pointer"
               >
                 <X className="w-3 h-3" />
-                Deselect
+                {language === 'vi' ? 'Bỏ chọn' : 'Deselect'}
               </button>
             </div>
 
@@ -528,22 +558,22 @@ export function ClientsList() {
               variant="destructive"
               size="sm"
               onClick={openDeleteBatch}
-              className="h-8 px-3 text-xs font-bold gap-1.5 bg-rose-600 hover:bg-rose-700 text-white"
+              className="h-8 px-3 text-xs font-bold gap-1.5 bg-rose-600 hover:bg-rose-700 text-white cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              Delete ({selectedIds.size}) Selected
+              {language === 'vi' ? `Xóa (${selectedIds.size}) mục đã chọn` : `Delete (${selectedIds.size}) Selected`}
             </Button>
           </div>
         ) : (
           <header className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900">Individual Tax Clients</h2>
+                <h2 className="text-base font-bold text-slate-900">{language === 'vi' ? 'Danh Sách Khách Hàng Cá Nhân' : 'Individual Tax Clients'}</h2>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
                   {filtered.length}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">Click any client to open their return history and records</p>
+              <p className="text-xs text-slate-500 mt-0.5">{language === 'vi' ? 'Nhấp vào khách hàng để xem chi tiết lịch sử và hồ sơ' : 'Click any client to open their return history and records'}</p>
             </div>
 
             <Button
@@ -551,10 +581,10 @@ export function ClientsList() {
               size="sm"
               onClick={exportToExcel}
               disabled={filtered.length === 0}
-              className="h-9 text-xs font-semibold gap-1.5"
+              className="h-9 text-xs font-semibold gap-1.5 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              Export Excel
+              {language === 'vi' ? 'Xuất Excel' : 'Export Excel'}
             </Button>
           </header>
         )}
@@ -580,14 +610,14 @@ export function ClientsList() {
                     )}
                   </button>
                 </th>
-                <th className="py-3.5 px-3">Client Name</th>
-                <th className="py-3.5 px-3">Contact</th>
-                <th className="py-3.5 px-3">Tax Year</th>
-                <th className="py-3.5 px-3">Return Type</th>
-                <th className="py-3.5 px-3">Status</th>
-                <th className="py-3.5 px-3">Assigned Staff</th>
-                <th className="py-3.5 px-4 text-right">Fee / Balance</th>
-                <th className="py-3.5 px-3 text-center w-12">Actions</th>
+                <th className="py-3.5 px-3">{language === 'vi' ? 'TÊN KHÁCH HÀNG' : 'CLIENT NAME'}</th>
+                <th className="py-3.5 px-3">{language === 'vi' ? 'LIÊN HỆ' : 'CONTACT'}</th>
+                <th className="py-3.5 px-3">{language === 'vi' ? 'NĂM THUẾ' : 'TAX YEAR'}</th>
+                <th className="py-3.5 px-3">{language === 'vi' ? 'MẪU TỜ KHAI' : 'RETURN TYPE'}</th>
+                <th className="py-3.5 px-3">{language === 'vi' ? 'TRẠNG THÁI' : 'STATUS'}</th>
+                <th className="py-3.5 px-3">{language === 'vi' ? 'NHÂN VIÊN PHỤ TRÁCH' : 'ASSIGNED STAFF'}</th>
+                <th className="py-3.5 px-4 text-right">{language === 'vi' ? 'PHÍ / CÒN NỢ' : 'FEE / BALANCE'}</th>
+                <th className="py-3.5 px-3 text-center w-12">{language === 'vi' ? 'THAO TÁC' : 'ACTIONS'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
@@ -624,7 +654,7 @@ export function ClientsList() {
                           <div className="font-bold text-slate-900 group-hover:text-blue-700 text-[13.5px]">
                             {c.name}
                           </div>
-                          <div className="text-[11px] text-slate-500 capitalize">{c.filingStatus.replace('_', ' ')}</div>
+                          <div className="text-[11px] text-slate-500">{getFilingStatusLabel(c.filingStatus)}</div>
                         </div>
                       </Link>
                     </td>
@@ -649,13 +679,11 @@ export function ClientsList() {
                             ? 'bg-amber-100 text-amber-800'
                             : c.status === 'In Preparation'
                             ? 'bg-blue-100 text-blue-800'
-                            : c.status === 'Review' || c.status === 'Signature Pending'
+                            : c.status === 'Review'
                             ? 'bg-purple-100 text-purple-800'
                             : c.status === 'Ready to File'
                             ? 'bg-indigo-100 text-indigo-800'
-                            : c.status === 'Completed' || c.status === 'Accepted'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-slate-100 text-slate-700'
+                            : 'bg-emerald-100 text-emerald-800'
                         }`}
                       >
                         <span
@@ -664,80 +692,62 @@ export function ClientsList() {
                               ? 'bg-amber-600'
                               : c.status === 'In Preparation'
                               ? 'bg-blue-600'
-                              : c.status === 'Review' || c.status === 'Signature Pending'
+                              : c.status === 'Review'
                               ? 'bg-purple-600'
                               : c.status === 'Ready to File'
                               ? 'bg-indigo-600'
-                              : c.status === 'Completed' || c.status === 'Accepted'
-                              ? 'bg-emerald-600'
-                              : 'bg-slate-400'
+                              : 'bg-emerald-600'
                           }`}
                         ></span>
-                        {c.status}
+                        {getStatusLabel(c.status)}
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-3">
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center justify-center border border-slate-200">
-                          {c.staff
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
-                        </span>
-                        <span className="text-xs font-medium text-slate-700">{c.staff}</span>
-                      </div>
-                    </td>
+                    <td className="py-3.5 px-3 font-medium text-slate-700">{c.staff}</td>
 
                     <td className="py-3.5 px-4 text-right">
                       <div className="font-bold text-slate-900 text-xs">${c.fee.toLocaleString()}</div>
                       {c.balance > 0 ? (
                         <div className="text-[11px] font-semibold text-rose-600">
-                          Due: ${c.balance.toLocaleString()}
+                          {language === 'vi' ? 'Còn nợ:' : 'Due:'} ${c.balance.toLocaleString()}
                         </div>
                       ) : (
-                        <div className="text-[11px] font-semibold text-emerald-600">Paid</div>
+                        <div className="text-[11px] font-semibold text-emerald-600">{language === 'vi' ? 'Đã thu đủ' : 'Paid in full'}</div>
                       )}
                     </td>
 
-                    <td className="py-3.5 px-3 text-center relative">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenuId(isMenuOpen ? null : c.id);
-                        }}
-                        className="h-8 w-8 text-slate-500 hover:text-slate-800"
-                        aria-label="Row actions"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
+                    <td className="py-3.5 px-3 text-center">
+                      <div className="relative inline-block">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setActiveMenuId(isMenuOpen ? null : c.id)}
+                          className="h-8 w-8 text-slate-500 hover:text-slate-900 cursor-pointer"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
 
-                      {/* Dropdown Action Menu */}
-                      {isMenuOpen && (
-                        <div className="absolute right-2 top-9 z-50 min-w-[150px] bg-white rounded-lg border border-slate-200 shadow-lg p-1 text-left">
-                          <Link
-                            href={`/clients/${c.id}`}
-                            onClick={() => setActiveMenuId(null)}
-                            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 rounded-md hover:bg-slate-50"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                            <span>View Details</span>
-                          </Link>
-
-                          <div className="h-px bg-slate-100 my-1" />
-
-                          <button
-                            type="button"
-                            onClick={() => openDeleteSingle(c)}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-rose-600 rounded-md hover:bg-rose-50 cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                            <span>Delete Client</span>
-                          </button>
-                        </div>
-                      )}
+                        {isMenuOpen && (
+                          <div className="absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-30 text-xs">
+                            <Link
+                              href={`/clients/${c.id}`}
+                              className="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                              onClick={() => setActiveMenuId(null)}
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
+                              {language === 'vi' ? 'Mở hồ sơ' : 'Open Record'}
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => openDeleteSingle(c)}
+                              className="w-full px-3 py-1.5 text-left text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer font-semibold"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              {language === 'vi' ? 'Xóa khách này' : 'Delete'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -750,7 +760,7 @@ export function ClientsList() {
               <div className="w-12 h-12 rounded-xl bg-slate-100 inline-flex items-center justify-center mb-3 text-slate-400">
                 <Search className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-800 mb-1">No clients found</h3>
+              <h3 className="text-base font-bold text-slate-800 mb-1">{language === 'vi' ? 'Không tìm thấy khách hàng' : 'No clients found'}</h3>
               <p className="text-xs text-slate-500 mb-4">
                 {clientList.length === 0
                   ? 'No clients currently exist. Click "+ Add Client" to create your first client record.'

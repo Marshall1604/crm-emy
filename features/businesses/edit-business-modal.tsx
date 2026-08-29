@@ -9,6 +9,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useLanguage } from '@/lib/i18n/language-context';
 
 export interface BusinessData {
   name: string;
@@ -40,6 +41,7 @@ export function EditBusinessModal({
   initialData,
   onSave,
 }: EditBusinessModalProps) {
+  const { language } = useLanguage();
   const [formData, setFormData] = useState<BusinessData>(initialData);
 
   // Sync initialData when modal opens
@@ -74,10 +76,12 @@ export function EditBusinessModal({
             </div>
             <div>
               <DialogTitle className="text-lg font-bold text-slate-900">
-                Edit Business Information
+                {language === 'vi' ? 'Chỉnh Sửa Thông Tin Doanh Nghiệp' : 'Edit Business Information'}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500 mt-0.5">
-                Update entity profile, workflow status, contact, and tax fees.
+                {language === 'vi'
+                  ? 'Cập nhật pháp nhân công ty, tiến độ xử lý, thông tin liên lạc và chi phí thuế.'
+                  : 'Update entity profile, workflow status, contact, and tax fees.'}
               </DialogDescription>
             </div>
           </div>
@@ -87,12 +91,12 @@ export function EditBusinessModal({
           {/* 1. Basic Info */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-              1. Business Identity & Status
+              {language === 'vi' ? '1. Thông Tin Pháp Nhân & Trạng Thái' : '1. Business Identity & Status'}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Legal Business Name <span className="text-rose-500">*</span>
+                  {language === 'vi' ? 'Tên Pháp Lý Doanh Nghiệp' : 'Legal Business Name'} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -105,7 +109,7 @@ export function EditBusinessModal({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  DBA (Doing Business As)
+                  {language === 'vi' ? 'Tên Thương Mại Hoạt Động (DBA)' : 'DBA (Doing Business As)'}
                 </label>
                 <input
                   type="text"
@@ -117,7 +121,7 @@ export function EditBusinessModal({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  EIN <span className="text-rose-500">*</span>
+                  {language === 'vi' ? 'Mã Số Thuế EIN' : 'EIN'} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -130,44 +134,44 @@ export function EditBusinessModal({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Entity Type
+                  {language === 'vi' ? 'Loại Hình Doanh Nghiệp' : 'Entity Type'}
                 </label>
                 <select
                   value={formData.entityType}
                   onChange={(e) => handleChange('entityType', e.target.value)}
                   className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm bg-white focus:outline-none focus:border-blue-500 cursor-pointer"
                 >
-                  <option value="Partnership">Partnership (Form 1065)</option>
-                  <option value="S Corporation">S Corporation (Form 1120-S)</option>
-                  <option value="C Corporation">C Corporation (Form 1120)</option>
-                  <option value="Sole Proprietor">Sole Proprietor (Schedule C)</option>
-                  <option value="Single Member LLC">Single Member LLC</option>
+                  <option value="Partnership">{language === 'vi' ? 'Hợp danh (Partnership Form 1065)' : 'Partnership (Form 1065)'}</option>
+                  <option value="S Corporation">{language === 'vi' ? 'Công ty S-Corp (Form 1120-S)' : 'S Corporation (Form 1120-S)'}</option>
+                  <option value="C Corporation">{language === 'vi' ? 'Công ty C-Corp (Form 1120)' : 'C Corporation (Form 1120)'}</option>
+                  <option value="Sole Proprietor">{language === 'vi' ? 'Hộ kinh doanh cá thể (Schedule C)' : 'Sole Proprietor (Schedule C)'}</option>
+                  <option value="Single Member LLC">{language === 'vi' ? 'Công ty LLC 1 thành viên' : 'Single Member LLC'}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Workflow Status
+                  {language === 'vi' ? 'Trạng Thái Xử Lý' : 'Workflow Status'}
                 </label>
                 <select
                   value={formData.status}
                   onChange={(e) => handleChange('status', e.target.value)}
                   className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm bg-white focus:outline-none focus:border-blue-500 cursor-pointer font-semibold"
                 >
-                  <option value="New">New</option>
-                  <option value="Waiting Documents">Waiting Documents</option>
-                  <option value="Documents Received">Documents Received</option>
-                  <option value="In Preparation">In Preparation</option>
-                  <option value="Missing Information">Missing Information</option>
-                  <option value="Review">Review</option>
-                  <option value="Ready to File">Ready to File</option>
-                  <option value="Completed">Completed</option>
+                  <option value="New">{language === 'vi' ? 'Mới tạo' : 'New'}</option>
+                  <option value="Waiting Documents">{language === 'vi' ? 'Chờ Giấy Tờ' : 'Waiting Documents'}</option>
+                  <option value="Documents Received">{language === 'vi' ? 'Đã Nhận Giấy Tờ' : 'Documents Received'}</option>
+                  <option value="In Preparation">{language === 'vi' ? 'Đang Soạn Hồ Sơ' : 'In Preparation'}</option>
+                  <option value="Missing Information">{language === 'vi' ? 'Thiếu Thông Tin' : 'Missing Information'}</option>
+                  <option value="Review">{language === 'vi' ? 'Đang Kiểm Tra' : 'Review'}</option>
+                  <option value="Ready to File">{language === 'vi' ? 'Sẵn Sàng Nộp' : 'Ready to File'}</option>
+                  <option value="Completed">{language === 'vi' ? 'Đã Hoàn Tất' : 'Completed'}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Assigned Staff
+                  {language === 'vi' ? 'Nhân Viên Phụ Trách' : 'Assigned Staff'}
                 </label>
                 <select
                   value={formData.assignedStaff}
@@ -185,12 +189,12 @@ export function EditBusinessModal({
           {/* 2. Contact Information */}
           <div className="pt-4 border-t border-slate-200">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-              2. Contact Information
+              {language === 'vi' ? '2. Thông Tin Liên Hệ' : '2. Contact Information'}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Email Address
+                  {language === 'vi' ? 'Địa Chỉ Email' : 'Email Address'}
                 </label>
                 <input
                   type="email"
@@ -202,7 +206,7 @@ export function EditBusinessModal({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Phone Number
+                  {language === 'vi' ? 'Số Điện Thoại' : 'Phone Number'}
                 </label>
                 <input
                   type="text"
@@ -214,7 +218,7 @@ export function EditBusinessModal({
 
               <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Business Address
+                  {language === 'vi' ? 'Địa Chỉ Trụ Sở Doanh Nghiệp' : 'Business Address'}
                 </label>
                 <input
                   type="text"
@@ -226,7 +230,7 @@ export function EditBusinessModal({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Primary Contact Person
+                  {language === 'vi' ? 'Người Đại Diện Chính' : 'Primary Contact Person'}
                 </label>
                 <input
                   type="text"
@@ -241,12 +245,12 @@ export function EditBusinessModal({
           {/* 3. Financial & Tax Fees */}
           <div className="pt-4 border-t border-slate-200">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-              3. Tax & Fee Engagements
+              {language === 'vi' ? '3. Biểu Phí & Nghĩa Vụ Thuế' : '3. Tax & Fee Engagements'}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Estimated Federal Tax ($)
+                  {language === 'vi' ? 'Ước Tính Thuế Liên Bang ($)' : 'Estimated Federal Tax ($)'}
                 </label>
                 <input
                   type="number"
@@ -259,7 +263,7 @@ export function EditBusinessModal({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Estimated State Tax ($)
+                  {language === 'vi' ? 'Ước Tính Thuế Tiểu Bang ($)' : 'Estimated State Tax ($)'}
                 </label>
                 <input
                   type="number"
@@ -272,7 +276,7 @@ export function EditBusinessModal({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Preparation Fee ($)
+                  {language === 'vi' ? 'Phí Dịch Vụ Khai Thuế ($)' : 'Preparation Fee ($)'}
                 </label>
                 <input
                   type="number"
@@ -285,7 +289,7 @@ export function EditBusinessModal({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Amount Paid ($)
+                  {language === 'vi' ? 'Số Tiền Đã Thanh Toán ($)' : 'Amount Paid ($)'}
                 </label>
                 <input
                   type="number"
@@ -298,7 +302,7 @@ export function EditBusinessModal({
             </div>
 
             <div className="mt-4 p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 flex items-center justify-between">
-              <span className="text-xs font-bold text-blue-950">Calculated Balance Due:</span>
+              <span className="text-xs font-bold text-blue-950">{language === 'vi' ? 'Số Tiền Còn Nợ Phải Thu:' : 'Calculated Balance Due:'}</span>
               <span className={`text-base font-extrabold ${balance > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
                 ${balance.toLocaleString()}
               </span>
@@ -311,17 +315,17 @@ export function EditBusinessModal({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="h-10 px-4 text-xs font-semibold"
+            className="h-10 px-4 text-xs font-semibold cursor-pointer"
           >
-            Cancel
+            {language === 'vi' ? 'Hủy' : 'Cancel'}
           </Button>
           <Button
             type="button"
             onClick={handleSubmit}
-            className="h-10 px-5 text-xs font-bold gap-2 bg-[#092c5c] hover:bg-[#072247] text-white shadow-sm"
+            className="h-10 px-5 text-xs font-bold gap-2 bg-[#092c5c] hover:bg-[#072247] text-white shadow-sm cursor-pointer"
           >
             <Save className="w-4 h-4" />
-            Save Changes
+            {language === 'vi' ? 'Lưu Thay Đổi' : 'Save Changes'}
           </Button>
         </div>
       </DialogContent>
