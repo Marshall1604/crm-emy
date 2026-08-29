@@ -27,6 +27,7 @@ const workspace = [
   ['Businesses', '/businesses', '▣'],
   ['Tax Returns', '/tax-returns', '▤'],
   ['Fees', '/fees', '$'],
+  ['Marketing Mail', '/marketing', '✉'],
 ] as const;
 
 const manage = [
