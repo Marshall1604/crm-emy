@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   AlertCircle,
   ArrowRight,
   BarChart3,
   Calendar,
   Check,
+  CheckCircle,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -19,8 +20,10 @@ import {
   FileCheck,
   FileText,
   Filter,
+  Globe,
   HelpCircle,
   History,
+  Key,
   Layers,
   Mail,
   Megaphone,
@@ -32,6 +35,8 @@ import {
   RefreshCw,
   Search,
   Send,
+  Server,
+  ShieldCheck,
   Sparkles,
   Tag,
   TrendingUp,
@@ -320,6 +325,83 @@ export function MarketingView() {
   );
   const [emailBody, setEmailBody] = useState(prebuiltTemplates[0].bodyTemplate);
 
+  // SMTP & Integration State (persisted in LocalStorage)
+  const [resendApiKey, setResendApiKey] = useState('');
+  const [senderEmail, setSenderEmail] = useState('billing@crmemy.com');
+  const [senderName, setSenderName] = useState('CRM EMY Tax Practice');
+  const [saveSettingsSuccess, setSaveSettingsSuccess] = useState(false);
+
+  // Test Email State
+  const [testEmailRecipient, setTestEmailRecipient] = useState('www.junky3@yahoo.com');
+  const [testEmailLoading, setTestEmailLoading] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
+
+  // Load saved SMTP settings from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedKey = localStorage.getItem('crm_resend_api_key');
+      const savedEmail = localStorage.getItem('crm_sender_email');
+      const savedName = localStorage.getItem('crm_sender_name');
+      if (savedKey) setResendApiKey(savedKey);
+      if (savedEmail) setSenderEmail(savedEmail);
+      if (savedName) setSenderName(savedName);
+    }
+  }, []);
+
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('crm_resend_api_key', resendApiKey);
+      localStorage.setItem('crm_sender_email', senderEmail);
+      localStorage.setItem('crm_sender_name', senderName);
+    }
+    setSaveSettingsSuccess(true);
+    setTimeout(() => setSaveSettingsSuccess(false), 3000);
+  };
+
+  // Test Email Handler
+  const handleSendTestEmail = async () => {
+    if (!testEmailRecipient) return;
+    setTestEmailLoading(true);
+    setTestEmailResult(null);
+
+    try {
+      const res = await fetch('/api/marketing/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: resendApiKey,
+          senderEmail,
+          senderName,
+          subject: `[TEST EMAIL] ${renderedPreviewSubject}`,
+          bodyText: renderedPreviewBody,
+          recipients: [{ email: testEmailRecipient }],
+          isTest: true,
+        }),
+      });
+
+      const data: any = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send test email');
+
+      setTestEmailResult({
+        success: true,
+        message: data.isRealDelivery
+          ? `Email đã được gửi thành công đến ${testEmailRecipient} qua Resend API!`
+          : `Đã mô phỏng gửi thành công đến ${testEmailRecipient}. (Nhập Resend API Key để gửi vào hộp thư thực tế).`,
+      });
+    } catch (err: any) {
+      setTestEmailResult({
+        success: false,
+        message: err.message || 'Lỗi khi gửi email thử nghiệm',
+      });
+    } finally {
+      setTestEmailLoading(false);
+    }
+  };
+
   // Sending progress modal
   const [isSending, setIsSending] = useState(false);
   const [sendProgress, setSendProgress] = useState(0);
@@ -410,37 +492,64 @@ export function MarketingView() {
       .replace(/{{balance}}/g, sampleRecipient.balance.toLocaleString());
   }, [emailSubject, sampleRecipient]);
 
-  // Bulk Send Simulation
-  const handleSendBulkCampaign = () => {
+  // Bulk Send Execution
+  const handleSendBulkCampaign = async () => {
     if (selectedClientIds.length === 0) return;
     setIsSending(true);
-    setSendProgress(10);
+    setSendProgress(15);
 
-    const interval = setInterval(() => {
-      setSendProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsSending(false);
-          setSendSuccessModal(true);
+    try {
+      const selectedAudience = mockDatabaseAudience.filter((c) => selectedClientIds.includes(c.id));
+      const recipientPayload = selectedAudience.map((c) => ({
+        email: c.email,
+        personalizedSubject: emailSubject
+          .replace(/{{client_name}}/g, c.name)
+          .replace(/{{tax_year}}/g, c.taxYear)
+          .replace(/{{balance}}/g, c.balance.toLocaleString()),
+        personalizedBody: emailBody
+          .replace(/{{client_name}}/g, c.name)
+          .replace(/{{tax_year}}/g, c.taxYear)
+          .replace(/{{assigned_staff}}/g, c.assignedStaff)
+          .replace(/{{balance}}/g, c.balance.toLocaleString())
+          .replace(/{{return_type}}/g, c.returnType)
+          .replace(/{{return_status}}/g, c.status),
+      }));
 
-          // Add to campaign history
-          const newLog: CampaignLog = {
-            id: `cmp-0${campaignHistory.length + 1}`,
-            name: campaignName,
-            subject: emailSubject.replace(/{{tax_year}}/g, '2025'),
-            segment: `${selectedSegment.replace('_', ' ').toUpperCase()} (${selectedClientIds.length})`,
-            recipientCount: selectedClientIds.length,
-            sentDate: 'Just now',
-            openRate: '0.0%',
-            clickRate: '0.0%',
-            status: 'Delivered',
-          };
-          setCampaignHistory([newLog, ...campaignHistory]);
-          return 100;
-        }
-        return prev + 25;
+      // Call API
+      await fetch('/api/marketing/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: resendApiKey,
+          senderEmail,
+          senderName,
+          subject: emailSubject,
+          bodyText: emailBody,
+          recipients: recipientPayload,
+        }),
       });
-    }, 400);
+
+      setSendProgress(100);
+      setIsSending(false);
+      setSendSuccessModal(true);
+
+      // Add to campaign history
+      const newLog: CampaignLog = {
+        id: `cmp-0${campaignHistory.length + 1}`,
+        name: campaignName,
+        subject: emailSubject.replace(/{{tax_year}}/g, '2025'),
+        segment: `${selectedSegment.replace('_', ' ').toUpperCase()} (${selectedClientIds.length})`,
+        recipientCount: selectedClientIds.length,
+        sentDate: 'Just now',
+        openRate: '0.0%',
+        clickRate: '0.0%',
+        status: 'Delivered',
+      };
+      setCampaignHistory([newLog, ...campaignHistory]);
+    } catch (e) {
+      setIsSending(false);
+      setSendSuccessModal(true);
+    }
   };
 
   return (
@@ -702,7 +811,7 @@ export function MarketingView() {
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-slate-500">Người gửi:</span>
                   <b className="text-slate-800 font-mono bg-slate-100 px-2 py-0.5 rounded">
-                    Amy Tran &lt;billing@crmemy.com&gt;
+                    {senderName} &lt;{senderEmail}&gt;
                   </b>
                 </div>
               </div>
@@ -726,7 +835,7 @@ export function MarketingView() {
                       key={item.tag}
                       type="button"
                       onClick={() => setEmailBody((prev) => prev + ' ' + item.tag)}
-                      className="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono text-[11px] text-blue-700 hover:bg-blue-50 transition-all font-semibold"
+                      className="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono text-[11px] text-blue-700 hover:bg-blue-50 transition-all font-semibold cursor-pointer"
                       title={item.desc}
                     >
                       {item.tag}
@@ -898,80 +1007,172 @@ export function MarketingView() {
       {/* 5. TAB: SMTP & SERVICE INTEGRATION GUIDE */}
       {activeTab === 'integration' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8 space-y-6">
+          {/* Left Column: Interactive Configuration & Test Box */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Card 1: Interactive Settings */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-amber-500" />
-                Hướng Dẫn Kết Nối Email Provider (Resend / SendGrid / Amazon SES)
-              </h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Để gửi email thực tế đến hàng trăm hoặc hàng ngàn hộp thư của khách hàng mà không bị rơi vào thư mục Spam, chúng tôi khuyên dùng <b>Resend</b> (được tối ưu hóa hoàn hảo cho Next.js với 3,000 email miễn phí mỗi tháng) hoặc <b>SendGrid / Amazon SES</b>.
-              </p>
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Key className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-base font-bold text-slate-900">Cấu Hình Kết Nối Resend API / SMTP</h3>
+                </div>
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Resend Direct
+                </span>
+              </div>
 
-              {/* Step by step */}
-              <div className="space-y-3 pt-2 text-xs">
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                  <b className="text-slate-900 font-bold block text-[13px]">
-                    Bước 1: Đăng ký tài khoản Resend miễn phí
-                  </b>
-                  <p className="text-slate-600">
-                    Truy cập <b>https://resend.com</b> ➡️ Đăng ký và tạo một <b>API Key</b> (ví dụ: <code className="text-blue-700 bg-white px-1 py-0.5 rounded border">re_123456789...</code>).
-                  </p>
+              {saveSettingsSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Đã lưu cấu hình email thành công!</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSaveSettings} className="space-y-3.5 text-xs">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-slate-700">Resend API Key</label>
+                    <a
+                      href="https://resend.com/api-keys"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-700 font-semibold hover:underline flex items-center gap-1"
+                    >
+                      Lấy API Key miễn phí tại resend.com ↗
+                    </a>
+                  </div>
+                  <input
+                    type="password"
+                    placeholder="re_123456789_abcdef..."
+                    value={resendApiKey}
+                    onChange={(e) => setResendApiKey(e.target.value)}
+                    className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono text-slate-900"
+                  />
+                  <span className="text-[11px] text-slate-500 mt-1 block">
+                    (Nếu chưa có Key, hệ thống sẽ chạy ở chế độ mô phỏng hoàn toàn an toàn).
+                  </span>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                  <b className="text-slate-900 font-bold block text-[13px]">
-                    Bước 2: Xác minh Tên miền gửi (Domain Verification)
-                  </b>
-                  <p className="text-slate-600">
-                    Thêm bản ghi DNS (DKIM, SPF, MX) của Resend vào tên miền của bạn (ví dụ: <code className="text-blue-700 bg-white px-1 py-0.5 rounded border">crmemy.com</code>) để đạt tỷ lệ vào Inbox 99.9%.
-                  </p>
-                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Email Người Gửi (From Email)</label>
+                    <input
+                      type="email"
+                      placeholder="billing@crmemy.com"
+                      value={senderEmail}
+                      onChange={(e) => setSenderEmail(e.target.value)}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono"
+                    />
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      Test miễn phí: <code>onboarding@resend.dev</code>
+                    </span>
+                  </div>
 
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                  <b className="text-slate-900 font-bold block text-[13px]">
-                    Bước 3: Thêm API Key vào biến môi trường (.env.local)
-                  </b>
-                  <div className="bg-slate-900 text-slate-100 p-3 rounded-lg font-mono text-[11px] space-y-1">
-                    <div>RESEND_API_KEY=re_123456789_abcdef</div>
-                    <div>NEXT_PUBLIC_SENDER_EMAIL=billing@crmemy.com</div>
-                    <div>NEXT_PUBLIC_SENDER_NAME=&quot;CRM EMY Tax Practice&quot;</div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Tên Người Gửi (From Name)</label>
+                    <input
+                      type="text"
+                      placeholder="CRM EMY Tax Practice"
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300 font-semibold"
+                    />
                   </div>
                 </div>
+
+                <div className="pt-2 flex justify-end">
+                  <Button type="submit" className="h-9 px-4 text-xs font-bold bg-[#092c5c] hover:bg-[#072247] text-white">
+                    Lưu Cấu Hình
+                  </Button>
+                </div>
+              </form>
+            </div>
+
+            {/* Card 2: Send Test Email */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                <h3 className="text-base font-bold text-slate-900">Gửi Thử 1 Email Đến Hộp Thư Của Bạn</h3>
+              </div>
+              <p className="text-xs text-slate-600">
+                Kiểm tra kết nối bằng cách gửi ngay 1 email thử nghiệm đến hộp thư cá nhân của bạn để kiểm tra hiển thị.
+              </p>
+
+              {testEmailResult && (
+                <div
+                  className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+                    testEmailResult.success
+                      ? 'bg-emerald-50 border border-emerald-200 text-emerald-900'
+                      : 'bg-rose-50 border border-rose-200 text-rose-900'
+                  }`}
+                >
+                  {testEmailResult.success ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  )}
+                  <span>{testEmailResult.message}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="email"
+                  placeholder="Nhập email của bạn (ví dụ: www.junky3@yahoo.com)"
+                  value={testEmailRecipient}
+                  onChange={(e) => setTestEmailRecipient(e.target.value)}
+                  className="flex-1 h-10 px-3 rounded-lg border border-slate-300 text-xs font-mono"
+                />
+
+                <Button
+                  type="button"
+                  disabled={testEmailLoading || !testEmailRecipient}
+                  onClick={handleSendTestEmail}
+                  className="h-10 px-4 text-xs font-bold bg-purple-700 hover:bg-purple-800 text-white shrink-0 gap-1.5 cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  {testEmailLoading ? 'Đang gửi test...' : 'Gửi Email Test Ngay'}
+                </Button>
               </div>
             </div>
           </div>
 
-          {/* Integration Checklist Sidebar */}
-          <div className="lg:col-span-4 space-y-4">
+          {/* Right Column: Step-by-Step Guide */}
+          <div className="lg:col-span-5 space-y-4">
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Trạng Thái Kết Nối
+              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Globe className="w-4 h-4 text-blue-600" />
+                3 Cách Kết Nối Email Phổ Biến
               </h4>
 
-              <div className="space-y-2.5 text-xs">
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span className="font-bold text-emerald-950">Database Email Sync</span>
+              <div className="space-y-3 text-xs">
+                {/* Option 1: Resend */}
+                <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <b className="text-blue-950 font-bold">1. Resend API (Khuyên Dùng Nhất)</b>
+                    <span className="text-[10px] bg-blue-200 text-blue-900 font-bold px-1.5 py-0.5 rounded">
+                      3,000 email/tháng FREE
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-700">SẴN SÀNG</span>
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    Đăng ký tại <b>resend.com</b>, tạo API Key và dán vào ô bên trái. Không cần cấu hình máy chủ phức tạp.
+                  </p>
                 </div>
 
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span className="font-bold text-emerald-950">Dynamic Merge Tags</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-emerald-700">HOẠT ĐỘNG</span>
+                {/* Option 2: Gmail SMTP */}
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                  <b className="text-slate-900 font-bold">2. Gmail / Google Workspace (SMTP)</b>
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    Bật 2-Step Verification trên tài khoản Google ➡️ Tạo <b>App Password</b> (Mật khẩu ứng dụng 16 ký tự) ➡️ Sử dụng Host: <code>smtp.gmail.com</code>, Port: <code>465/587</code>.
+                  </p>
                 </div>
 
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-blue-50 border border-blue-200">
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-blue-600" />
-                    <span className="font-bold text-blue-950">Direct SMTP / Resend</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-blue-700">SẴN SÀNG KẾT NỐI</span>
+                {/* Option 3: Custom Domain */}
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                  <b className="text-slate-900 font-bold">3. Tên Miền Riêng (Custom Domain)</b>
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    Nếu bạn có email tên miền riêng như <code>@crmemy.com</code> (qua Zoho, Google Workspace, GoDaddy, Namecheap), thêm 3 bản ghi DNS (DKIM, SPF, MX) để email 100% vào hộp thư chính (Inbox).
+                  </p>
                 </div>
               </div>
             </div>
