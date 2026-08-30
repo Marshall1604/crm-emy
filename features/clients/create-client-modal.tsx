@@ -227,7 +227,7 @@ export function CreateClientModal({
     const formattedDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     const newRecord: ClientRecord = {
-      id: `${slug}-${Date.now().toString().slice(-4)}`,
+      id: `${slug}-${crypto.randomUUID().slice(0, 6)}`,
       name: fullName,
       initials,
       updated: formattedDate,

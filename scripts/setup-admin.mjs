@@ -1,7 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://drdvovguidtnotaiuvmz.supabase.co';
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const adminEmail = process.env.CRM_ADMIN_EMAIL;
+const adminPassword = process.env.CRM_ADMIN_PASSWORD;
+const adminName = process.env.CRM_ADMIN_NAME || 'Super Administrator';
+
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.error('❌ Configuration Error: Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables.');
+  console.error('Usage: NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... CRM_ADMIN_EMAIL=... CRM_ADMIN_PASSWORD=... node scripts/setup-admin.mjs');
+  process.exit(1);
+}
+
+if (!adminEmail || !adminPassword) {
+  console.error('❌ Security Error: CRM_ADMIN_EMAIL and CRM_ADMIN_PASSWORD environment variables must be provided.');
+  console.error('Never hard-code administrative credentials in source files.');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: {
@@ -10,76 +25,73 @@ const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
   },
 });
 
-const ADMIN_EMAIL = 'www.junky3@yahoo.com';
-const ADMIN_PASSWORD = 'Phanhong0407';
-
 async function setupAdmin() {
-  console.log(`Setting up Super Admin for: ${ADMIN_EMAIL}...`);
+  console.log(`🔐 Initiating secure Super Admin provisioning for: ${adminEmail}...`);
 
   try {
     // 1. Check if user already exists
     const { data: usersData, error: listError } = await supabase.auth.admin.listUsers();
     if (listError) {
-      console.error('Failed to list users:', listError);
-      return;
+      console.error('❌ Failed to query users via Supabase Admin API:', listError.message);
+      process.exit(1);
     }
 
     let existingUser = usersData.users.find(
-      (u) => u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+      (u) => u.email?.toLowerCase() === adminEmail.toLowerCase()
     );
 
     let userId;
 
     if (existingUser) {
-      console.log(`User found (ID: ${existingUser.id}). Updating password and confirming email...`);
+      console.log(`✓ Existing user record found (ID: ${existingUser.id}). Updating credentials...`);
       userId = existingUser.id;
       const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
-        password: ADMIN_PASSWORD,
+        password: adminPassword,
         email_confirm: true,
-        user_metadata: { full_name: 'Administrator' },
+        user_metadata: { full_name: adminName },
       });
       if (updateError) {
-        console.error('Error updating user:', updateError);
-      } else {
-        console.log('User password updated and email confirmed.');
+        console.error('❌ Error updating user authentication record:', updateError.message);
+        process.exit(1);
       }
+      console.log('✓ User password updated and email verified.');
     } else {
-      console.log('Creating new user in Supabase Auth...');
+      console.log('✓ Creating new user in Supabase Auth...');
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-        email: ADMIN_EMAIL,
-        password: ADMIN_PASSWORD,
+        email: adminEmail,
+        password: adminPassword,
         email_confirm: true,
-        user_metadata: { full_name: 'Administrator' },
+        user_metadata: { full_name: adminName },
       });
 
       if (createError) {
-        console.error('Error creating user:', createError);
-        return;
+        console.error('❌ Error creating user:', createError.message);
+        process.exit(1);
       }
       userId = newUser.user.id;
-      console.log(`User created successfully with ID: ${userId}`);
+      console.log(`✓ User created successfully with ID: ${userId}`);
     }
 
     // 2. Upsert into public.profiles
-    console.log('Ensuring profile in public.profiles...');
+    console.log('✓ Syncing profile to public.profiles...');
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
         id: userId,
-        email: ADMIN_EMAIL,
-        full_name: 'Administrator',
+        email: adminEmail,
+        full_name: adminName,
         status: 'active',
         updated_at: new Date().toISOString(),
       });
 
     if (profileError) {
-      console.warn('Profile upsert note (table might not exist if SQL not run yet):', profileError.message);
+      console.warn('⚠️ Profile upsert warning (verify schema migration is applied):', profileError.message);
     } else {
-      console.log('Profile active in public.profiles.');
+      console.log('✓ Profile active in public.profiles.');
     }
 
     // 3. Assign super_admin role in public.user_roles
-    console.log('Assigning super_admin role...');
+    console.log('✓ Assigning super_admin role in public.user_roles...');
     const { error: roleError } = await supabase
       .from('user_roles')
       .upsert({
@@ -88,13 +100,13 @@ async function setupAdmin() {
       });
 
     if (roleError) {
-      console.warn('Role assign note:', roleError.message);
+      console.warn('⚠️ Role assign warning:', roleError.message);
     } else {
-      console.log('Role super_admin assigned.');
+      console.log('✓ Role super_admin granted.');
     }
 
     // 4. Assign lifetime subscription in public.subscriptions
-    console.log('Assigning lifetime subscription...');
+    console.log('✓ Granting lifetime administrative license...');
     const { error: subError } = await supabase
       .from('subscriptions')
       .upsert({
@@ -110,18 +122,19 @@ async function setupAdmin() {
       });
 
     if (subError) {
-      console.warn('Subscription assign note:', subError.message);
+      console.warn('⚠️ Subscription assignment warning:', subError.message);
     } else {
-      console.log('Lifetime subscription granted.');
+      console.log('✓ Lifetime administrative license active.');
     }
 
-    console.log('\n========================================');
-    console.log('Super Admin setup successfully completed!');
-    console.log(`Email: ${ADMIN_EMAIL}`);
-    console.log(`Password: ${ADMIN_PASSWORD}`);
-    console.log('========================================\n');
+    console.log('\n======================================================');
+    console.log('✅ Super Admin setup successfully completed!');
+    console.log(`Target Email: ${adminEmail}`);
+    console.log('Password has been securely applied and is not logged.');
+    console.log('======================================================\n');
   } catch (err) {
-    console.error('Fatal error during setup:', err);
+    console.error('❌ Fatal error during admin setup:', err);
+    process.exit(1);
   }
 }
 

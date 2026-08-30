@@ -41,6 +41,7 @@ const manage = [
 export function CrmShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, profile, role, subscription, isLifetime, signOut } = useAuth();
+  const { t } = useLanguage();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -94,8 +95,6 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
     : subscription?.plan === 'monthly'
     ? 'Monthly Pro'
     : '7-Day Trial';
-
-  const { t } = useLanguage();
 
   return (
     <div className="route-shell">

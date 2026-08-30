@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Clock3, Mail, MoreHorizontal, Pencil, ShieldCheck, Trash2, UserPlus, UsersRound, X } from 'lucide-react';
+import { Clock3, Mail, MoreHorizontal, Pencil, ShieldCheck, Trash2, UserPlus, UsersRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';

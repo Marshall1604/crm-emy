@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
-import type { Database, UserRole, SubscriptionPlan, SubscriptionStatus } from '@/lib/supabase/types';
+import type { UserRole, SubscriptionPlan, SubscriptionStatus, UserStatus } from '@/lib/supabase/types';
 
 export interface UserProfile {
   id: string;
@@ -11,7 +11,7 @@ export interface UserProfile {
   full_name: string | null;
   phone: string | null;
   avatar_url: string | null;
-  status: 'active' | 'blocked' | 'suspended';
+  status: UserStatus;
   created_at: string;
 }
 
@@ -47,11 +47,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Default mock admin profile if Supabase is not configured or in preview
+// Default limited preview profile only for local development when Supabase is unconfigured
 const defaultPreviewProfile: UserProfile = {
-  id: 'preview-admin',
-  email: 'admin@crmemy.com',
-  full_name: 'Amy Tran',
+  id: 'preview-user',
+  email: 'preview@crmemy.com',
+  full_name: 'Preview User',
   phone: '(714) 555-0188',
   avatar_url: null,
   status: 'active',
@@ -60,12 +60,12 @@ const defaultPreviewProfile: UserProfile = {
 
 const defaultPreviewSubscription: UserSubscription = {
   id: 'sub-preview',
-  user_id: 'preview-admin',
-  plan: 'lifetime',
-  status: 'active',
+  user_id: 'preview-user',
+  plan: 'trial',
+  status: 'trial',
   start_date: new Date().toISOString(),
   expire_date: null,
-  lifetime: true,
+  lifetime: false,
   auto_renew: false,
   payment_provider: 'manual',
   amount: 0,
@@ -74,8 +74,8 @@ const defaultPreviewSubscription: UserSubscription = {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [role, setRole] = useState<UserRole>('super_admin');
-  const [roles, setRoles] = useState<UserRole[]>(['super_admin']);
+  const [role, setRole] = useState<UserRole>('user');
+  const [roles, setRoles] = useState<UserRole[]>(['user']);
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,15 +85,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // 1. Fetch Profile
-      const { data: profileData } = await (supabase.from('profiles') as any)
+      const { data: profileData } = await supabase
+        .from('profiles')
         .select('*')
         .eq('id', currentUser.id)
-        .single();
+        .maybeSingle();
 
       if (profileData) {
         setProfile(profileData as UserProfile);
       } else {
-        // Fallback profile
         setProfile({
           id: currentUser.id,
           email: currentUser.email || '',
@@ -105,36 +105,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
-      // 2. Fetch User Roles
-      const { data: userRolesData } = await (supabase.from('user_roles') as any)
-      // Check for Super Admin Email
-      const isKnownSuperAdmin =
-        currentUser.email?.toLowerCase() === 'www.junky3@yahoo.com' ||
-        currentUser.email?.toLowerCase() === 'admin@crmemy.com';
+      // 2. Fetch User Roles strictly from Database
+      const { data: userRolesData } = await supabase
+        .from('user_roles')
+        .select('role_id')
+        .eq('user_id', currentUser.id);
 
       if (userRolesData && userRolesData.length > 0) {
-        const assignedRoles = (userRolesData as any[]).map((r) => r.role_id as UserRole);
-        if (isKnownSuperAdmin && !assignedRoles.includes('super_admin')) {
-          assignedRoles.push('super_admin');
-        }
+        const assignedRoles = userRolesData.map((r: { role_id: UserRole }) => r.role_id);
         setRoles(assignedRoles);
-        // Primary role priority
+
         if (assignedRoles.includes('super_admin')) setRole('super_admin');
         else if (assignedRoles.includes('admin')) setRole('admin');
         else if (assignedRoles.includes('staff')) setRole('staff');
         else setRole('user');
       } else {
-        if (isKnownSuperAdmin) {
-          setRoles(['super_admin']);
-          setRole('super_admin');
-        } else {
-          setRoles(['user']);
-          setRole('user');
-        }
+        setRoles(['user']);
+        setRole('user');
       }
 
       // 3. Fetch Subscription
-      const { data: subData } = await (supabase.from('subscriptions') as any)
+      const { data: subData } = await supabase
+        .from('subscriptions')
         .select('*')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false })
@@ -143,31 +135,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (subData) {
         setSubscription(subData as UserSubscription);
-      } else if (isKnownSuperAdmin) {
-        setSubscription({
-          id: 'sub-super-admin',
-          user_id: currentUser.id,
-          plan: 'lifetime',
-          status: 'active',
-          start_date: new Date().toISOString(),
-          expire_date: null,
-          lifetime: true,
-          auto_renew: false,
-          payment_provider: 'manual',
-          amount: 0,
-        });
+      } else {
+        setSubscription(null);
       }
 
       // 4. Fetch Role Permissions
-      const { data: permData } = await (supabase.from('role_permissions') as any)
+      const assignedRoleIds = userRolesData && userRolesData.length > 0
+        ? userRolesData.map((r: { role_id: UserRole }) => r.role_id)
+        : ['user'];
+
+      const { data: permData } = await supabase
+        .from('role_permissions')
         .select('permission_id')
-        .in('role_id', (userRolesData as any[])?.map((r) => r.role_id) || ['user']);
+        .in('role_id', assignedRoleIds as UserRole[]);
 
       if (permData) {
-        setPermissions((permData as any[]).map((p) => p.permission_id));
+        setPermissions(permData.map((p: { permission_id: string }) => p.permission_id));
       }
     } catch (err) {
-      console.error('Error fetching auth user profile:', err);
+      console.error('Error fetching auth user profile from database:', err);
     }
   }, []);
 
@@ -175,8 +161,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!supabase || !isSupabaseConfigured) {
       setProfile(defaultPreviewProfile);
       setSubscription(defaultPreviewSubscription);
-      setRole('super_admin');
-      setRoles(['super_admin']);
+      setRole('user');
+      setRoles(['user']);
       setIsLoading(false);
       return;
     }
@@ -197,20 +183,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRole('user');
       }
     } catch (err) {
-      console.error('Error getting auth session:', err);
+      console.error('Error retrieving auth session:', err);
     } finally {
       setIsLoading(false);
     }
   }, [fetchUserData]);
 
   useEffect(() => {
-    refreshSession();
+    let isMounted = true;
+
+    const initAuth = async () => {
+      if (!supabase || !isSupabaseConfigured) {
+        if (isMounted) {
+          setProfile(defaultPreviewProfile);
+          setSubscription(defaultPreviewSubscription);
+          setRole('user');
+          setRoles(['user']);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (isMounted) {
+          if (session?.user) {
+            setUser(session.user);
+            await fetchUserData(session.user);
+          } else {
+            setUser(null);
+            setProfile(null);
+            setSubscription(null);
+            setRoles(['user']);
+            setRole('user');
+          }
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initAuth();
 
     if (!supabase) return;
 
     const {
       data: { subscription: authSub },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
       if (session?.user) {
         setUser(session.user);
         await fetchUserData(session.user);
@@ -225,9 +252,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
+      isMounted = false;
       authSub.unsubscribe();
     };
-  }, [refreshSession, fetchUserData]);
+  }, [fetchUserData]);
 
   const signOut = async () => {
     if (supabase) {
@@ -249,22 +277,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role === 'super_admin'
   );
 
-  const isBlocked = profile?.status === 'blocked' || profile?.status === 'suspended';
-
-  const isLifetime = Boolean(subscription?.lifetime);
-
+  const isLifetime = subscription?.lifetime === true;
   const isSubscriptionActive = Boolean(
-    !isSupabaseConfigured || // In offline preview mode, allow access
-      role === 'super_admin' || // Super Admin always active
+    !isSupabaseConfigured ||
+      role === 'super_admin' ||
+      role === 'admin' ||
       isLifetime ||
       (subscription &&
         (subscription.status === 'active' || subscription.status === 'trial') &&
         (!subscription.expire_date || new Date(subscription.expire_date) > new Date()))
   );
 
+  const isBlocked = profile?.status === 'blocked' || profile?.status === 'suspended';
+
   const hasPermission = (permission: string) => {
     if (role === 'super_admin') return true;
-    return permissions.includes(permission);
+    if (permissions.includes(permission) || permissions.includes('*')) return true;
+    return false;
   };
 
   return (

@@ -1,17 +1,10 @@
-'use client';
-
 import Link from 'next/link';
 import {
   ArrowLeft,
-  CalendarDays,
-  CheckCircle2,
   ChevronRight,
   CircleDollarSign,
   FileCheck,
   FileText,
-  MapPin,
-  ShieldCheck,
-  UserCheck,
   UserRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

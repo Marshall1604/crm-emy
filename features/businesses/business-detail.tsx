@@ -36,7 +36,7 @@ import { EditBusinessModal, type BusinessData } from './edit-business-modal';
 const defaultBusiness: BusinessData = {
   name: 'ABC Logistics LLC',
   dba: 'ABC Freight & Logistics',
-  ein: '12-3456789',
+  ein: '**-***6789',
   entityType: 'Partnership',
   status: 'Waiting Documents',
   assignedStaff: 'Daniel Lee',

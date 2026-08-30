@@ -1,53 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { requireAdmin, recordAuditLog } from '@/lib/auth/require-admin';
+import { z } from 'zod';
+import type { UserRole, UserStatus, SubscriptionPlan } from '@/lib/supabase/types';
 
-export async function GET(request: NextRequest) {
+const CreateUserSchema = z.object({
+  action: z.literal('create_user'),
+  payload: z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+    fullName: z.string().min(1),
+    phone: z.string().optional().nullable(),
+    role: z.enum(['super_admin', 'admin', 'staff', 'user']).default('user'),
+    plan: z.enum(['trial', 'monthly', 'yearly', 'lifetime']).default('trial'),
+    status: z.enum(['active', 'blocked', 'suspended']).default('active'),
+    emailConfirm: z.boolean().optional().default(true),
+  }),
+});
+
+const DeleteUserSchema = z.object({
+  action: z.literal('delete_user'),
+  targetUserId: z.string().uuid(),
+});
+
+const UpdateStatusSchema = z.object({
+  action: z.literal('update_status'),
+  targetUserId: z.string().uuid(),
+  payload: z.object({
+    status: z.enum(['active', 'blocked', 'suspended']),
+  }),
+});
+
+const ChangeRoleSchema = z.object({
+  action: z.literal('change_role'),
+  targetUserId: z.string().uuid(),
+  payload: z.object({
+    newRole: z.enum(['super_admin', 'admin', 'staff', 'user']),
+  }),
+});
+
+export async function GET() {
+  const auth = await requireAdmin();
+  if (!auth.success) return auth.response;
+
+  const { adminClient } = auth.data;
+
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // 1. Fetch profiles
+    const { data: dbProfiles, error: profilesError } = await adminClient
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    const isKnownSuperAdmin =
-      user?.email?.toLowerCase() === 'www.junky3@yahoo.com' ||
-      user?.email?.toLowerCase() === 'admin@crmemy.com';
-
-    if (!user && !isKnownSuperAdmin) {
-      // In local dev/mock, allow reading
+    if (profilesError) {
+      return NextResponse.json({ error: 'Failed to fetch user profiles.' }, { status: 500 });
     }
 
-    const adminClient = createAdminClient();
+    // 2. Fetch all user roles
+    const { data: dbRoles, error: rolesError } = await adminClient
+      .from('user_roles')
+      .select('*');
 
-    // Fetch profiles
-    let profiles: any[] = [];
-    try {
-      const { data: dbProfiles } = await (adminClient.from('profiles') as any)
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (dbProfiles) profiles = dbProfiles;
-    } catch {}
+    if (rolesError) {
+      return NextResponse.json({ error: 'Failed to fetch user roles.' }, { status: 500 });
+    }
 
-    // Fetch all user roles
-    let allRoles: any[] = [];
-    try {
-      const { data: dbRoles } = await (adminClient.from('user_roles') as any).select('*');
-      if (dbRoles) allRoles = dbRoles;
-    } catch {}
+    // 3. Fetch latest subscriptions
+    const { data: dbSubs } = await adminClient
+      .from('subscriptions')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    // Fetch latest subscriptions
-    let allSubs: any[] = [];
-    try {
-      const { data: dbSubs } = await (adminClient.from('subscriptions') as any)
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (dbSubs) allSubs = dbSubs;
-    } catch {}
+    const profiles = dbProfiles || [];
+    const allRoles = dbRoles || [];
+    const allSubs = dbSubs || [];
 
     // Combine data
     const enrichedUsers = profiles.map((p) => {
-      const uRoles = allRoles?.filter((r) => r.user_id === p.id).map((r) => r.role_id) || ['user'];
-      const uSub = allSubs?.find((s) => s.user_id === p.id);
+      const uRoles = allRoles.filter((r) => r.user_id === p.id).map((r) => r.role_id) || ['user'];
+      const uSub = allSubs.find((s) => s.user_id === p.id);
 
       return {
         ...p,
@@ -64,105 +94,84 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ users: enrichedUsers });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Internal server exception while loading users.' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.success) return auth.response;
+
+  const { user: actorUser, isSuperAdmin, adminClient } = auth.data;
+
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const rawBody = (await request.json()) as { action?: string; targetUserId?: string; payload?: unknown };
+    const action = rawBody?.action;
 
-    const isKnownSuperAdmin =
-      user?.email?.toLowerCase() === 'www.junky3@yahoo.com' ||
-      user?.email?.toLowerCase() === 'admin@crmemy.com';
+    // Helper: Check if target user is currently a Super Admin
+    const isTargetSuperAdmin = async (targetId: string): Promise<boolean> => {
+      const { data: targetRoles } = await adminClient
+        .from('user_roles')
+        .select('role_id')
+        .eq('user_id', targetId);
+      return (targetRoles || []).some((r) => r.role_id === 'super_admin');
+    };
 
-    let roles: string[] = [];
-    if (user) {
-      try {
-        const { data: userRoles } = await (supabase.from('user_roles') as any)
-          .select('role_id')
-          .eq('user_id', user.id);
-        roles = (userRoles as any[])?.map((r) => r.role_id) || [];
-      } catch {}
-    }
-
-    const isSuperAdmin = isKnownSuperAdmin || roles.includes('super_admin') || !user;
-    const isAdmin = isSuperAdmin || roles.includes('admin');
-
-    const body: any = await request.json();
-    const { action, targetUserId, payload } = body;
-    const adminClient = createAdminClient();
-
-    // Check target user's current role for Super Admin protection
-    let targetIsSuperAdmin = false;
-    if (targetUserId) {
-      try {
-        const { data: targetRoles } = await (adminClient.from('user_roles') as any)
-          .select('role_id')
-          .eq('user_id', targetUserId);
-        targetIsSuperAdmin = (targetRoles as any[])?.some((r) => r.role_id === 'super_admin');
-      } catch {}
-    }
-
-    if (
-      targetIsSuperAdmin &&
-      !isSuperAdmin &&
-      (action === 'delete_user' || action === 'change_role' || action === 'block_user')
-    ) {
-      return NextResponse.json(
-        { error: 'Protection rule: Standard administrators cannot modify or delete Super Admins.' },
-        { status: 403 }
-      );
-    }
-
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
-    const userAgent = request.headers.get('user-agent') || 'Browser';
-
-    // 1. CREATE USER ACTION
+    // ─── 1. CREATE USER ───
     if (action === 'create_user') {
-      const { email, password, fullName, phone, role, plan, status, emailConfirm } = payload;
-      let createdUserId = `usr-${Date.now()}`;
-
-      try {
-        const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
-          email,
-          password: password || 'Phanhong0407',
-          email_confirm: emailConfirm !== false,
-          user_metadata: { full_name: fullName, phone },
-        });
-        if (authData?.user?.id) {
-          createdUserId = authData.user.id;
-        }
-      } catch (e) {
-        console.warn('Auth creation note:', e);
+      const parseResult = CreateUserSchema.safeParse(rawBody);
+      if (!parseResult.success) {
+        return NextResponse.json(
+          { error: 'Invalid user creation payload.', details: parseResult.error.flatten() },
+          { status: 400 }
+        );
       }
 
-      // Profile
-      try {
-        await (adminClient.from('profiles') as any).upsert({
-          id: createdUserId,
-          email,
-          full_name: fullName,
-          phone: phone || null,
-          status: status || 'active',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-      } catch {}
+      const { email, password, fullName, phone, role, plan, status, emailConfirm } = parseResult.data.payload;
 
-      // Roles
-      try {
-        await (adminClient.from('user_roles') as any).upsert({
-          user_id: createdUserId,
-          role_id: role || 'user',
-        });
-      } catch {}
+      // Only Super Admin can create another Super Admin
+      if (role === 'super_admin' && !isSuperAdmin) {
+        return NextResponse.json(
+          { error: 'Forbidden: Only Super Administrators can provision the super_admin role.' },
+          { status: 403 }
+        );
+      }
 
-      // Subscriptions
+      const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: emailConfirm,
+        user_metadata: { full_name: fullName, phone },
+      });
+
+      if (authError || !authData?.user) {
+        return NextResponse.json(
+          { error: authError?.message || 'Failed to create auth user.' },
+          { status: 400 }
+        );
+      }
+
+      const createdUserId = authData.user.id;
+
+      // Upsert profile
+      await adminClient.from('profiles').upsert({
+        id: createdUserId,
+        email,
+        full_name: fullName,
+        phone: phone || null,
+        status: status as UserStatus,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      // Upsert role
+      await adminClient.from('user_roles').upsert({
+        user_id: createdUserId,
+        role_id: role as UserRole,
+      });
+
+      // Upsert subscription
       const isLifetime = plan === 'lifetime';
       const now = new Date();
       const expireDate = isLifetime
@@ -173,32 +182,23 @@ export async function POST(request: NextRequest) {
         ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
         : new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      try {
-        await (adminClient.from('subscriptions') as any).upsert({
-          user_id: createdUserId,
-          plan: plan || 'trial',
-          status: 'active',
-          start_date: now.toISOString(),
-          expire_date: expireDate,
-          lifetime: isLifetime,
-          payment_provider: isLifetime ? 'manual' : 'stripe',
-          amount: isLifetime ? 999 : plan === 'yearly' ? 490 : plan === 'monthly' ? 49 : 0,
-        });
-      } catch {}
+      await adminClient.from('subscriptions').upsert({
+        user_id: createdUserId,
+        plan: plan as SubscriptionPlan,
+        status: 'active',
+        start_date: now.toISOString(),
+        expire_date: expireDate,
+        lifetime: isLifetime,
+        payment_provider: isLifetime ? 'manual' : 'stripe',
+        amount: isLifetime ? 999 : plan === 'yearly' ? 490 : plan === 'monthly' ? 49 : 0,
+      });
 
       // Audit Log
-      try {
-        await (adminClient.from('audit_logs') as any).insert({
-          actor_user_id: user?.id || 'super_admin',
-          target_user_id: createdUserId,
-          action: 'user_created',
-          entity_type: 'profile',
-          entity_id: createdUserId,
-          new_value: { email, role, plan },
-          ip_address: ip,
-          user_agent: userAgent,
-        });
-      } catch {}
+      await recordAuditLog(actorUser.id, 'user_created', 'profile', createdUserId, {
+        email,
+        role,
+        plan,
+      });
 
       return NextResponse.json({
         success: true,
@@ -207,82 +207,112 @@ export async function POST(request: NextRequest) {
           email,
           full_name: fullName,
           phone: phone || null,
-          avatar_url: null,
-          status: status || 'active',
-          created_at: new Date().toISOString(),
-          last_sign_in_at: null,
-          primaryRole: role || 'user',
-          roles: [role || 'user'],
-          subscription: {
-            plan: plan || 'trial',
-            status: 'active',
-            start_date: now.toISOString(),
-            expire_date: expireDate,
-            lifetime: isLifetime,
-            payment_provider: isLifetime ? 'manual' : 'stripe',
-            amount: isLifetime ? 999 : plan === 'yearly' ? 490 : plan === 'monthly' ? 49 : 0,
-          },
+          status,
+          primaryRole: role,
+          roles: [role],
         },
       });
     }
 
-    // 2. DELETE USER ACTION
+    // ─── 2. DELETE USER ───
     if (action === 'delete_user') {
-      try {
-        await adminClient.auth.admin.deleteUser(targetUserId);
-      } catch (e) {
-        console.warn('deleteUser auth note:', e);
+      const parseResult = DeleteUserSchema.safeParse(rawBody);
+      if (!parseResult.success) {
+        return NextResponse.json({ error: 'Invalid user deletion payload.' }, { status: 400 });
       }
-      try {
-        await (adminClient.from('profiles') as any).delete().eq('id', targetUserId);
-        await (adminClient.from('user_roles') as any).delete().eq('user_id', targetUserId);
-        await (adminClient.from('subscriptions') as any).delete().eq('user_id', targetUserId);
-      } catch (e) {}
 
-      // Audit log
-      try {
-        await (adminClient.from('audit_logs') as any).insert({
-          actor_user_id: user?.id || 'super_admin',
-          target_user_id: targetUserId,
-          action: 'user_deleted',
-          entity_type: 'profile',
-          entity_id: targetUserId,
-          old_value: null,
-          new_value: null,
-          ip_address: ip,
-          user_agent: userAgent,
-        });
-      } catch {}
+      const { targetUserId } = parseResult.data;
+
+      if (targetUserId === actorUser.id) {
+        return NextResponse.json({ error: 'Security restriction: Administrators cannot delete their own account.' }, { status: 400 });
+      }
+
+      const targetIsSuper = await isTargetSuperAdmin(targetUserId);
+      if (targetIsSuper && !isSuperAdmin) {
+        return NextResponse.json(
+          { error: 'Forbidden: Only Super Administrators can delete another Super Administrator.' },
+          { status: 403 }
+        );
+      }
+
+      await adminClient.auth.admin.deleteUser(targetUserId);
+      await adminClient.from('profiles').delete().eq('id', targetUserId);
+      await adminClient.from('user_roles').delete().eq('user_id', targetUserId);
+      await adminClient.from('subscriptions').delete().eq('user_id', targetUserId);
+
+      await recordAuditLog(actorUser.id, 'user_deleted', 'profile', targetUserId);
 
       return NextResponse.json({ success: true, deletedUserId: targetUserId });
     }
 
-    // 3. UPDATE STATUS ACTION
+    // ─── 3. UPDATE STATUS (BLOCK / UNBLOCK / SUSPEND) ───
     if (action === 'update_status') {
-      try {
-        await (adminClient.from('profiles') as any)
-          .update({ status: payload.status, updated_at: new Date().toISOString() })
-          .eq('id', targetUserId);
-      } catch {}
+      const parseResult = UpdateStatusSchema.safeParse(rawBody);
+      if (!parseResult.success) {
+        return NextResponse.json({ error: 'Invalid status update payload.' }, { status: 400 });
+      }
+
+      const { targetUserId, payload } = parseResult.data;
+
+      if (targetUserId === actorUser.id && payload.status !== 'active') {
+        return NextResponse.json({ error: 'Security restriction: You cannot block or suspend your own account.' }, { status: 400 });
+      }
+
+      const targetIsSuper = await isTargetSuperAdmin(targetUserId);
+      if (targetIsSuper && !isSuperAdmin) {
+        return NextResponse.json(
+          { error: 'Forbidden: Only Super Administrators can modify the status of another Super Administrator.' },
+          { status: 403 }
+        );
+      }
+
+      await adminClient
+        .from('profiles')
+        .update({ status: payload.status as UserStatus, updated_at: new Date().toISOString() })
+        .eq('id', targetUserId);
+
+      await recordAuditLog(actorUser.id, `user_status_${payload.status}`, 'profile', targetUserId, {
+        status: payload.status,
+      });
 
       return NextResponse.json({ success: true, status: payload.status });
     }
 
-    // 4. CHANGE ROLE ACTION
+    // ─── 4. CHANGE ROLE ───
     if (action === 'change_role') {
-      try {
-        await (adminClient.from('user_roles') as any).delete().eq('user_id', targetUserId);
-        await (adminClient.from('user_roles') as any).insert({
-          user_id: targetUserId,
-          role_id: payload.newRole,
-        });
-      } catch {}
+      const parseResult = ChangeRoleSchema.safeParse(rawBody);
+      if (!parseResult.success) {
+        return NextResponse.json({ error: 'Invalid role change payload.' }, { status: 400 });
+      }
 
-      return NextResponse.json({ success: true, role: payload.newRole });
+      const { targetUserId, payload } = parseResult.data;
+      const { newRole } = payload;
+
+      const targetIsSuper = await isTargetSuperAdmin(targetUserId);
+
+      // Rule: Granting or revoking super_admin requires the actor to be super_admin
+      if ((newRole === 'super_admin' || targetIsSuper) && !isSuperAdmin) {
+        return NextResponse.json(
+          { error: 'Forbidden: Only Super Administrators can assign or alter Super Administrator roles.' },
+          { status: 403 }
+        );
+      }
+
+      await adminClient.from('user_roles').delete().eq('user_id', targetUserId);
+      await adminClient.from('user_roles').insert({
+        user_id: targetUserId,
+        role_id: newRole as UserRole,
+      });
+
+      await recordAuditLog(actorUser.id, 'user_role_changed', 'user_roles', targetUserId, {
+        newRole,
+      });
+
+      return NextResponse.json({ success: true, role: newRole });
     }
 
-    return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Unsupported administrative action.' }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: 'Internal server exception while processing request.' }, { status: 500 });
   }
 }

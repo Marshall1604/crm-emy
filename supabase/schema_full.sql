@@ -1,7 +1,10 @@
 -- ==============================================================================
--- CRM EMY: FULL SUPABASE DATABASE SCHEMA
+-- [ARCHIVED REFERENCE ONLY] CRM EMY: HISTORICAL CONSOLIDATED REFERENCE SCHEMA
 -- ==============================================================================
--- Run this entire script in Supabase SQL Editor (https://supabase.com/dashboard/project/_/sql)
+-- ⚠️ IMPORTANT NOTICE:
+-- Do NOT execute this file directly on existing databases.
+-- The canonical, versioned migrations are located in: supabase/migrations/
+-- Always apply migrations sequentially or via Supabase CLI: supabase db push
 -- ==============================================================================
 
 -- Enable UUID extension

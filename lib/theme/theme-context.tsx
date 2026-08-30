@@ -13,32 +13,29 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('crm_theme');
+        if (saved === 'dark' || saved === 'light') return saved;
+      } catch {}
+    }
+    return 'light';
+  });
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('crm_theme') as Theme | null;
-      if (saved === 'dark') {
-        setThemeState('dark');
-        document.documentElement.classList.add('dark');
-      } else {
-        setThemeState('light');
-        document.documentElement.classList.remove('dark');
-      }
-    } catch {
-      // ignore SSR or storage disabled
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-    setMounted(true);
-  }, []);
+  }, [theme]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     try {
       localStorage.setItem('crm_theme', newTheme);
-    } catch {
-      // ignore
-    }
+    } catch {}
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -60,7 +57,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+    return {
+      theme: 'light' as Theme,
+      setTheme: () => {},
+      toggleTheme: () => {},
+    };
   }
   return context;
 }

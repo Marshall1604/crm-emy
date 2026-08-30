@@ -1,49 +1,26 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   AlertCircle,
-  ArrowRight,
   BarChart3,
-  Calendar,
-  Check,
-  CheckCircle,
   CheckCircle2,
-  ChevronRight,
-  Clock,
-  Code2,
-  Copy,
-  CreditCard,
   DollarSign,
   Download,
   Eye,
   FileCheck,
   FileText,
-  Filter,
   Globe,
-  HelpCircle,
-  History,
-  Key,
   Layers,
-  Mail,
   Megaphone,
-  MessageSquare,
-  Paperclip,
-  Percent,
-  Play,
-  Plus,
   RefreshCw,
   Search,
   Send,
-  Server,
   ShieldCheck,
   Sparkles,
   Tag,
   TrendingUp,
-  UserCheck,
   Users,
-  X,
-  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -325,42 +302,13 @@ export function MarketingView() {
   );
   const [emailBody, setEmailBody] = useState(prebuiltTemplates[0].bodyTemplate);
 
-  // SMTP & Integration State (persisted in LocalStorage)
-  const [resendApiKey, setResendApiKey] = useState('');
-  const [senderEmail, setSenderEmail] = useState('billing@crmemy.com');
-  const [senderName, setSenderName] = useState('CRM EMY Tax Practice');
-  const [saveSettingsSuccess, setSaveSettingsSuccess] = useState(false);
-
   // Test Email State
-  const [testEmailRecipient, setTestEmailRecipient] = useState('www.junky3@yahoo.com');
+  const [testEmailRecipient, setTestEmailRecipient] = useState('');
   const [testEmailLoading, setTestEmailLoading] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<{
     success: boolean;
     message: string;
   } | null>(null);
-
-  // Load saved SMTP settings from localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedKey = localStorage.getItem('crm_resend_api_key');
-      const savedEmail = localStorage.getItem('crm_sender_email');
-      const savedName = localStorage.getItem('crm_sender_name');
-      if (savedKey) setResendApiKey(savedKey);
-      if (savedEmail) setSenderEmail(savedEmail);
-      if (savedName) setSenderName(savedName);
-    }
-  }, []);
-
-  const handleSaveSettings = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('crm_resend_api_key', resendApiKey);
-      localStorage.setItem('crm_sender_email', senderEmail);
-      localStorage.setItem('crm_sender_name', senderName);
-    }
-    setSaveSettingsSuccess(true);
-    setTimeout(() => setSaveSettingsSuccess(false), 3000);
-  };
 
   // Test Email Handler
   const handleSendTestEmail = async () => {
@@ -373,9 +321,6 @@ export function MarketingView() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          apiKey: resendApiKey,
-          senderEmail,
-          senderName,
           subject: `[TEST EMAIL] ${renderedPreviewSubject}`,
           bodyText: renderedPreviewBody,
           recipients: [{ email: testEmailRecipient }],
@@ -383,19 +328,20 @@ export function MarketingView() {
         }),
       });
 
-      const data: any = await res.json();
+      const data = (await res.json()) as { error?: string; isRealDelivery?: boolean; isDemoSimulation?: boolean };
       if (!res.ok) throw new Error(data.error || 'Failed to send test email');
 
       setTestEmailResult({
         success: true,
         message: data.isRealDelivery
           ? `Email đã được gửi thành công đến ${testEmailRecipient} qua Resend API!`
-          : `Đã mô phỏng gửi thành công đến ${testEmailRecipient}. (Nhập Resend API Key để gửi vào hộp thư thực tế).`,
+          : `Đã mô phỏng gửi thành công đến ${testEmailRecipient} (Chế độ Sandbox/Demo).`,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Lỗi khi gửi email thử nghiệm';
       setTestEmailResult({
         success: false,
-        message: err.message || 'Lỗi khi gửi email thử nghiệm',
+        message,
       });
     } finally {
       setTestEmailLoading(false);
@@ -473,24 +419,22 @@ export function MarketingView() {
     return found || mockDatabaseAudience[0];
   }, [selectedClientIds]);
 
-  const renderedPreviewBody = useMemo(() => {
-    if (!sampleRecipient) return emailBody;
-    return emailBody
-      .replace(/{{client_name}}/g, sampleRecipient.name)
-      .replace(/{{tax_year}}/g, sampleRecipient.taxYear)
-      .replace(/{{assigned_staff}}/g, sampleRecipient.assignedStaff)
-      .replace(/{{balance}}/g, sampleRecipient.balance.toLocaleString())
-      .replace(/{{return_type}}/g, sampleRecipient.returnType)
-      .replace(/{{return_status}}/g, sampleRecipient.status);
-  }, [emailBody, sampleRecipient]);
+  const renderedPreviewBody = sampleRecipient
+    ? emailBody
+        .replace(/{{client_name}}/g, sampleRecipient.name)
+        .replace(/{{tax_year}}/g, sampleRecipient.taxYear)
+        .replace(/{{assigned_staff}}/g, sampleRecipient.assignedStaff)
+        .replace(/{{balance}}/g, sampleRecipient.balance.toLocaleString())
+        .replace(/{{return_type}}/g, sampleRecipient.returnType)
+        .replace(/{{return_status}}/g, sampleRecipient.status)
+    : emailBody;
 
-  const renderedPreviewSubject = useMemo(() => {
-    if (!sampleRecipient) return emailSubject;
-    return emailSubject
-      .replace(/{{client_name}}/g, sampleRecipient.name)
-      .replace(/{{tax_year}}/g, sampleRecipient.taxYear)
-      .replace(/{{balance}}/g, sampleRecipient.balance.toLocaleString());
-  }, [emailSubject, sampleRecipient]);
+  const renderedPreviewSubject = sampleRecipient
+    ? emailSubject
+        .replace(/{{client_name}}/g, sampleRecipient.name)
+        .replace(/{{tax_year}}/g, sampleRecipient.taxYear)
+        .replace(/{{balance}}/g, sampleRecipient.balance.toLocaleString())
+    : emailSubject;
 
   // Bulk Send Execution
   const handleSendBulkCampaign = async () => {
@@ -520,9 +464,6 @@ export function MarketingView() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          apiKey: resendApiKey,
-          senderEmail,
-          senderName,
           subject: emailSubject,
           bodyText: emailBody,
           recipients: recipientPayload,
@@ -546,7 +487,7 @@ export function MarketingView() {
         status: 'Delivered',
       };
       setCampaignHistory([newLog, ...campaignHistory]);
-    } catch (e) {
+    } catch {
       setIsSending(false);
       setSendSuccessModal(true);
     }
@@ -811,7 +752,7 @@ export function MarketingView() {
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-slate-500">Người gửi:</span>
                   <b className="text-slate-800 font-mono bg-slate-100 px-2 py-0.5 rounded">
-                    {senderName} &lt;{senderEmail}&gt;
+                    CRM EMY Tax Practice &lt;Server SMTP&gt;
                   </b>
                 </div>
               </div>
@@ -1009,83 +950,44 @@ export function MarketingView() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Interactive Configuration & Test Box */}
           <div className="lg:col-span-7 space-y-6">
-            {/* Card 1: Interactive Settings */}
+            {/* Card 1: Server-side Security Info */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <Key className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-base font-bold text-slate-900">Cấu Hình Kết Nối Resend API / SMTP</h3>
+                  <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                  <h3 className="text-base font-bold text-slate-900">Cấu Hình Bảo Mật Resend API (Server-Side)</h3>
                 </div>
-                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  Resend Direct
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  Bảo Mật Máy Chủ
                 </span>
               </div>
 
-              {saveSettingsSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Đã lưu cấu hình email thành công!</span>
-                </div>
-              )}
+              <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
+                <p>
+                  Nhằm bảo vệ an toàn tối đa cho hệ thống, <b>Resend API Key</b> và thông tin người gửi được quản lý an toàn trực tiếp qua <b>Biến Môi Trường Máy Chủ (Server Environment Variables)</b> và không bao giờ lưu trữ trên trình duyệt của người dùng.
+                </p>
 
-              <form onSubmit={handleSaveSettings} className="space-y-3.5 text-xs">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-bold text-slate-700">Resend API Key</label>
-                    <a
-                      href="https://resend.com/api-keys"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-blue-700 font-semibold hover:underline flex items-center gap-1"
-                    >
-                      Lấy API Key miễn phí tại resend.com ↗
-                    </a>
-                  </div>
-                  <input
-                    type="password"
-                    placeholder="re_123456789_abcdef..."
-                    value={resendApiKey}
-                    onChange={(e) => setResendApiKey(e.target.value)}
-                    className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono text-slate-900"
-                  />
-                  <span className="text-[11px] text-slate-500 mt-1 block">
-                    (Nếu chưa có Key, hệ thống sẽ chạy ở chế độ mô phỏng hoàn toàn an toàn).
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-800 space-y-1">
+                  <div className="text-slate-500 font-bold mb-1 font-sans text-xs">Biến môi trường trên Vercel / Server:</div>
+                  <div><span className="text-blue-700 font-bold">RESEND_API_KEY</span>=re_xxxxxxxxxxxx</div>
+                  <div><span className="text-blue-700 font-bold">RESEND_FROM_EMAIL</span>=notifications@yourdomain.com</div>
+                  <div><span className="text-blue-700 font-bold">RESEND_FROM_NAME</span>=CRM EMY Tax Practice</div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px] text-slate-500">
+                    Bạn có thể gửi thử ngay 1 email để kiểm tra kết nối hệ thống.
                   </span>
+                  <a
+                    href="https://resend.com/api-keys"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-700 font-semibold hover:underline flex items-center gap-1 text-[11px]"
+                  >
+                    Truy cập Resend Dashboard ↗
+                  </a>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-bold text-slate-700 mb-1">Email Người Gửi (From Email)</label>
-                    <input
-                      type="email"
-                      placeholder="billing@crmemy.com"
-                      value={senderEmail}
-                      onChange={(e) => setSenderEmail(e.target.value)}
-                      className="w-full h-9 px-3 rounded-lg border border-slate-300 font-mono"
-                    />
-                    <span className="text-[10px] text-slate-400 mt-0.5 block">
-                      Test miễn phí: <code>onboarding@resend.dev</code>
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-slate-700 mb-1">Tên Người Gửi (From Name)</label>
-                    <input
-                      type="text"
-                      placeholder="CRM EMY Tax Practice"
-                      value={senderName}
-                      onChange={(e) => setSenderName(e.target.value)}
-                      className="w-full h-9 px-3 rounded-lg border border-slate-300 font-semibold"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <Button type="submit" className="h-9 px-4 text-xs font-bold bg-[#092c5c] hover:bg-[#072247] text-white">
-                    Lưu Cấu Hình
-                  </Button>
-                </div>
-              </form>
+              </div>
             </div>
 
             {/* Card 2: Send Test Email */}

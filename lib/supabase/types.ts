@@ -49,6 +49,7 @@ export interface Database {
           updated_at?: string;
           last_sign_in_at?: string | null;
         };
+        Relationships: [];
       };
       roles: {
         Row: {
@@ -69,6 +70,7 @@ export interface Database {
           description?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       permissions: {
         Row: {
@@ -92,6 +94,7 @@ export interface Database {
           description?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       role_permissions: {
         Row: {
@@ -106,6 +109,7 @@ export interface Database {
           role_id?: UserRole;
           permission_id?: string;
         };
+        Relationships: [];
       };
       user_roles: {
         Row: {
@@ -123,6 +127,7 @@ export interface Database {
           role_id?: UserRole;
           created_at?: string;
         };
+        Relationships: [];
       };
       plans: {
         Row: {
@@ -155,6 +160,7 @@ export interface Database {
           is_active?: boolean;
           created_at?: string;
         };
+        Relationships: [];
       };
       subscriptions: {
         Row: {
@@ -202,6 +208,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       audit_logs: {
         Row: {
@@ -209,7 +216,7 @@ export interface Database {
           actor_user_id: string | null;
           target_user_id: string | null;
           action: string;
-          entity_type: string;
+          entity_type: string | null;
           entity_id: string | null;
           old_value: Json | null;
           new_value: Json | null;
@@ -222,7 +229,7 @@ export interface Database {
           actor_user_id?: string | null;
           target_user_id?: string | null;
           action: string;
-          entity_type: string;
+          entity_type?: string | null;
           entity_id?: string | null;
           old_value?: Json | null;
           new_value?: Json | null;
@@ -235,7 +242,7 @@ export interface Database {
           actor_user_id?: string | null;
           target_user_id?: string | null;
           action?: string;
-          entity_type?: string;
+          entity_type?: string | null;
           entity_id?: string | null;
           old_value?: Json | null;
           new_value?: Json | null;
@@ -243,6 +250,7 @@ export interface Database {
           user_agent?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       team_members: {
         Row: {
@@ -281,6 +289,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       clients: {
         Row: {
@@ -391,6 +400,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       tax_returns: {
         Row: {
@@ -453,6 +463,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       client_documents: {
         Row: {
@@ -488,6 +499,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       client_notes: {
         Row: {
@@ -514,7 +526,18 @@ export interface Database {
           tax_year?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: {
+      user_role: UserRole;
+      user_status: UserStatus;
+      subscription_plan: SubscriptionPlan;
+      subscription_status: SubscriptionStatus;
+      payment_provider: PaymentProvider;
+    };
+    CompositeTypes: Record<string, never>;
   };
 }

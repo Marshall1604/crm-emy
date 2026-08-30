@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import type { Database, UserRole, UserStatus } from '@/lib/supabase/types';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -52,7 +53,7 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+  const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -93,65 +94,60 @@ export async function middleware(request: NextRequest) {
 
   // C. Fetch Profile & Subscription Status for route enforcement
   try {
-    const { data: profile } = await (supabase.from('profiles') as any)
+    const { data: profile } = await supabase
+      .from('profiles')
       .select('status')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
-    const isKnownSuperAdmin =
-      user.email?.toLowerCase() === 'www.junky3@yahoo.com' ||
-      user.email?.toLowerCase() === 'admin@crmemy.com';
-
-    // Email verification check
-    if (!user.email_confirmed_at && !isKnownSuperAdmin && !isPublicRoute) {
-      return NextResponse.redirect(new URL(`/verify-email?email=${encodeURIComponent(user.email || '')}`, request.url));
-    }
+    const profileStatus = (profile as { status?: UserStatus } | null)?.status;
 
     // Check if account is blocked or suspended
-    if ((profile?.status === 'blocked' || profile?.status === 'suspended') && !isAccountBlockedRoute) {
+    if ((profileStatus === 'blocked' || profileStatus === 'suspended') && !isAccountBlockedRoute) {
       return NextResponse.redirect(new URL('/account-blocked', request.url));
+    }
+
+    // Check User Roles
+    const { data: userRoles } = await supabase
+      .from('user_roles')
+      .select('role_id')
+      .eq('user_id', user.id);
+
+    const roles: UserRole[] = (userRoles || []).map((r: { role_id: UserRole }) => r.role_id);
+    const isSuperAdmin = roles.includes('super_admin');
+    const isAdmin = isSuperAdmin || roles.includes('admin');
+
+    // Email verification check
+    if (!user.email_confirmed_at && user.app_metadata?.provider === 'email' && !isSuperAdmin && !isPublicRoute) {
+      return NextResponse.redirect(new URL(`/verify-email?email=${encodeURIComponent(user.email || '')}`, request.url));
     }
 
     // Check Admin Route Authorization (/admin/*)
     if (pathname.startsWith('/admin')) {
-      const { data: userRoles } = await (supabase.from('user_roles') as any)
-        .select('role_id')
-        .eq('user_id', user.id);
-
-      const roles = (userRoles as any[])?.map((r) => r.role_id) || [];
-      const isAdmin = isKnownSuperAdmin || roles.includes('super_admin') || roles.includes('admin');
-
       if (!isAdmin) {
         return NextResponse.redirect(new URL('/unauthorized', request.url));
       }
     }
 
     // Check Subscription Expiry on CRM App Routes (exclude /subscription-expired & /unauthorized)
-    if (!isSubscriptionExpiredRoute && !isUnauthorizedRoute && !pathname.startsWith('/admin')) {
-      const { data: userRoles } = await (supabase.from('user_roles') as any)
-        .select('role_id')
-        .eq('user_id', user.id);
+    if (!isSubscriptionExpiredRoute && !isUnauthorizedRoute && !pathname.startsWith('/admin') && !isAdmin) {
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('status, expire_date, lifetime')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      const isSuperAdmin = isKnownSuperAdmin || (userRoles as any[])?.some((r) => r.role_id === 'super_admin');
+      if (sub) {
+        const isExpired =
+          !sub.lifetime &&
+          (sub.status === 'expired' ||
+            sub.status === 'cancelled' ||
+            (sub.expire_date && new Date(sub.expire_date) <= new Date()));
 
-      if (!isSuperAdmin) {
-        const { data: sub } = await (supabase.from('subscriptions') as any)
-          .select('status, expire_date, lifetime')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (sub) {
-          const isExpired =
-            !sub.lifetime &&
-            (sub.status === 'expired' ||
-              sub.status === 'cancelled' ||
-              (sub.expire_date && new Date(sub.expire_date) <= new Date()));
-
-          if (isExpired) {
-            return NextResponse.redirect(new URL('/subscription-expired', request.url));
-          }
+        if (isExpired) {
+          return NextResponse.redirect(new URL('/subscription-expired', request.url));
         }
       }
     }

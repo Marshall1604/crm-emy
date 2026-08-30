@@ -3,58 +3,29 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
-  AlertCircle,
   ArrowRight,
-  BarChart3,
-  Bot,
   Building2,
   Calendar,
-  Check,
   CheckCircle2,
   ChevronDown,
-  Clock,
-  Crown,
   DollarSign,
-  Eye,
-  FileCheck,
-  FileSpreadsheet,
-  FileText,
-  Filter,
   Globe,
-  HelpCircle,
   Layers,
   Lock,
-  Mail,
   Megaphone,
   Moon,
-  Percent,
-  Play,
-  Plus,
-  Receipt,
-  RotateCcw,
-  Search,
   Send,
-  Shield,
   ShieldCheck,
   Sparkles,
-  Star,
-  Sun,
-  Tag,
-  TrendingUp,
-  UserCheck,
-  Users,
   UsersRound,
-  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
-import { useTheme } from '@/lib/theme/theme-context';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 
 export function HomeLanding() {
   const { language } = useLanguage();
-  const { theme } = useTheme();
   const isVi = language === 'vi';
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'clients' | 'businesses' | 'pipeline' | 'fees' | 'marketing'>('dashboard');
@@ -239,7 +210,7 @@ export function HomeLanding() {
                   ].map((tab) => (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
+                      onClick={() => setActiveTab(tab.id as 'dashboard' | 'clients' | 'businesses' | 'pipeline' | 'fees' | 'marketing')}
                       className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all whitespace-nowrap cursor-pointer ${
                         activeTab === tab.id
                           ? 'bg-white dark:bg-[#1D2128] text-blue-700 dark:text-blue-400 shadow-xs font-black'

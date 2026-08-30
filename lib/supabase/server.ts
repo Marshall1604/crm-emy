@@ -36,12 +36,14 @@ export async function createClient() {
 /**
  * Privileged Admin Client using SUPABASE_SERVICE_ROLE_KEY.
  * Only use inside Server Actions and API route handlers for administrative mutations.
+ * Throws Server Configuration Error if SUPABASE_SERVICE_ROLE_KEY is missing (Fail-Closed).
  * Never expose to browser.
  */
 export function createAdminClient() {
   if (!supabaseServiceRoleKey) {
-    console.warn('SUPABASE_SERVICE_ROLE_KEY is not set. Falling back to anon key.');
-    return createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey);
+    throw new Error(
+      'Server Security Exception: SUPABASE_SERVICE_ROLE_KEY is not configured on this server. Privileged admin actions cannot proceed.'
+    );
   }
   return createSupabaseClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
