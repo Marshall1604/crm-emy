@@ -1,9 +1,8 @@
 -- ==============================================================================
--- CRM EMY: Schema Reconciliation & Strict RLS Hardening (Forward-Only)
--- Migration ID: 202608310000_reconcile_schema_and_rls.sql
+-- CRM EMY: FULL DATABASE RECONCILIATION & STRICT RLS (SAFE FOR EXISTING DATABASES)
 -- ==============================================================================
 
--- 1. Enable Required Cryptographic Extensions
+-- 1. Enable Required Extensions
 create extension if not exists "uuid-ossp";
 create extension if not exists "pgcrypto";
 
@@ -17,7 +16,6 @@ create table if not exists public.roles (
   created_at timestamptz not null default now()
 );
 
--- Seed standardized core roles
 insert into public.roles (id, name, description)
 values
   ('super_admin', 'Super Administrator', 'Full system and license ownership'),
@@ -48,6 +46,9 @@ create table if not exists public.user_roles (
   created_at timestamptz not null default now(),
   primary key (user_id, role_id)
 );
+
+alter table public.user_roles add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.user_roles add column if not exists role_id text references public.roles(id) on delete cascade;
 
 create index if not exists idx_user_roles_user_id on public.user_roles(user_id);
 create index if not exists idx_user_roles_role_id on public.user_roles(role_id);
@@ -107,13 +108,13 @@ create table if not exists public.profiles (
   full_name text,
   phone text,
   avatar_url text,
-  status text not null default 'active' check (status in ('active', 'invited', 'blocked', 'suspended')),
+  status text not null default 'active',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   last_sign_in_at timestamptz
 );
 
--- Ensure columns exist if table was created in an earlier migration
+alter table public.profiles add column if not exists email text;
 alter table public.profiles add column if not exists full_name text;
 alter table public.profiles add column if not exists phone text;
 alter table public.profiles add column if not exists avatar_url text;
@@ -125,12 +126,12 @@ create index if not exists idx_profiles_email on public.profiles(email);
 create index if not exists idx_profiles_status on public.profiles(status);
 
 -- ------------------------------------------------------------------------------
--- 4. CLIENTS & SENSITIVE DATA (Encrypted + Masked Storage)
+-- 4. CLIENTS TABLE & RECONCILIATION
 -- ------------------------------------------------------------------------------
 create table if not exists public.clients (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete set null,
-  name text not null,
+  name text,
   initials text,
   first_name text,
   middle_name text,
@@ -167,16 +168,48 @@ create table if not exists public.clients (
   updated_at timestamptz not null default now()
 );
 
+-- Ensure all columns exist on previously created clients table
+alter table public.clients add column if not exists user_id uuid references auth.users(id) on delete set null;
+alter table public.clients add column if not exists name text;
+alter table public.clients add column if not exists initials text;
+alter table public.clients add column if not exists first_name text;
+alter table public.clients add column if not exists middle_name text;
+alter table public.clients add column if not exists last_name text;
+alter table public.clients add column if not exists ssn text;
 alter table public.clients add column if not exists ssn_encrypted bytea;
 alter table public.clients add column if not exists ssn_last_four text;
+alter table public.clients add column if not exists dob date;
+alter table public.clients add column if not exists filing_status text default 'Single';
+alter table public.clients add column if not exists phone text;
+alter table public.clients add column if not exists email text;
+alter table public.clients add column if not exists address text;
+alter table public.clients add column if not exists city text;
+alter table public.clients add column if not exists state text;
+alter table public.clients add column if not exists zip text;
+alter table public.clients add column if not exists spouse_first_name text;
+alter table public.clients add column if not exists spouse_last_name text;
+alter table public.clients add column if not exists spouse_ssn text;
 alter table public.clients add column if not exists spouse_ssn_last_four text;
+alter table public.clients add column if not exists spouse_dob date;
+alter table public.clients add column if not exists tax_year text default '2025';
+alter table public.clients add column if not exists return_type text default 'Form 1040';
+alter table public.clients add column if not exists status text default 'Waiting Documents';
+alter table public.clients add column if not exists assigned_staff text;
+alter table public.clients add column if not exists federal_tax numeric(12,2) default 0;
+alter table public.clients add column if not exists fee numeric(12,2) default 0;
+alter table public.clients add column if not exists amount_paid numeric(12,2) default 0;
+alter table public.clients add column if not exists balance numeric(12,2) default 0;
+alter table public.clients add column if not exists state_taxes jsonb default '[]'::jsonb;
+alter table public.clients add column if not exists dependents jsonb default '[]'::jsonb;
+alter table public.clients add column if not exists notes text;
+alter table public.clients add column if not exists client_since date default current_date;
 
 create index if not exists idx_clients_user_id on public.clients(user_id);
 create index if not exists idx_clients_email on public.clients(email);
 create index if not exists idx_clients_status on public.clients(status);
 
 -- ------------------------------------------------------------------------------
--- 5. TAX RETURNS TABLE (Single Source of Truth for Engagements)
+-- 5. TAX RETURNS TABLE & RECONCILIATION
 -- ------------------------------------------------------------------------------
 create table if not exists public.tax_returns (
   id uuid primary key default gen_random_uuid(),
@@ -200,6 +233,7 @@ create table if not exists public.tax_returns (
   updated_at timestamptz not null default now()
 );
 
+alter table public.tax_returns add column if not exists user_id uuid references auth.users(id) on delete set null;
 alter table public.tax_returns add column if not exists assigned_staff_id uuid references public.profiles(id) on delete set null;
 alter table public.tax_returns add column if not exists taxpayer_name_snapshot text;
 alter table public.tax_returns add column if not exists address_snapshot text;
@@ -216,7 +250,7 @@ create index if not exists idx_tax_returns_assigned_staff_id on public.tax_retur
 create table if not exists public.businesses (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete set null,
-  name text not null,
+  name text,
   dba text,
   ein text,
   ein_encrypted bytea,
@@ -241,6 +275,7 @@ create table if not exists public.businesses (
   updated_at timestamptz not null default now()
 );
 
+alter table public.businesses add column if not exists user_id uuid references auth.users(id) on delete set null;
 alter table public.businesses add column if not exists ein_encrypted bytea;
 alter table public.businesses add column if not exists ein_last_four text;
 
@@ -257,7 +292,7 @@ create table if not exists public.business_partners (
 create index if not exists idx_business_partners_biz_id on public.business_partners(business_id);
 
 -- ------------------------------------------------------------------------------
--- 7. AUDIT LOGS, NOTES, ACTIVITIES & SUBSCRIPTIONS
+-- 7. AUDIT LOGS & SUBSCRIPTIONS
 -- ------------------------------------------------------------------------------
 create table if not exists public.audit_logs (
   id uuid primary key default gen_random_uuid(),
@@ -280,7 +315,7 @@ create table if not exists public.subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   plan text not null default 'trial',
-  status text not null default 'trial' check (status in ('active', 'expired', 'cancelled', 'past_due', 'trial')),
+  status text not null default 'trial',
   start_date timestamptz not null default now(),
   expire_date timestamptz,
   lifetime boolean not null default false,
@@ -291,6 +326,13 @@ create table if not exists public.subscriptions (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.subscriptions add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.subscriptions add column if not exists plan text default 'trial';
+alter table public.subscriptions add column if not exists status text default 'trial';
+alter table public.subscriptions add column if not exists expire_date timestamptz;
+alter table public.subscriptions add column if not exists lifetime boolean default false;
+alter table public.subscriptions add column if not exists auto_renew boolean default false;
 
 create index if not exists idx_subscriptions_user_id on public.subscriptions(user_id);
 create index if not exists idx_subscriptions_status on public.subscriptions(status);
@@ -310,34 +352,35 @@ alter table public.business_partners enable row level security;
 alter table public.subscriptions enable row level security;
 alter table public.audit_logs enable row level security;
 
--- Drop old insecure open policies if any exist
-drop policy if exists "allow_all_profiles" on public.profiles;
-drop policy if exists "allow_all_clients" on public.clients;
-drop policy if exists "allow_all_tax_returns" on public.tax_returns;
+-- Drop old policies if existing
+drop policy if exists "profiles_select_policy" on public.profiles;
+drop policy if exists "profiles_update_policy" on public.profiles;
+drop policy if exists "user_roles_select_policy" on public.user_roles;
+drop policy if exists "user_roles_admin_manage_policy" on public.user_roles;
+drop policy if exists "roles_select_policy" on public.roles;
+drop policy if exists "permissions_select_policy" on public.permissions;
+drop policy if exists "role_permissions_select_policy" on public.role_permissions;
+drop policy if exists "clients_staff_manage_policy" on public.clients;
+drop policy if exists "tax_returns_staff_manage_policy" on public.tax_returns;
+drop policy if exists "businesses_staff_manage_policy" on public.businesses;
+drop policy if exists "business_partners_staff_manage_policy" on public.business_partners;
+drop policy if exists "subscriptions_select_policy" on public.subscriptions;
+drop policy if exists "subscriptions_admin_manage_policy" on public.subscriptions;
+drop policy if exists "audit_logs_admin_select_policy" on public.audit_logs;
 
--- Profiles: Users can read their own profile; Admins/Staff can read all; Admins can update
+-- Re-create safe policies
 create policy "profiles_select_policy" on public.profiles
-  for select using (
-    auth.uid() = id or public.is_staff_or_admin()
-  );
+  for select using (auth.uid() = id or public.is_staff_or_admin());
 
 create policy "profiles_update_policy" on public.profiles
-  for update using (
-    auth.uid() = id or public.is_admin()
-  );
+  for update using (auth.uid() = id or public.is_admin());
 
--- User Roles: Users can see their own roles; Admins can manage
 create policy "user_roles_select_policy" on public.user_roles
-  for select using (
-    auth.uid() = user_id or public.is_admin()
-  );
+  for select using (auth.uid() = user_id or public.is_admin());
 
 create policy "user_roles_admin_manage_policy" on public.user_roles
-  for all using (
-    public.is_admin()
-  );
+  for all using (public.is_admin());
 
--- Roles and Permissions: Read-only for authenticated users; Admins can manage
 create policy "roles_select_policy" on public.roles
   for select using (auth.role() = 'authenticated');
 
@@ -347,7 +390,6 @@ create policy "permissions_select_policy" on public.permissions
 create policy "role_permissions_select_policy" on public.role_permissions
   for select using (auth.role() = 'authenticated');
 
--- Clients & Tax Returns: Only authenticated Staff and Admins have access (Anon has 0 access)
 create policy "clients_staff_manage_policy" on public.clients
   for all using (public.is_staff_or_admin());
 
@@ -360,15 +402,11 @@ create policy "businesses_staff_manage_policy" on public.businesses
 create policy "business_partners_staff_manage_policy" on public.business_partners
   for all using (public.is_staff_or_admin());
 
--- Subscriptions: Users can read their own subscription; Admins can manage
 create policy "subscriptions_select_policy" on public.subscriptions
-  for select using (
-    auth.uid() = user_id or public.is_admin()
-  );
+  for select using (auth.uid() = user_id or public.is_admin());
 
 create policy "subscriptions_admin_manage_policy" on public.subscriptions
   for all using (public.is_admin());
 
--- Audit Logs: Only Administrators can view audit logs
 create policy "audit_logs_admin_select_policy" on public.audit_logs
   for select using (public.is_admin());
