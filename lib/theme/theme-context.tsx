@@ -19,19 +19,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem('crm_theme') as Theme | null;
-      if (saved === 'dark' || saved === 'light') {
-        setThemeState(saved);
-        if (saved === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
+      if (saved === 'dark') {
+        setThemeState('dark');
+        document.documentElement.classList.add('dark');
       } else {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (prefersDark) {
-          setThemeState('dark');
-          document.documentElement.classList.add('dark');
-        }
+        setThemeState('light');
+        document.documentElement.classList.remove('dark');
       }
     } catch {
       // ignore SSR or storage disabled
