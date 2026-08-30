@@ -178,7 +178,7 @@ export function HomeLanding() {
               <Button
                 className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-9 text-sm sm:text-base font-extrabold bg-gradient-to-r from-[#092c5c] via-[#104380] to-[#092c5c] hover:shadow-[0_10px_30px_rgba(9,44,92,0.3)] text-white shadow-xl transition-all gap-2 cursor-pointer"
               >
-                <span>{isVi ? 'Bắt Đầu Dùng Thử 7 Ngày Miễn Phí' : 'Start 7-Day Free Trial'}</span>
+                <span>{isVi ? 'Dùng Thử Miễn Phí' : 'Free Trial'}</span>
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </Link>
@@ -978,7 +978,7 @@ export function HomeLanding() {
                 <Button
                   className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-10 text-sm sm:text-base font-extrabold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-2xl transition-all gap-2 cursor-pointer"
                 >
-                  <span>{isVi ? 'Bắt Đầu Dùng Thử Miễn Phí 7 Ngày' : 'Start Free 7-Day Trial Now'}</span>
+                  <span>{isVi ? 'Dùng Thử Miễn Phí' : 'Free Trial'}</span>
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
               </Link>
