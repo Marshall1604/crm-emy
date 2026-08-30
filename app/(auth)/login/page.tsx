@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertCircle,
   ArrowRight,
-  CheckCircle2,
   Eye,
   EyeOff,
   Lock,
@@ -22,8 +21,8 @@ function LoginFormContent() {
   const redirectPath = searchParams.get('redirect') || '/dashboard';
   const errorParam = searchParams.get('error');
 
-  const [email, setEmail] = useState('www.junky3@yahoo.com');
-  const [password, setPassword] = useState('Phanhong0407');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(
     errorParam === 'account_blocked'
@@ -45,16 +44,19 @@ function LoginFormContent() {
 
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
       if (authError) {
         if (authError.message.includes('Email not confirmed')) {
-          window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
+          window.location.href = `/verify-email?email=${encodeURIComponent(email.trim())}`;
           return;
-        } else if (authError.message.includes('Invalid login credentials')) {
-          setError('Incorrect email or password. Please try again.');
+        } else if (
+          authError.message.includes('Invalid login credentials') ||
+          authError.message.includes('invalid_grant')
+        ) {
+          setError('Email hoặc mật khẩu không chính xác. Vui lòng thử lại.');
         } else {
           setError(authError.message);
         }
@@ -63,22 +65,29 @@ function LoginFormContent() {
       }
 
       if (data.user) {
-        const isSuperAdmin =
-          data.user.email?.toLowerCase() === 'www.junky3@yahoo.com' ||
-          data.user.email?.toLowerCase() === 'admin@crmemy.com';
-
         // 1. Email Verification Check
-        if (!data.user.email_confirmed_at && !isSuperAdmin) {
-          window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
-          return;
+        if (!data.user.email_confirmed_at && data.user.app_metadata?.provider === 'email') {
+          // Check if admin role before forcing verification
+          const { data: userRoles } = await supabase
+            .from('user_roles')
+            .select('role_id')
+            .eq('user_id', data.user.id);
+
+          const hasAdminRole = userRoles?.some((r: { role_id: string }) => r.role_id === 'super_admin' || r.role_id === 'admin');
+
+          if (!hasAdminRole) {
+            window.location.href = `/verify-email?email=${encodeURIComponent(data.user.email || '')}`;
+            return;
+          }
         }
 
         // 2. Profile Status Check
         try {
-          const { data: profile } = await (supabase.from('profiles') as any)
+          const { data: profile } = await supabase
+            .from('profiles')
             .select('status')
             .eq('id', data.user.id)
-            .single();
+            .maybeSingle();
 
           if (profile?.status === 'blocked' || profile?.status === 'suspended') {
             window.location.href = '/account-blocked';
@@ -86,10 +95,18 @@ function LoginFormContent() {
           }
         } catch {}
 
-        // 3. Subscription Status Check
-        if (!isSuperAdmin) {
-          try {
-            const { data: sub } = await (supabase.from('subscriptions') as any)
+        // 3. Subscription Status Check (Admins bypass expiry)
+        try {
+          const { data: userRoles } = await supabase
+            .from('user_roles')
+            .select('role_id')
+            .eq('user_id', data.user.id);
+
+          const isSuperAdmin = userRoles?.some((r: { role_id: string }) => r.role_id === 'super_admin');
+
+          if (!isSuperAdmin) {
+            const { data: sub } = await supabase
+              .from('subscriptions')
               .select('status, expire_date, lifetime')
               .eq('user_id', data.user.id)
               .order('created_at', { ascending: false })
@@ -107,31 +124,15 @@ function LoginFormContent() {
                 return;
               }
             }
-          } catch {}
-        }
+          }
+        } catch {}
 
         window.location.href = redirectPath;
       }
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred during login.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred during login.';
+      setError(msg);
       setLoading(false);
-    }
-  };
-
-  const handleDirectAdminLogin = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      if (supabase) {
-        await supabase.auth.signInWithPassword({
-          email: 'www.junky3@yahoo.com',
-          password: 'Phanhong0407',
-        });
-      }
-      window.location.href = '/admin';
-    } catch (err) {
-      console.warn('Admin quick-login note:', err);
-      window.location.href = '/admin';
     }
   };
 
@@ -172,7 +173,7 @@ function LoginFormContent() {
               placeholder="name@taxoffice.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-11 pl-10 pr-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+              className="w-full h-11 pl-10 pr-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all text-slate-900"
             />
           </div>
         </div>
@@ -197,7 +198,7 @@ function LoginFormContent() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-11 pl-10 pr-10 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-mono"
+              className="w-full h-11 pl-10 pr-10 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all font-mono text-slate-900"
             />
             <button
               type="button"
@@ -221,26 +222,6 @@ function LoginFormContent() {
           {loading ? 'Signing in...' : 'Sign In to Workspace'}
           <ArrowRight className="w-4 h-4" />
         </Button>
-
-        {/* QUICK DEMO / ADMIN ACCESS BUTTON */}
-        <div className="pt-2">
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-slate-200"></div>
-            <span className="flex-shrink mx-3 text-[11px] font-bold text-slate-400 uppercase">Or Quick Admin Access</span>
-            <div className="flex-grow border-t border-slate-200"></div>
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            disabled={loading}
-            onClick={handleDirectAdminLogin}
-            className="w-full h-11 border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-950 font-bold text-xs rounded-lg gap-2 cursor-pointer shadow-xs"
-          >
-            <ShieldCheck className="w-4 h-4 text-amber-700" />
-            <span>Enter Admin Dashboard Directly (/admin)</span>
-          </Button>
-        </div>
       </form>
 
       {/* Footer Navigation */}
@@ -263,7 +244,7 @@ function LoginFormContent() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-radial from-slate-50 to-slate-100 p-4">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50/40 p-4">
       <Suspense fallback={<div className="text-xs text-slate-400">Loading...</div>}>
         <LoginFormContent />
       </Suspense>
