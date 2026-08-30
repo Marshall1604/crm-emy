@@ -14,15 +14,25 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Define Public Auth Routes
-  const isAuthRoute =
+  // 2. Define Public Routes (Accessible without logging in)
+  const isPublicRoute =
+    pathname === '/' ||
+    pathname === '/home' ||
     pathname === '/login' ||
     pathname === '/register' ||
     pathname === '/forgot-password' ||
     pathname === '/reset-password' ||
     pathname === '/verify-email' ||
     pathname === '/account-blocked' ||
+    pathname === '/subscription-expired' ||
+    pathname === '/unauthorized' ||
     pathname.startsWith('/auth/callback');
+
+  const isAuthOnlyRoute =
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password';
 
   const isSubscriptionExpiredRoute = pathname === '/subscription-expired';
   const isUnauthorizedRoute = pathname === '/unauthorized';
@@ -68,7 +78,7 @@ export async function middleware(request: NextRequest) {
 
   // A. Unauthenticated user trying to access protected routes
   if (!user) {
-    if (!isAuthRoute && !isSubscriptionExpiredRoute && !isUnauthorizedRoute) {
+    if (!isPublicRoute) {
       const redirectUrl = new URL('/login', request.url);
       redirectUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(redirectUrl);
@@ -77,7 +87,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // B. Authenticated user visiting /login or /register -> redirect to /dashboard
-  if (isAuthRoute) {
+  if (isAuthOnlyRoute) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
@@ -93,7 +103,7 @@ export async function middleware(request: NextRequest) {
       user.email?.toLowerCase() === 'admin@crmemy.com';
 
     // Email verification check
-    if (!user.email_confirmed_at && !isKnownSuperAdmin && !isAuthRoute) {
+    if (!user.email_confirmed_at && !isKnownSuperAdmin && !isPublicRoute) {
       return NextResponse.redirect(new URL(`/verify-email?email=${encodeURIComponent(user.email || '')}`, request.url));
     }
 
