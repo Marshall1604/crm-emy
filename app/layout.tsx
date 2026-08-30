@@ -16,6 +16,8 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+import { WhatsAppButton } from '@/components/whatsapp-button';
+
 export const metadata: Metadata = {
   title: 'EMLY CUSTOMER LIST — Tax Office Client Management',
   description: 'Modern tax preparation office client management SaaS with RBAC & subscription system.',
@@ -54,6 +56,7 @@ export default function RootLayout({
           <LanguageProvider>
             <AuthProvider>
               <CrmShell>{children}</CrmShell>
+              <WhatsAppButton />
             </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
