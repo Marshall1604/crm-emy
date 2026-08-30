@@ -54,11 +54,16 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Hide CRM layout on Auth and Admin pages
+  // Hide CRM layout on Auth, Admin and Public Landing pages
   const isAuthPage =
+    pathname === '/' ||
+    pathname === '/home' ||
     pathname === '/login' ||
     pathname === '/register' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password' ||
     pathname === '/verify-email' ||
+    pathname === '/account-blocked' ||
     pathname === '/subscription-expired' ||
     pathname === '/unauthorized' ||
     pathname.startsWith('/auth/');
