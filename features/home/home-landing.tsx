@@ -933,6 +933,21 @@ export function HomeLanding() {
               </p>
             </div>
           </div>
+
+          {/* Work in Progress & Feedback Notice */}
+          <div className="mt-12 max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl bg-white dark:bg-[#242A34] border border-slate-200/90 dark:border-slate-700/80 shadow-xs">
+              <span className="flex h-2.5 w-2.5 relative shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-600"></span>
+              </span>
+              <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300">
+                {isVi
+                  ? 'Phần mềm đang trong quá trình hoàn thiện và phát triển liên tục. Chúng tôi rất mong nhận được ý kiến đóng góp của bạn để sản phẩm ngày càng hoàn hảo hơn!'
+                  : "The software is still a work in progress. We'd love your feedback to make it even better!"}
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* ─── FAQ SECTION ─── */}
