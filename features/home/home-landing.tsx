@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
+  AlertCircle,
   ArrowRight,
   BarChart3,
   Bot,
@@ -56,7 +57,7 @@ export function HomeLanding() {
   const { theme } = useTheme();
   const isVi = language === 'vi';
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'clients' | 'pipeline' | 'fees' | 'marketing'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'clients' | 'businesses' | 'pipeline' | 'fees' | 'marketing'>('dashboard');
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
 
   const toggleFaq = (index: number) => {
@@ -67,13 +68,13 @@ export function HomeLanding() {
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#1D2128] text-slate-900 dark:text-slate-100 transition-colors duration-300 font-sans selection:bg-[#092c5c] selection:text-white">
       {/* ─── BACKGROUND LUXURY AMBIENT MESH ─── */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[550px] bg-gradient-to-b from-blue-500/8 via-indigo-500/5 to-transparent dark:from-blue-600/10 dark:via-emerald-600/5 dark:to-transparent rounded-full blur-3xl" />
-        <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] bg-emerald-500/5 dark:bg-emerald-600/5 rounded-full blur-3xl" />
-        <div className="absolute top-2/3 -right-40 w-[500px] h-[500px] bg-purple-500/5 dark:bg-purple-600/5 rounded-full blur-3xl" />
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1100px] h-[650px] bg-gradient-to-b from-blue-500/10 via-indigo-500/5 to-transparent dark:from-blue-600/15 dark:via-emerald-600/5 dark:to-transparent rounded-full blur-3xl" />
+        <div className="absolute top-1/3 -left-40 w-[600px] h-[600px] bg-emerald-500/5 dark:bg-emerald-600/5 rounded-full blur-3xl" />
+        <div className="absolute top-2/3 -right-40 w-[600px] h-[600px] bg-purple-500/5 dark:bg-purple-600/5 rounded-full blur-3xl" />
       </div>
 
       {/* ─── HEADER / NAVIGATION BAR ─── */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-[#161A20]/80 border-b border-slate-200/80 dark:border-slate-800/80 transition-all shadow-xs">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/85 dark:bg-[#161A20]/85 border-b border-slate-200/80 dark:border-slate-800/80 transition-all shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           {/* Logo Brand */}
           <Link href="/" className="flex items-center gap-3 group text-decoration-none">
@@ -98,7 +99,7 @@ export function HomeLanding() {
               {isVi ? 'Tính Năng' : 'Features'}
             </a>
             <a href="#preview" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-              {isVi ? 'Trải Nghiệm' : 'Live Preview'}
+              {isVi ? 'Trải Nghiệm Trực Tiếp' : 'Live Preview'}
             </a>
             <a href="#faq" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               {isVi ? 'Hỏi & Đáp' : 'FAQ'}
@@ -131,7 +132,7 @@ export function HomeLanding() {
 
       <main className="relative z-10">
         {/* ─── HERO SECTION ─── */}
-        <section className="pt-14 pb-20 md:pt-22 md:pb-28 text-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="pt-14 pb-14 md:pt-20 md:pb-20 text-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Eyebrow Pill */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-white/90 dark:bg-slate-800/90 text-blue-700 dark:text-blue-300 border border-slate-200/90 dark:border-slate-700 shadow-xs mb-8">
             <span className="flex h-2 w-2 relative">
@@ -140,7 +141,7 @@ export function HomeLanding() {
             </span>
             <span>
               {isVi
-                ? 'Nền Tảng Quản Lý Khách Hàng Khai Thuế Hiện Đại & Tinh Tế'
+                ? 'Nền Tảng Quản Lý Khách Hàng Khai Thuế Hiện Đại & Chuyên Nghiệp'
                 : 'Modern Tax Practice Management CRM For US Accounting Offices'}
             </span>
           </div>
@@ -172,7 +173,7 @@ export function HomeLanding() {
           </p>
 
           {/* Hero CTAs */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/register" className="w-full sm:w-auto">
               <Button
                 className="w-full sm:w-auto h-14 px-9 text-base font-extrabold bg-gradient-to-r from-[#092c5c] via-[#104380] to-[#092c5c] hover:shadow-[0_10px_30px_rgba(9,44,92,0.3)] text-white shadow-xl hover:-translate-y-0.5 transition-all gap-2.5 cursor-pointer"
@@ -208,35 +209,40 @@ export function HomeLanding() {
             </span>
           </div>
 
-          {/* ─── LIVE INTERACTIVE SOFTWARE PREVIEW (BENTO WINDOW) ─── */}
-          <div id="preview" className="mt-16 max-w-6xl mx-auto rounded-2xl p-2 sm:p-3 bg-gradient-to-b from-slate-200/80 via-slate-100 to-slate-200 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900 shadow-2xl border border-slate-200/90 dark:border-slate-700">
-            <div className="rounded-xl bg-white dark:bg-[#242A34] overflow-hidden border border-slate-200/90 dark:border-slate-700 text-left">
+          {/* ─── EXPANDED & IMMERSIVE LIVE INTERACTIVE SOFTWARE PREVIEW ─── */}
+          <div id="preview" className="mt-14 w-full max-w-7xl mx-auto rounded-2xl p-2.5 sm:p-4 bg-gradient-to-b from-slate-200/90 via-slate-100/70 to-slate-200/90 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900 shadow-2xl border border-slate-300/80 dark:border-slate-700">
+            <div className="rounded-xl bg-white dark:bg-[#242A34] overflow-hidden border border-slate-200 dark:border-slate-700 text-left shadow-inner">
+              
               {/* Window Navigation Header */}
-              <div className="h-14 bg-slate-100/90 dark:bg-[#181C23] border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-rose-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                  <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                  <span className="ml-2 hidden sm:inline-block text-xs font-mono text-slate-400">
-                    app.crmemy.com/{activeTab}
-                  </span>
+              <div className="h-14 bg-slate-100 dark:bg-[#181C23] border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3.5 h-3.5 rounded-full bg-rose-500" />
+                    <div className="w-3.5 h-3.5 rounded-full bg-amber-500" />
+                    <div className="w-3.5 h-3.5 rounded-full bg-emerald-500" />
+                  </div>
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-md bg-white dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-500 dark:text-slate-400 shadow-xs">
+                    <Lock className="w-3 h-3 text-emerald-500" />
+                    <span>https://app.crmemy.com/{activeTab}</span>
+                  </div>
                 </div>
 
-                {/* Interactive Demo Tab Bar */}
-                <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-200/70 dark:bg-[#2A313D] text-xs font-bold">
+                {/* Interactive Demo Tab Bar (6 Tabs) */}
+                <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-200/80 dark:bg-[#2A313D] text-xs font-bold overflow-x-auto max-w-full">
                   {[
-                    { id: 'dashboard', label: isVi ? '▦ Dashboard' : '▦ Dashboard' },
-                    { id: 'clients', label: isVi ? '♙ Cá Nhân (1040)' : '♙ Clients (1040)' },
-                    { id: 'pipeline', label: isVi ? '▣ Pipeline' : '▣ Pipeline' },
-                    { id: 'fees', label: isVi ? '$ Thu Phí' : '$ Fees' },
+                    { id: 'dashboard', label: isVi ? '▦ Tổng Quan' : '▦ Dashboard' },
+                    { id: 'clients', label: isVi ? '👤 Cá Nhân (1040)' : '👤 Form 1040' },
+                    { id: 'businesses', label: isVi ? '🏢 Doanh Nghiệp' : '🏢 Entities' },
+                    { id: 'pipeline', label: isVi ? '▣ Pipeline IRS' : '▣ Pipeline' },
+                    { id: 'fees', label: isVi ? '💵 Thu Phí & Nợ' : '💵 Fee Ledger' },
                     { id: 'marketing', label: isVi ? '✉ Marketing Mail' : '✉ Marketing' },
                   ].map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap cursor-pointer ${
                         activeTab === tab.id
-                          ? 'bg-white dark:bg-[#1D2128] text-slate-900 dark:text-white shadow-xs font-extrabold'
+                          ? 'bg-white dark:bg-[#1D2128] text-blue-700 dark:text-blue-400 shadow-xs font-black'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
@@ -247,115 +253,246 @@ export function HomeLanding() {
               </div>
 
               {/* Dynamic Tab Screen View */}
-              <div className="p-6 md:p-8 space-y-6">
+              <div className="p-5 sm:p-8 space-y-6">
+
+                {/* ─── TAB 1: FULL DASHBOARD ─── */}
                 {activeTab === 'dashboard' && (
                   <div className="space-y-6 animate-fadeIn">
-                    {/* 4 KPIs */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200/80 dark:border-slate-700">
-                        <span className="text-xs font-bold text-slate-500">{isVi ? 'TỔNG KHÁCH HÀNG' : 'ACTIVE CLIENTS'}</span>
-                        <div className="text-3xl font-black text-slate-900 dark:text-white mt-1">1,248</div>
-                        <span className="text-xs text-emerald-600 font-bold">↗ +18.4% {isVi ? 'so với năm trước' : 'YoY Growth'}</span>
+                    {/* Top Stats 4 Cards Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-bold">
+                          <span>{isVi ? 'TỔNG KHÁCH HÀNG' : 'ACTIVE CLIENTS'}</span>
+                          <span className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-bold">👤</span>
+                        </div>
+                        <div className="text-3xl font-black text-slate-900 dark:text-white mt-2">1,248</div>
+                        <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                          <span className="text-emerald-600 font-bold">↗ +18.4% {isVi ? 'năm nay' : 'YoY'}</span>
+                          <span className="text-slate-400 font-mono">1040: 980 | Biz: 268</span>
+                        </div>
                       </div>
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200/80 dark:border-slate-700">
-                        <span className="text-xs font-bold text-slate-500">{isVi ? 'ĐANG SOẠN HỒ SƠ' : 'IN PREPARATION'}</span>
-                        <div className="text-3xl font-black text-blue-600 dark:text-blue-400 mt-1">42</div>
-                        <span className="text-xs text-slate-500">12 {isVi ? 'chờ W-2 / 1099' : 'waiting documents'}</span>
+
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-bold">
+                          <span>{isVi ? 'ĐANG SOẠN HỒ SƠ' : 'IN PREPARATION'}</span>
+                          <span className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 flex items-center justify-center font-bold">⏳</span>
+                        </div>
+                        <div className="text-3xl font-black text-blue-600 dark:text-blue-400 mt-2">42</div>
+                        <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                          <span className="text-amber-600 dark:text-amber-400 font-bold">12 {isVi ? 'chờ W-2 / 1099' : 'waiting W-2'}</span>
+                          <span className="text-slate-400 font-mono">QA Review: 9</span>
+                        </div>
                       </div>
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200/80 dark:border-slate-700">
-                        <span className="text-xs font-bold text-slate-500">{isVi ? 'IRS CHẤP THUẬN' : 'IRS ACCEPTED'}</span>
-                        <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">98.8%</div>
-                        <span className="text-xs text-emerald-600 font-bold">✓ E-Filed 100% On-time</span>
+
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-bold">
+                          <span>{isVi ? 'TỶ LỆ IRS CHẤP THUẬN' : 'IRS ACCEPTANCE'}</span>
+                          <span className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center font-bold">✓</span>
+                        </div>
+                        <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-2">99.4%</div>
+                        <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                          <span className="text-emerald-600 font-bold">✓ 1,195 {isVi ? 'đã hoàn tất' : 'completed'}</span>
+                          <span className="text-slate-400 font-mono">0 Rejected</span>
+                        </div>
                       </div>
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200/80 dark:border-slate-700">
-                        <span className="text-xs font-bold text-slate-500">{isVi ? 'DOANH THU PHÍ' : 'TOTAL BILLED FEES'}</span>
-                        <div className="text-3xl font-black text-purple-600 dark:text-purple-400 mt-1">$148,250</div>
-                        <span className="text-xs text-rose-500 font-bold">{isVi ? 'Còn nợ: $8,420' : 'Balance due: $8,420'}</span>
+
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-bold">
+                          <span>{isVi ? 'DOANH THU & CÔNG NỢ' : 'TOTAL REVENUE'}</span>
+                          <span className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-600 flex items-center justify-center font-bold">$</span>
+                        </div>
+                        <div className="text-3xl font-black text-purple-600 dark:text-purple-400 mt-2">$148,250</div>
+                        <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                          <span className="text-emerald-600 font-bold">{isVi ? 'Đã thu:' : 'Paid:'} $139,830</span>
+                          <span className="text-rose-500 font-bold">{isVi ? 'Nợ:' : 'Due:'} $8,420</span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Pipeline Stage Interactive Bar */}
-                    <div className="p-5 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200/80 dark:border-slate-700">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                          {isVi ? 'Tiến Độ Quy Trình Hồ Sơ Thuế (IRS Pipeline)' : 'Tax Return Progress Pipeline'}
-                        </span>
-                        <span className="text-xs text-blue-600 font-bold">{isVi ? 'Tự động đồng bộ' : 'Auto-synced'}</span>
+                    {/* Middle Section: Pipeline & Urgent Deadlines */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* 5-Stage IRS Pipeline Visual (2 cols) */}
+                      <div className="lg:col-span-2 p-5 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                              {isVi ? 'Tiến Độ Quy Trình Hồ Sơ Thuế (IRS Workflow Pipeline)' : 'Tax Return Progress Pipeline'}
+                            </h4>
+                            <p className="text-xs text-slate-500">{isVi ? 'Theo dõi thời gian thực 5 giai đoạn xử lý tờ khai' : 'Real-time 5-stage return tracking'}</p>
+                          </div>
+                          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                            ● {isVi ? 'Đang hoạt động' : 'Live Sync'}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+                          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+                            <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400 block">Giai đoạn 1</span>
+                            <b className="text-amber-950 dark:text-amber-200 block mt-1">{isVi ? 'Chờ Giấy Tờ' : 'Waiting Docs'}</b>
+                            <span className="mt-2 inline-block px-2 py-0.5 rounded-full text-xs font-black bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-100">12</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
+                            <span className="text-[10px] uppercase font-bold text-blue-700 dark:text-blue-400 block">Giai đoạn 2</span>
+                            <b className="text-blue-950 dark:text-blue-200 block mt-1">{isVi ? 'Đang Soạn' : 'In Prep'}</b>
+                            <span className="mt-2 inline-block px-2 py-0.5 rounded-full text-xs font-black bg-blue-200/80 dark:bg-blue-900 text-blue-900 dark:text-blue-100">18</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800">
+                            <span className="text-[10px] uppercase font-bold text-purple-700 dark:text-purple-400 block">Giai đoạn 3</span>
+                            <b className="text-purple-950 dark:text-purple-200 block mt-1">{isVi ? 'Kiểm Tra QA' : 'QA Review'}</b>
+                            <span className="mt-2 inline-block px-2 py-0.5 rounded-full text-xs font-black bg-purple-200/80 dark:bg-purple-900 text-purple-900 dark:text-purple-100">9</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800">
+                            <span className="text-[10px] uppercase font-bold text-indigo-700 dark:text-indigo-400 block">Giai đoạn 4</span>
+                            <b className="text-indigo-950 dark:text-indigo-200 block mt-1">{isVi ? 'Sẵn Sàng Nộp' : 'Ready to File'}</b>
+                            <span className="mt-2 inline-block px-2 py-0.5 rounded-full text-xs font-black bg-indigo-200/80 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-100">14</span>
+                          </div>
+                          <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+                            <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400 block">Giai đoạn 5</span>
+                            <b className="text-emerald-950 dark:text-emerald-200 block mt-1">{isVi ? 'Đã Hoàn Tất' : 'Completed'}</b>
+                            <span className="mt-2 inline-block px-2 py-0.5 rounded-full text-xs font-black bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100">1,195</span>
+                          </div>
+                        </div>
+
+                        {/* Recent Activity Mini List */}
+                        <div className="mt-4 pt-3 border-t border-slate-200/70 dark:border-slate-800 space-y-2 text-xs">
+                          <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                            <span className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                              <b>Minh Nguyen (Form 1040)</b>: IRS đã chấp thuận hồ sơ (E-file Accepted).
+                            </span>
+                            <span className="text-slate-400 text-[11px]">10 phút trước</span>
+                          </div>
+                          <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                            <span className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-blue-500" />
+                              <b>ABC Logistics LLC (Form 1065)</b>: Đã cập nhật 2 thành viên góp vốn K-1.
+                            </span>
+                            <span className="text-slate-400 text-[11px]">32 phút trước</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center text-xs">
-                        <div className="p-3 rounded-lg bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-300 font-bold">
-                          1. {isVi ? 'Chờ Giấy Tờ' : 'Waiting Docs'} (12)
+
+                      {/* Urgent Deadlines & Workload (1 col) */}
+                      <div className="p-5 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+                            <Calendar className="w-4 h-4 text-rose-500" />
+                            <span>{isVi ? 'Hạn Chót Sắp Đến (IRS Deadlines)' : 'Upcoming Deadlines'}</span>
+                          </h4>
+                          <span className="text-xs font-bold text-rose-600">3 {isVi ? 'Hồ sơ' : 'Files'}</span>
                         </div>
-                        <div className="p-3 rounded-lg bg-blue-100/80 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-800 text-blue-900 dark:text-blue-300 font-bold">
-                          2. {isVi ? 'Đang Soạn' : 'In Prep'} (18)
-                        </div>
-                        <div className="p-3 rounded-lg bg-purple-100/80 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-800 text-purple-900 dark:text-purple-300 font-bold">
-                          3. {isVi ? 'Kiểm Tra QA' : 'Review'} (9)
-                        </div>
-                        <div className="p-3 rounded-lg bg-indigo-100/80 dark:bg-indigo-950/60 border border-indigo-300 dark:border-indigo-800 text-indigo-900 dark:text-indigo-300 font-bold">
-                          4. {isVi ? 'Sẵn Sàng Nộp' : 'Ready to File'} (14)
-                        </div>
-                        <div className="p-3 rounded-lg bg-emerald-100/80 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300 font-bold">
-                          5. {isVi ? 'Đã Hoàn Tất' : 'Completed'} (1,195)
+
+                        <div className="space-y-2.5 text-xs">
+                          <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 flex items-center justify-between">
+                            <div>
+                              <b className="text-rose-950 dark:text-rose-200 block">Form 1040 Extension Due</b>
+                              <span className="text-slate-500 text-[11px]">David & Lisa Harrison</span>
+                            </div>
+                            <span className="font-mono font-bold text-rose-600 bg-white dark:bg-rose-950 px-2 py-0.5 rounded text-[11px]">Oct 15</span>
+                          </div>
+
+                          <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 flex items-center justify-between">
+                            <div>
+                              <b className="text-amber-950 dark:text-amber-200 block">Form 1065 Partnership</b>
+                              <span className="text-slate-500 text-[11px]">XYZ Tech Partners</span>
+                            </div>
+                            <span className="font-mono font-bold text-amber-600 bg-white dark:bg-amber-950 px-2 py-0.5 rounded text-[11px]">Sep 15</span>
+                          </div>
+
+                          <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 flex items-center justify-between">
+                            <div>
+                              <b className="text-blue-950 dark:text-blue-200 block">Form 1120-S S-Corp</b>
+                              <span className="text-slate-500 text-[11px]">Luxury Nails Studio</span>
+                            </div>
+                            <span className="font-mono font-bold text-blue-600 bg-white dark:bg-blue-950 px-2 py-0.5 rounded text-[11px]">Sep 15</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
 
+                {/* ─── TAB 2: INDIVIDUAL FORM 1040 ─── */}
                 {activeTab === 'clients' && (
                   <div className="space-y-4 animate-fadeIn">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-700">
                       <div>
                         <h4 className="font-bold text-slate-900 dark:text-white text-base">
-                          {isVi ? 'Danh Sách Khách Hàng Cá Nhân (Form 1040)' : 'Individual Client Directory (Form 1040)'}
+                          {isVi ? 'Quản Lý Khách Hàng Cá Nhân (Form 1040)' : 'Individual Taxpayer Directory (Form 1040)'}
                         </h4>
-                        <p className="text-xs text-slate-500">{isVi ? 'Quản lý SSN, người phụ thuộc và công nợ phí' : 'Manage SSN, dependents, and balance due'}</p>
+                        <p className="text-xs text-slate-500">
+                          {isVi ? 'Kiểm soát SSN, vợ/chồng, người phụ thuộc, tình trạng hôn nhân và số dư nợ phí' : 'Track SSN, spouse, dependents, filing status & balance due'}
+                        </p>
                       </div>
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        {isVi ? '1,248 Hồ sơ' : '1,248 Clients'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 rounded-lg text-xs font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          980 {isVi ? 'Hồ sơ 1040' : 'Returns'}
+                        </span>
+                        <Button size="sm" className="h-8 text-xs font-bold bg-[#092c5c] text-white">
+                          + {isVi ? 'Thêm Khách Mới' : 'Add Client'}
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead>
                           <tr className="border-b border-slate-200 dark:border-slate-700 text-slate-500 font-bold uppercase text-[11px]">
-                            <th className="pb-3">{isVi ? 'TÊN KHÁCH HÀNG' : 'CLIENT NAME'}</th>
-                            <th className="pb-3">{isVi ? 'MÃ TỜ KHAI' : 'FORM'}</th>
+                            <th className="pb-3">{isVi ? 'TÊN KHÁCH HÀNG / SSN' : 'CLIENT / SSN'}</th>
+                            <th className="pb-3">{isVi ? 'TÌNH TRẠNG HÔN NHÂN' : 'FILING STATUS'}</th>
+                            <th className="pb-3">{isVi ? 'NGƯỜI PHỤ THUỘC' : 'DEPENDENTS'}</th>
                             <th className="pb-3">{isVi ? 'NĂM THUẾ' : 'TAX YEAR'}</th>
-                            <th className="pb-3">{isVi ? 'TRẠNG THÁI' : 'STATUS'}</th>
-                            <th className="pb-3">{isVi ? 'NHÂN VIÊN' : 'STAFF'}</th>
-                            <th className="pb-3 text-right">{isVi ? 'PHÍ / CÒN NỢ' : 'FEE / BALANCE'}</th>
+                            <th className="pb-3">{isVi ? 'TRẠNG THÁI PIPELINE' : 'STAGE'}</th>
+                            <th className="pb-3">{isVi ? 'NHÂN VIÊN' : 'PREPARER'}</th>
+                            <th className="pb-3 text-right">{isVi ? 'PHÍ / CÔNG NỢ' : 'FEE / BALANCE'}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 font-medium">
                           <tr>
                             <td className="py-3">
-                              <b>Minh Nguyen</b>
-                              <small className="block text-slate-500">{isVi ? 'Độc thân' : 'Single'} • (714) 555-0184</small>
+                              <b className="text-slate-900 dark:text-white block">Minh Nguyen</b>
+                              <small className="text-slate-500 font-mono">SSN: ***-**-1234 • (714) 555-0184</small>
                             </td>
-                            <td><span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-bold">1040</span></td>
+                            <td><span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-bold">{isVi ? 'Độc Thân (Single)' : 'Single'}</span></td>
+                            <td><span className="font-semibold text-slate-600 dark:text-slate-400">0</span></td>
                             <td><b>2025</b></td>
-                            <td><span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 font-bold text-[11px]">{isVi ? 'Chờ Giấy Tờ' : 'Waiting Docs'}</span></td>
+                            <td><span className="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 font-bold text-[11px]">{isVi ? 'Chờ Giấy Tờ' : 'Waiting Docs'}</span></td>
                             <td>Amy Tran</td>
                             <td className="text-right">
                               <b>$650</b>
                               <small className="block text-rose-500 font-bold">{isVi ? 'Còn nợ: $325' : 'Due: $325'}</small>
                             </td>
                           </tr>
+
                           <tr>
                             <td className="py-3">
-                              <b>David & Lisa Harrison</b>
-                              <small className="block text-slate-500">{isVi ? 'Vợ chồng khai chung (MFJ)' : 'Married Filing Jointly'}</small>
+                              <b className="text-slate-900 dark:text-white block">Olivia Johnson</b>
+                              <small className="text-slate-500 font-mono">SSN: ***-**-5678 • (415) 555-0128</small>
                             </td>
-                            <td><span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-bold">1040</span></td>
+                            <td><span className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 font-bold">{isVi ? 'Chủ Hộ (HOH)' : 'Head of Household'}</span></td>
+                            <td><span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold">1 con (Emma)</span></td>
                             <td><b>2025</b></td>
-                            <td><span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 font-bold text-[11px]">{isVi ? 'Đang Soạn Hồ Sơ' : 'In Preparation'}</span></td>
+                            <td><span className="px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 font-bold text-[11px]">{isVi ? 'Kiểm Tra QA' : 'QA Review'}</span></td>
                             <td>Daniel Lee</td>
                             <td className="text-right">
-                              <b>$850</b>
-                              <small className="block text-emerald-600 font-bold">{isVi ? 'Đã thu đủ' : 'Paid in full'}</small>
+                              <b>$875</b>
+                              <small className="block text-emerald-600 font-bold">{isVi ? 'Đã thu đủ' : 'Paid in Full'}</small>
+                            </td>
+                          </tr>
+
+                          <tr>
+                            <td className="py-3">
+                              <b className="text-slate-900 dark:text-white block">Kevin & Mai Tran</b>
+                              <small className="text-slate-500 font-mono">SSN: ***-**-9012 • (408) 555-9012</small>
+                            </td>
+                            <td><span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold">{isVi ? 'Khai Chung (MFJ)' : 'Married Jointly'}</span></td>
+                            <td><span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold">2 con (Lucas, Chloe)</span></td>
+                            <td><b>2025</b></td>
+                            <td><span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-bold text-[11px]">{isVi ? 'IRS Chấp Thuận' : 'IRS Accepted'}</span></td>
+                            <td>Amy Tran</td>
+                            <td className="text-right">
+                              <b>$950</b>
+                              <small className="block text-emerald-600 font-bold">{isVi ? 'Đã thu đủ' : 'Paid in Full'}</small>
                             </td>
                           </tr>
                         </tbody>
@@ -364,87 +501,290 @@ export function HomeLanding() {
                   </div>
                 )}
 
+                {/* ─── TAB 3: BUSINESS ENTITIES ─── */}
+                {activeTab === 'businesses' && (
+                  <div className="space-y-4 animate-fadeIn">
+                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+                      <div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-base">
+                          {isVi ? 'Khách Hàng Doanh Nghiệp (LLC, S-Corp 1120-S, Partnership 1065)' : 'Corporate & Business Entities Directory'}
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          {isVi ? 'Theo dõi cơ cấu thành viên góp vốn (Partnership K-1), EIN, địa chỉ và 8 tab dữ liệu chi tiết' : 'EIN, K-1 partner breakdown, entity ownership & filing records'}
+                        </p>
+                      </div>
+                      <span className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        268 {isVi ? 'Doanh nghiệp' : 'Entities'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Biz 1 */}
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
+                              Form 1065 (Partnership)
+                            </span>
+                            <h5 className="font-bold text-slate-900 dark:text-white text-sm mt-1">ABC Logistics LLC</h5>
+                          </div>
+                          <span className="text-xs font-bold text-slate-500 font-mono">CA</span>
+                        </div>
+                        <div className="text-xs text-slate-500 space-y-1">
+                          <div>EIN: <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">**-***5678</span></div>
+                          <div>Thành viên: <span className="font-semibold text-slate-800 dark:text-slate-200">Kevin Tran (60%), Linda Vo (40%)</span></div>
+                          <div>Phí dịch vụ: <b className="text-slate-900 dark:text-white">$2,400</b> (Còn nợ: <span className="text-rose-500 font-bold">$1,200</span>)</div>
+                        </div>
+                        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-blue-600">
+                          <span>8 Tabs Hồ Sơ Chi Tiết</span>
+                          <span>Xem ➔</span>
+                        </div>
+                      </div>
+
+                      {/* Biz 2 */}
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                              Form 1120-S (S-Corp)
+                            </span>
+                            <h5 className="font-bold text-slate-900 dark:text-white text-sm mt-1">XYZ Tech Solutions Inc</h5>
+                          </div>
+                          <span className="text-xs font-bold text-slate-500 font-mono">TX</span>
+                        </div>
+                        <div className="text-xs text-slate-500 space-y-1">
+                          <div>EIN: <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">**-***1234</span></div>
+                          <div>Cổ đông: <span className="font-semibold text-slate-800 dark:text-slate-200">Daniel Lee (100%)</span></div>
+                          <div>Phí dịch vụ: <b className="text-slate-900 dark:text-white">$3,200</b> (Đã thu đủ: <span className="text-emerald-600 font-bold">$3,200</span>)</div>
+                        </div>
+                        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-blue-600">
+                          <span>8 Tabs Hồ Sơ Chi Tiết</span>
+                          <span>Xem ➔</span>
+                        </div>
+                      </div>
+
+                      {/* Biz 3 */}
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
+                              Schedule C (Sole Prop)
+                            </span>
+                            <h5 className="font-bold text-slate-900 dark:text-white text-sm mt-1">Luxury Nails Studio</h5>
+                          </div>
+                          <span className="text-xs font-bold text-slate-500 font-mono">FL</span>
+                        </div>
+                        <div className="text-xs text-slate-500 space-y-1">
+                          <div>DBA: <span className="font-semibold text-slate-800 dark:text-slate-200">Luxury Nails & Spa</span></div>
+                          <div>Chủ sở hữu: <span className="font-semibold text-slate-800 dark:text-slate-200">Sarah Kim (100%)</span></div>
+                          <div>Phí dịch vụ: <b className="text-slate-900 dark:text-white">$1,850</b> (Đã thu đủ)</div>
+                        </div>
+                        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-blue-600">
+                          <span>8 Tabs Hồ Sơ Chi Tiết</span>
+                          <span>Xem ➔</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ─── TAB 4: KANBAN PIPELINE ─── */}
                 {activeTab === 'pipeline' && (
                   <div className="space-y-4 animate-fadeIn">
-                    <h4 className="font-bold text-slate-900 dark:text-white text-base">
-                      {isVi ? 'Kiểm Soát Toàn Bộ 5 Giai Đoạn Khai Thuế IRS' : 'Comprehensive IRS Filing Workflow'}
-                    </h4>
-                    <p className="text-xs text-slate-500">
-                      {isVi
-                        ? 'Tự động gửi thông báo cho khách hàng khi trạng thái hồ sơ chuyển sang giai đoạn mới.'
-                        : 'Automatic email triggers notify clients whenever their tax file progresses to the next milestone.'}
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700">
-                        <div className="text-xs font-bold text-blue-600 uppercase">Giai Đoạn 1 & 2</div>
-                        <h5 className="font-bold text-slate-900 dark:text-white mt-1">Thu Thập & Soạn Thảo</h5>
-                        <p className="text-xs text-slate-500 mt-1">Tải lên W-2, 1099, K-1 và tổng hợp thu nhập, giảm trừ thuế.</p>
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                      <div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-base">
+                          {isVi ? 'Bảng Điều Khiển Quy Trình Hồ Sơ (IRS Kanban Pipeline)' : 'Visual IRS Tax Return Pipeline'}
+                        </h4>
+                        <p className="text-xs text-slate-500">{isVi ? 'Kéo thả và chuyển trạng thái hồ sơ theo thời gian thực' : 'Real-time drag and drop filing workflow'}</p>
                       </div>
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700">
-                        <div className="text-xs font-bold text-purple-600 uppercase">Giai Đoạn 3 & 4</div>
-                        <h5 className="font-bold text-slate-900 dark:text-white mt-1">Kiểm Tra QA & Ký Tên</h5>
-                        <p className="text-xs text-slate-500 mt-1">Reviewer duyệt tính toán, gửi Form 8879 xin chữ ký điện tử.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                      {/* Col 1 */}
+                      <div className="p-3 rounded-xl bg-slate-100/80 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div className="flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-400">
+                          <span>1. {isVi ? 'Chờ Giấy Tờ' : 'Waiting Docs'}</span>
+                          <span className="w-5 h-5 rounded-full bg-amber-200 dark:bg-amber-900 flex items-center justify-center text-[10px]">12</span>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-[#242A34] border border-slate-200 dark:border-slate-700 shadow-xs space-y-1">
+                          <b className="text-xs text-slate-900 dark:text-white block">Minh Nguyen</b>
+                          <small className="text-[11px] text-slate-500 block">Form 1040 • Chờ 1099-INT</small>
+                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950 px-1.5 py-0.5 rounded block w-fit">Amy Tran</span>
+                        </div>
                       </div>
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700">
-                        <div className="text-xs font-bold text-emerald-600 uppercase">Giai Đoạn 5</div>
-                        <h5 className="font-bold text-slate-900 dark:text-white mt-1">Nộp IRS & Hoàn Tất</h5>
-                        <p className="text-xs text-slate-500 mt-1">E-file lên IRS, lưu trữ biên nhận chấp thuận và tất toán hóa đơn.</p>
+
+                      {/* Col 2 */}
+                      <div className="p-3 rounded-xl bg-slate-100/80 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div className="flex items-center justify-between text-xs font-bold text-blue-700 dark:text-blue-400">
+                          <span>2. {isVi ? 'Đang Soạn' : 'In Prep'}</span>
+                          <span className="w-5 h-5 rounded-full bg-blue-200 dark:bg-blue-900 flex items-center justify-center text-[10px]">18</span>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-[#242A34] border border-slate-200 dark:border-slate-700 shadow-xs space-y-1">
+                          <b className="text-xs text-slate-900 dark:text-white block">David Harrison</b>
+                          <small className="text-[11px] text-slate-500 block">Form 1040 • Nhập W-2</small>
+                          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 rounded block w-fit">Daniel Lee</span>
+                        </div>
+                      </div>
+
+                      {/* Col 3 */}
+                      <div className="p-3 rounded-xl bg-slate-100/80 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div className="flex items-center justify-between text-xs font-bold text-purple-700 dark:text-purple-400">
+                          <span>3. {isVi ? 'Kiểm Tra QA' : 'QA Review'}</span>
+                          <span className="w-5 h-5 rounded-full bg-purple-200 dark:bg-purple-900 flex items-center justify-center text-[10px]">9</span>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-[#242A34] border border-slate-200 dark:border-slate-700 shadow-xs space-y-1">
+                          <b className="text-xs text-slate-900 dark:text-white block">Olivia Johnson</b>
+                          <small className="text-[11px] text-slate-500 block">Form 1040 • Duyệt Giảm Trừ</small>
+                          <span className="text-[10px] font-bold text-purple-600 bg-purple-50 dark:bg-purple-950 px-1.5 py-0.5 rounded block w-fit">Amy Tran</span>
+                        </div>
+                      </div>
+
+                      {/* Col 4 */}
+                      <div className="p-3 rounded-xl bg-slate-100/80 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div className="flex items-center justify-between text-xs font-bold text-indigo-700 dark:text-indigo-400">
+                          <span>4. {isVi ? 'Sẵn Sàng Nộp' : 'Ready to File'}</span>
+                          <span className="w-5 h-5 rounded-full bg-indigo-200 dark:bg-indigo-900 flex items-center justify-center text-[10px]">14</span>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-[#242A34] border border-slate-200 dark:border-slate-700 shadow-xs space-y-1">
+                          <b className="text-xs text-slate-900 dark:text-white block">ABC Logistics</b>
+                          <small className="text-[11px] text-slate-500 block">Form 1065 • Đã Ký 8879</small>
+                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950 px-1.5 py-0.5 rounded block w-fit">E-File Queue</span>
+                        </div>
+                      </div>
+
+                      {/* Col 5 */}
+                      <div className="p-3 rounded-xl bg-slate-100/80 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 space-y-2">
+                        <div className="flex items-center justify-between text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                          <span>5. {isVi ? 'Đã Hoàn Tất' : 'Completed'}</span>
+                          <span className="w-5 h-5 rounded-full bg-emerald-200 dark:bg-emerald-900 flex items-center justify-center text-[10px]">1,195</span>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-[#242A34] border border-slate-200 dark:border-slate-700 shadow-xs space-y-1">
+                          <b className="text-xs text-slate-900 dark:text-white block">Kevin & Mai Tran</b>
+                          <small className="text-[11px] text-slate-500 block">IRS Accepted ✓</small>
+                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.5 rounded block w-fit">Archived</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
 
+                {/* ─── TAB 5: FEE LEDGER ─── */}
                 {activeTab === 'fees' && (
                   <div className="space-y-4 animate-fadeIn">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-700">
                       <div>
                         <h4 className="font-bold text-slate-900 dark:text-white text-base">
-                          {isVi ? 'Sổ Theo Dõi Thu Phí & Hóa Đơn (Fee Ledger)' : 'Fee Ledger & Receivables'}
+                          {isVi ? 'Sổ Theo Dõi Thu Phí & Hóa Đơn (Fee Ledger)' : 'Fee Ledger & Receivables Management'}
                         </h4>
-                        <p className="text-xs text-slate-500">{isVi ? 'Liên kết trực tiếp với từng tờ khai thuế' : 'Directly linked to individual tax return files'}</p>
+                        <p className="text-xs text-slate-500">{isVi ? 'Tự động tính toán công nợ và trạng thái thanh toán' : 'Automated balance due & payment tracking'}</p>
                       </div>
-                      <div className="text-right">
-                        <span className="text-xs text-slate-500 block">{isVi ? 'Tổng tiền đã thu' : 'Collected'}</span>
-                        <b className="text-emerald-600 text-base font-extrabold">$139,830</b>
-                      </div>
-                    </div>
-                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center font-black">
-                          $
+                      <div className="flex items-center gap-4 text-right">
+                        <div>
+                          <span className="text-[11px] text-slate-500 block">{isVi ? 'Đã Thu' : 'Collected'}</span>
+                          <b className="text-emerald-600 text-sm font-extrabold">$139,830</b>
                         </div>
                         <div>
-                          <b className="text-xs font-bold text-slate-900 dark:text-white block">ABC Logistics LLC (Form 1065)</b>
-                          <small className="text-slate-500">Phí: $2,400 • Đã trả: $1,200</small>
+                          <span className="text-[11px] text-slate-500 block">{isVi ? 'Còn Nợ' : 'Balance Due'}</span>
+                          <b className="text-rose-500 text-sm font-extrabold">$8,420</b>
                         </div>
                       </div>
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">
-                        {isVi ? 'Còn nợ $1,200 (Đã gửi hóa đơn)' : 'Due $1,200 (Invoice Sent)'}
-                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center">$</span>
+                          <div>
+                            <b className="text-slate-900 dark:text-white block">ABC Logistics LLC (Form 1065)</b>
+                            <span className="text-slate-500 text-[11px]">Hóa đơn #INV-2025-084 • Đã trả $1,200</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="font-bold text-slate-900 dark:text-white">Tổng phí: $2,400</span>
+                          <span className="px-2.5 py-1 rounded-full font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">
+                            {isVi ? 'Còn nợ $1,200 (Đã gửi hóa đơn)' : 'Due $1,200 (Invoice Sent)'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold flex items-center justify-center">$</span>
+                          <div>
+                            <b className="text-slate-900 dark:text-white block">Minh Nguyen (Form 1040)</b>
+                            <span className="text-slate-500 text-[11px]">Hóa đơn #INV-2025-091 • Đã trả $325</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="font-bold text-slate-900 dark:text-white">Tổng phí: $650</span>
+                          <span className="px-2.5 py-1 rounded-full font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300">
+                            {isVi ? 'Còn nợ $325 (Quá hạn 15 ngày)' : 'Due $325 (Overdue 15d)'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center">✓</span>
+                          <div>
+                            <b className="text-slate-900 dark:text-white block">XYZ Tech Solutions Inc (Form 1120-S)</b>
+                            <span className="text-slate-500 text-[11px]">Hóa đơn #INV-2025-072 • Đã trả $3,200</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="font-bold text-slate-900 dark:text-white">Tổng phí: $3,200</span>
+                          <span className="px-2.5 py-1 rounded-full font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300">
+                            {isVi ? 'Đã Thanh Toán Đủ' : 'Paid in Full'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
 
+                {/* ─── TAB 6: MARKETING MAIL ─── */}
                 {activeTab === 'marketing' && (
                   <div className="space-y-4 animate-fadeIn">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-700">
                       <div>
                         <h4 className="font-bold text-slate-900 dark:text-white text-base">
-                          {isVi ? 'Email Marketing & Gửi Thư Hàng Loạt' : 'Bulk Marketing & Reminder Campaigns'}
+                          {isVi ? 'Email Marketing & Gửi Thư Hàng Loạt Tự Động' : 'Bulk Marketing & Automated Reminder Campaigns'}
                         </h4>
-                        <p className="text-xs text-slate-500">{isVi ? 'Nhắc nợ, nhắc bổ sung tài liệu W-2 qua Resend API' : 'Automated document & payment reminders via Resend API'}</p>
+                        <p className="text-xs text-slate-500">{isVi ? 'Tích hợp Resend API / SMTP, cá nhân hóa theo từng khách hàng' : 'Resend API integration with dynamic mail tags'}</p>
                       </div>
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                        ⚡ 72.8% Open Rate
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                        ⚡ 74.2% Open Rate • 48.6% Click Rate
                       </span>
                     </div>
-                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 space-y-2">
-                      <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Tiêu đề: <span className="font-mono text-blue-600 dark:text-blue-400">[Nhắc Nhở] Hoàn Tất Hồ Sơ Thuế 2025 - CRM EMY</span>
+
+                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#1D2128] border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+                        <span className="font-bold text-slate-700 dark:text-slate-300">
+                          {isVi ? 'Mẫu Email Đang Chọn:' : 'Selected Template:'} <b className="text-blue-600">[Nhắc Nhở Bổ Sung Giấy Tờ Thuế 2025]</b>
+                        </span>
+                        <span className="text-slate-500">Người nhận: <b>12 Khách hàng đang ở giai đoạn 1</b></span>
                       </div>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 italic">
-                        &quot;Chào David & Lisa Harrison, văn phòng thuế đã sẵn sàng xử lý tờ khai của bạn. Vui lòng phản hồi bổ sung Form 1099 còn thiếu trước ngày 15/10...&quot;
-                      </p>
+
+                      <div className="p-3.5 rounded-lg bg-white dark:bg-[#242A34] border border-slate-200 dark:border-slate-700 font-sans space-y-2">
+                        <div className="text-slate-500 font-mono text-[11px]">
+                          To: &lt;minh.nguyen@example.com&gt; | Subject: [CRM EMY] Nhắc nhở hoàn tất hồ sơ khai thuế Form 1040
+                        </div>
+                        <p className="text-slate-700 dark:text-slate-300 italic leading-relaxed">
+                          &quot;Chào <b>Minh Nguyen</b>, văn phòng thuế đã tiếp nhận thông tin của bạn cho năm thuế 2025. Hiện tại hồ sơ của bạn đang thiếu <b>Form 1099-INT</b>. Vui lòng gửi bổ sung tài liệu để chúng tôi kịp nộp trước hạn chót...&quot;
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <div className="flex gap-2">
+                          <span className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[11px] font-mono">&#123;&#123;client_name&#125;&#125;</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[11px] font-mono">&#123;&#123;tax_year&#125;&#125;</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-[11px] font-mono">&#123;&#123;balance_due&#125;&#125;</span>
+                        </div>
+                        <Button size="sm" className="h-8 text-xs font-bold bg-[#092c5c] text-white">
+                          <Send className="w-3.5 h-3.5 mr-1" /> {isVi ? 'Gửi Chiến Dịch Ngay' : 'Send Campaign'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
