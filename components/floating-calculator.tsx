@@ -1,15 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Calculator,
   X,
-  Minus,
-  RotateCcw,
   ArrowUpDown,
   Copy,
   Check,
-  Percent,
   Delete,
   Settings2,
   History,
@@ -17,24 +14,25 @@ import {
   DollarSign,
   GripHorizontal,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
-type CalcMode = 'calculator' | 'currency';
+type CalcMode = 'currency' | 'calculator';
 
 export function FloatingCalculator() {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<CalcMode>('currency');
 
-  // Bubble Position State (Draggable)
-  const [bubblePos, setBubblePos] = useState({ x: 0, y: 0 });
+  // Bubble Position State (Draggable with fallback to CSS fixed position)
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const [bubblePos, setBubblePos] = useState<{ x: number; y: number } | null>(null);
   const [isDraggingBubble, setIsDraggingBubble] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [hasMoved, setHasMoved] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, initialX: 0, initialY: 0 });
+  const hasMovedRef = useRef(false);
 
   // Window Position State (Draggable Window)
-  const [windowPos, setWindowPos] = useState({ x: 0, y: 0 });
+  const windowRef = useRef<HTMLDivElement>(null);
+  const [windowPos, setWindowPos] = useState<{ x: number; y: number } | null>(null);
   const [isDraggingWindow, setIsDraggingWindow] = useState(false);
-  const [windowDragStart, setWindowDragStart] = useState({ x: 0, y: 0 });
+  const windowDragStartRef = useRef({ x: 0, y: 0, initialX: 0, initialY: 0 });
 
   // Calculator State
   const [displayValue, setDisplayValue] = useState('0');
@@ -51,46 +49,47 @@ export function FloatingCalculator() {
   const [isEditingRate, setIsEditingRate] = useState(false);
   const [customRateInput, setCustomRateInput] = useState('25500');
 
-  // Set default initial position on mount (right middle)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const initialBubbleX = Math.max(16, window.innerWidth - 76);
-      const initialBubbleY = Math.max(100, Math.min(window.innerHeight - 180, window.innerHeight * 0.5));
-      setBubblePos({ x: initialBubbleX, y: initialBubbleY });
-
-      const initialWinX = Math.max(16, window.innerWidth - 380);
-      const initialWinY = Math.max(80, window.innerHeight * 0.2);
-      setWindowPos({ x: initialWinX, y: initialWinY });
-    }
-  }, []);
-
   // -------------------------------------------------------------
-  // BUBBLE DRAG HANDLERS (Mouse & Touch)
+  // BUBBLE DRAG & POINTER HANDLERS
   // -------------------------------------------------------------
   const handleBubblePointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
+    const rect = bubbleRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    hasMovedRef.current = false;
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      initialX: rect.left,
+      initialY: rect.top,
+    };
     setIsDraggingBubble(true);
-    setHasMoved(false);
-    setDragStart({
-      x: e.clientX - bubblePos.x,
-      y: e.clientY - bubblePos.y,
-    });
   };
 
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
       if (isDraggingBubble) {
-        const newX = Math.max(10, Math.min(window.innerWidth - 70, e.clientX - dragStart.x));
-        const newY = Math.max(60, Math.min(window.innerHeight - 80, e.clientY - dragStart.y));
-        if (Math.abs(newX - bubblePos.x) > 3 || Math.abs(newY - bubblePos.y) > 3) {
-          setHasMoved(true);
+        const deltaX = e.clientX - dragStartRef.current.x;
+        const deltaY = e.clientY - dragStartRef.current.y;
+
+        if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
+          hasMovedRef.current = true;
         }
+
+        const newX = Math.max(10, Math.min(window.innerWidth - 65, dragStartRef.current.initialX + deltaX));
+        const newY = Math.max(50, Math.min(window.innerHeight - 75, dragStartRef.current.initialY + deltaY));
+
         setBubblePos({ x: newX, y: newY });
       }
 
       if (isDraggingWindow) {
-        const newWinX = Math.max(10, Math.min(window.innerWidth - 360, e.clientX - windowDragStart.x));
-        const newWinY = Math.max(20, Math.min(window.innerHeight - 520, e.clientY - windowDragStart.y));
+        const deltaX = e.clientX - windowDragStartRef.current.x;
+        const deltaY = e.clientY - windowDragStartRef.current.y;
+
+        const newWinX = Math.max(10, Math.min(window.innerWidth - 350, windowDragStartRef.current.initialX + deltaX));
+        const newWinY = Math.max(20, Math.min(window.innerHeight - 520, windowDragStartRef.current.initialY + deltaY));
+
         setWindowPos({ x: newWinX, y: newWinY });
       }
     };
@@ -109,15 +108,19 @@ export function FloatingCalculator() {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [isDraggingBubble, isDraggingWindow, dragStart, windowDragStart, bubblePos]);
+  }, [isDraggingBubble, isDraggingWindow]);
 
-  const handleBubbleClick = () => {
-    if (!hasMoved) {
-      // Auto-position window nicely next to bubble if not already open
-      if (!isOpen && typeof window !== 'undefined') {
-        const targetX = Math.max(16, Math.min(window.innerWidth - 380, bubblePos.x - 320));
-        const targetY = Math.max(70, Math.min(window.innerHeight - 560, bubblePos.y - 120));
-        setWindowPos({ x: targetX, y: targetY });
+  const handleBubbleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!hasMovedRef.current) {
+      // If window position is not set yet, smartly position it near the bubble
+      if (!isOpen && !windowPos && typeof window !== 'undefined') {
+        const bubbleRect = bubbleRef.current?.getBoundingClientRect();
+        if (bubbleRect) {
+          const targetX = Math.max(12, Math.min(window.innerWidth - 370, bubbleRect.left - 310));
+          const targetY = Math.max(60, Math.min(window.innerHeight - 560, bubbleRect.top - 280));
+          setWindowPos({ x: targetX, y: targetY });
+        }
       }
       setIsOpen((prev) => !prev);
     }
@@ -127,11 +130,16 @@ export function FloatingCalculator() {
   // WINDOW HEADER DRAG HANDLER
   // -------------------------------------------------------------
   const handleWindowHeaderPointerDown = (e: React.PointerEvent) => {
+    const rect = windowRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    windowDragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      initialX: rect.left,
+      initialY: rect.top,
+    };
     setIsDraggingWindow(true);
-    setWindowDragStart({
-      x: e.clientX - windowPos.x,
-      y: e.clientY - windowPos.y,
-    });
   };
 
   // -------------------------------------------------------------
@@ -289,39 +297,51 @@ export function FloatingCalculator() {
   return (
     <>
       {/* ──────────────────────────────────────────────────────────
-          1. FLOATING DRAGGABLE BUBBLE
+          1. FLOATING DRAGGABLE BUBBLE (AVAILABLE ON ALL PAGES)
       ────────────────────────────────────────────────────────── */}
       <div
-        style={{
-          transform: `translate3d(${bubblePos.x}px, ${bubblePos.y}px, 0)`,
-          touchAction: 'none',
-        }}
+        ref={bubbleRef}
+        style={
+          bubblePos
+            ? {
+                left: `${bubblePos.x}px`,
+                top: `${bubblePos.y}px`,
+                right: 'auto',
+                bottom: 'auto',
+                touchAction: 'none',
+              }
+            : {
+                touchAction: 'none',
+              }
+        }
         onPointerDown={handleBubblePointerDown}
         onClick={handleBubbleClick}
         title="Kéo di chuyển hoặc Click để mở Máy Tính / Chuyển Đổi Tiền Tệ"
-        className={`fixed top-0 left-0 z-[9998] select-none flex items-center justify-center cursor-grab active:cursor-grabbing transition-transform ${
-          isDraggingBubble ? 'scale-105 opacity-90' : 'hover:scale-105'
-        }`}
+        className={`fixed z-50 select-none flex items-center group cursor-grab active:cursor-grabbing transition-transform ${
+          !bubblePos ? 'bottom-20 right-4 sm:bottom-24 sm:right-6' : ''
+        } ${isDraggingBubble ? 'scale-110 opacity-90' : 'hover:scale-105'}`}
       >
-        <div className="relative group">
-          {/* Glowing ring */}
-          <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-blue-600 via-indigo-500 to-amber-500 opacity-70 blur-xs group-hover:opacity-100 transition duration-300 animate-pulse" />
+        {/* Tooltip on Hover */}
+        <span className="hidden sm:inline-block mr-3 px-3 py-1.5 rounded-full bg-slate-900/90 text-white text-xs font-semibold shadow-lg backdrop-blur-md opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300 pointer-events-none whitespace-nowrap">
+          Máy Tính & Tỷ Giá Tiền Tệ
+        </span>
+
+        <div className="relative">
+          {/* Glowing pulse ring */}
+          <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-blue-600 via-indigo-500 to-amber-500 opacity-65 blur-xs group-hover:opacity-100 transition duration-300 animate-pulse" />
 
           {/* Main Bubble Button */}
-          <button
-            type="button"
-            className="relative w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white text-slate-900 border-2 border-blue-500/80 shadow-2xl flex flex-col items-center justify-center p-0 transition-all hover:bg-slate-50 cursor-pointer"
-          >
-            <Calculator className="w-6 h-6 sm:w-6.5 sm:h-6.5 text-[#092c5c] group-hover:text-blue-600 transition-colors" />
-            <span className="text-[9px] font-black text-blue-700 tracking-tighter uppercase mt-0.5">
+          <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white text-slate-900 border-2 border-blue-500/80 shadow-[0_6px_20px_rgba(37,99,235,0.35)] flex flex-col items-center justify-center p-0 transition-all hover:bg-slate-50">
+            <Calculator className="w-5 h-5 sm:w-6 sm:h-6 text-[#092c5c] group-hover:text-blue-600 transition-colors" />
+            <span className="text-[8px] sm:text-[9px] font-black text-blue-700 tracking-tighter uppercase mt-0.5">
               CALC
             </span>
 
-            {/* Notification Badge */}
-            <span className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full bg-amber-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs">
+            {/* Notification Dollar Badge */}
+            <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full bg-amber-500 text-white text-[8px] sm:text-[9px] font-black flex items-center justify-center shadow-xs">
               $
             </span>
-          </button>
+          </div>
         </div>
       </div>
 
@@ -330,10 +350,20 @@ export function FloatingCalculator() {
       ────────────────────────────────────────────────────────── */}
       {isOpen && (
         <div
-          style={{
-            transform: `translate3d(${windowPos.x}px, ${windowPos.y}px, 0)`,
-          }}
-          className="fixed top-0 left-0 z-[9999] w-[340px] sm:w-[360px] bg-white rounded-3xl border border-slate-200/90 shadow-2xl flex flex-col overflow-hidden text-slate-900 animate-in fade-in zoom-in-95 duration-150 select-none"
+          ref={windowRef}
+          style={
+            windowPos
+              ? {
+                  left: `${windowPos.x}px`,
+                  top: `${windowPos.y}px`,
+                  right: 'auto',
+                  bottom: 'auto',
+                }
+              : undefined
+          }
+          className={`fixed z-[60] w-[330px] sm:w-[360px] max-w-[calc(100vw-24px)] bg-white rounded-3xl border border-slate-200/90 shadow-[0_20px_60px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden text-slate-900 animate-in fade-in zoom-in-95 duration-150 select-none ${
+            !windowPos ? 'bottom-36 right-4 sm:bottom-40 sm:right-6 md:right-8' : ''
+          }`}
         >
           {/* --- Draggable Header Bar --- */}
           <div
@@ -391,7 +421,7 @@ export function FloatingCalculator() {
               }`}
             >
               <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Chuyển Đổi Tiền (USD ⇄ VND)</span>
+              <span>Chuyển Đổi (USD ⇄ VND)</span>
             </button>
 
             <button
@@ -404,7 +434,7 @@ export function FloatingCalculator() {
               }`}
             >
               <Calculator className="w-3.5 h-3.5 text-blue-600" />
-              <span>Máy Tính Thuế Cơ Bản</span>
+              <span>Máy Tính Cơ Bản</span>
             </button>
           </div>
 
@@ -550,7 +580,7 @@ export function FloatingCalculator() {
           </div>
 
           {/* ──────────────────────────────────────────────────────────
-              QUICK TAX PRESETS BAR (+5%, +10%, +15%, +30%)
+              QUICK TAX PRESETS BAR (+5%, +10%, +15%, +20%)
           ────────────────────────────────────────────────────────── */}
           <div className="bg-slate-100/90 px-3 py-1.5 border-b border-slate-200 flex items-center justify-between gap-1 text-[11px]">
             <span className="font-bold text-slate-500 text-[10px] uppercase tracking-wider">Cộng Thuế / Phí:</span>
