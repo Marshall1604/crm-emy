@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 import { WhatsAppButton } from '@/components/whatsapp-button';
+import { FloatingCalculator } from '@/components/floating-calculator';
 
 export const metadata: Metadata = {
   title: 'EMLY CUSTOMER LIST — Tax Office Client Management',
@@ -56,6 +57,7 @@ export default function RootLayout({
           <LanguageProvider>
             <AuthProvider>
               <CrmShell>{children}</CrmShell>
+              <FloatingCalculator />
               <WhatsAppButton />
             </AuthProvider>
           </LanguageProvider>
