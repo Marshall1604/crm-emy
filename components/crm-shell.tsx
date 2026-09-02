@@ -9,7 +9,6 @@ import {
   FileSpreadsheet,
   LogOut,
   Receipt,
-  Search,
   Settings,
   ShieldAlert,
   ShieldCheck,
@@ -224,12 +223,9 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
 
       <section className="route-content">
         <header className="route-topbar">
-          <label>
-            <Search size={15} />
-            <input placeholder="Search clients, returns, EIN..." />
-            <kbd>⌘ K</kbd>
-          </label>
-          <div className="flex items-center gap-2.5">
+          {/* Khu vực trống thoáng đãng dành cho chèn quảng cáo sau này */}
+          <div className="flex-1 min-w-0" id="topbar-ad-slot" />
+          <div className="flex items-center gap-2.5 shrink-0 ml-auto">
             <ThemeSwitcher />
             <LanguageSwitcher />
 
