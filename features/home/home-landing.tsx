@@ -9,15 +9,20 @@ import {
   CheckCircle2,
   ChevronDown,
   DollarSign,
+  Download,
   Globe,
+  HardDrive,
+  Laptop,
   Layers,
   Lock,
   Megaphone,
+  Monitor,
   Moon,
   Send,
   ShieldCheck,
   Sparkles,
   UsersRound,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
@@ -30,6 +35,7 @@ export function HomeLanding() {
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'clients' | 'businesses' | 'pipeline' | 'fees' | 'marketing'>('dashboard');
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   const toggleFaq = (index: number) => {
     setActiveFaq(activeFaq === index ? null : index);
@@ -145,23 +151,26 @@ export function HomeLanding() {
 
           {/* Hero CTAs */}
           <div className="mt-6 sm:mt-9 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-md sm:max-w-none mx-auto">
+            {/* LEFT BUTTON: DÙNG MIỄN PHÍ TRÊN WEB (TRỎ SANG /register) */}
             <Link href="/register" className="w-full sm:w-auto">
               <Button
-                className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-9 text-sm sm:text-base font-extrabold bg-gradient-to-r from-[#092c5c] via-[#104380] to-[#092c5c] hover:shadow-[0_10px_30px_rgba(9,44,92,0.3)] text-white shadow-xl transition-all gap-2 cursor-pointer"
+                className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-9 text-sm sm:text-base font-extrabold bg-gradient-to-r from-[#092c5c] via-[#104380] to-[#092c5c] hover:shadow-[0_10px_30px_rgba(9,44,92,0.35)] text-white shadow-xl transition-all gap-2.5 cursor-pointer"
               >
-                <span>{isVi ? 'Dùng Thử Miễn Phí' : 'Free Trial'}</span>
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>{isVi ? 'Dùng Miễn Phí Trên Web' : 'Use Free On Web'}</span>
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
               </Button>
             </Link>
 
-            <a href="#features" className="w-full sm:w-auto">
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-100 shadow-sm transition-all cursor-pointer"
-              >
-                {isVi ? 'Khám Phá Tính Năng' : 'Explore Features'}
-              </Button>
-            </a>
+            {/* RIGHT BUTTON: TẢI CHO MÁY TÍNH (.EXE / TAURI PC APP) */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDownloadModalOpen(true)}
+              className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-extrabold border-2 border-blue-600/40 dark:border-blue-500/40 bg-white/90 dark:bg-slate-800/90 hover:bg-blue-50/70 dark:hover:bg-slate-750 text-blue-900 dark:text-blue-200 shadow-md hover:shadow-lg transition-all gap-2.5 cursor-pointer"
+            >
+              <Download className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+              <span>{isVi ? 'Tải Cho Máy Tính (PC .exe)' : 'Download For PC (.exe)'}</span>
+            </Button>
           </div>
 
           {/* Guarantee Badges */}
@@ -944,19 +953,29 @@ export function HomeLanding() {
                 : 'Sign up today to streamline your tax preparation client workflows.'}
             </p>
 
-            <div className="mt-6 sm:mt-9 flex justify-center w-full max-w-md sm:max-w-none mx-auto">
+            <div className="mt-6 sm:mt-9 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-md sm:max-w-none mx-auto">
               <Link href="/register" className="w-full sm:w-auto">
                 <Button
-                  className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-10 text-sm sm:text-base font-extrabold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-2xl transition-all gap-2 cursor-pointer"
+                  className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-9 text-sm sm:text-base font-extrabold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-2xl transition-all gap-2.5 cursor-pointer"
                 >
-                  <span>{isVi ? 'Dùng Thử Miễn Phí' : 'Free Trial'}</span>
+                  <span>{isVi ? 'Dùng Miễn Phí Trên Web' : 'Use Free On Web'}</span>
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
               </Link>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDownloadModalOpen(true)}
+                className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-extrabold bg-white/10 hover:bg-white/20 border-white/30 text-white shadow-lg transition-all gap-2.5 cursor-pointer"
+              >
+                <Download className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
+                <span>{isVi ? 'Tải Cho Máy Tính (.exe)' : 'Download For PC (.exe)'}</span>
+              </Button>
             </div>
 
             <p className="mt-3 sm:mt-4 text-[11px] sm:text-xs text-blue-200">
-              {isVi ? 'Không cần thẻ tín dụng • Kích hoạt tức thì 30s' : 'No credit card required • Instant 30-sec activation'}
+              {isVi ? 'Không cần thẻ tín dụng • Tải về cài đặt trong 2 giây' : 'No credit card required • Instant 2-sec download'}
             </p>
           </div>
         </section>
@@ -994,6 +1013,90 @@ export function HomeLanding() {
           </div>
         </div>
       </footer>
+
+      {/* ─── WINDOWS DESKTOP APP DOWNLOAD MODAL (LUXURY WHITE-GRAY THEME) ─── */}
+      {isDownloadModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-[#1E232B] rounded-3xl border border-slate-200/90 dark:border-slate-700 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 text-left">
+            {/* Luxury Header */}
+            <div className="p-6 pb-4 bg-gradient-to-b from-slate-50 via-white to-white dark:from-[#242A34] dark:to-[#1E232B] border-b border-slate-100 dark:border-slate-800 relative">
+              <button
+                type="button"
+                onClick={() => setIsDownloadModalOpen(false)}
+                className="absolute top-5 right-5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-3.5 mb-2">
+                <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 flex items-center justify-center text-[#092c5c] dark:text-blue-400 shadow-xs">
+                  <Laptop className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                    {isVi ? 'Tải EMLY CRM Cho Máy Tính' : 'Download EMLY CRM For PC'}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {isVi ? 'Ứng dụng cài đặt cho Windows 10/11 (64-bit)' : 'Standalone desktop app for Windows 10/11 (64-bit)'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content Body - Clean White/Gray Specs */}
+            <div className="p-6 space-y-5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    {isVi ? 'Tệp Cài Đặt' : 'Installer File'}
+                  </span>
+                  <p className="font-extrabold text-slate-900 dark:text-slate-100 mt-1 text-xs">
+                    Emly-CRM-x64.exe
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    {isVi ? 'Dung Lượng' : 'File Size'}
+                  </span>
+                  <p className="font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 text-xs">
+                    ~8.4 MB (Siêu nhẹ)
+                  </p>
+                </div>
+              </div>
+
+              {/* Download Action */}
+              <div className="pt-1 space-y-3">
+                <a
+                  href="/downloads/Emly-Tax-CRM-Setup-x64.exe"
+                  download="Emly-Tax-CRM-Setup-x64.exe"
+                  className="block w-full"
+                >
+                  <Button
+                    type="button"
+                    className="w-full h-12 bg-gradient-to-r from-[#092c5c] via-[#104380] to-[#092c5c] hover:from-[#072247] hover:to-[#092c5c] text-white font-extrabold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all gap-2 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 text-amber-400" />
+                    <span>{isVi ? 'Bắt Đầu Tải Bản Cài Đặt (.EXE)' : 'Download Windows Installer (.EXE)'}</span>
+                  </Button>
+                </a>
+
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                  <Link
+                    href="/register"
+                    onClick={() => setIsDownloadModalOpen(false)}
+                    className="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>{isVi ? 'Dùng trực tiếp trên Web →' : 'Use directly on Web →'}</span>
+                  </Link>
+
+                  <span className="text-[10px] text-slate-400 font-mono">Windows 64-bit • v1.0.0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
