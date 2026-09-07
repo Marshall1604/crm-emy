@@ -66,12 +66,15 @@ export function FloatingCalculator() {
   const [showHistory, setShowHistory] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Load calculation history from localStorage
+  // Load calculation history from localStorage safely
   useEffect(() => {
     try {
       const saved = localStorage.getItem('crm_calc_history');
       if (saved) {
-        setHistoryList(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setHistoryList(parsed.map((x) => String(x || '')));
+        }
       }
     } catch (e) {}
   }, []);
@@ -510,7 +513,8 @@ export function FloatingCalculator() {
                   <div
                     key={idx}
                     onClick={() => {
-                      const match = item.match(/=\s*([\d,.-]+)$/);
+                      const str = String(item || '');
+                      const match = str.match(/=\s*([\d,.-]+)$/);
                       if (match && match[1]) {
                         setDisplayValue(match[1].replace(/,/g, ''));
                       }
@@ -650,7 +654,8 @@ export function FloatingCalculator() {
                 <button
                   type="button"
                   onClick={() => {
-                    const match = historyList[0].match(/=\s*([\d,.-]+)$/);
+                    const str = String(historyList[0] || '');
+                    const match = str.match(/=\s*([\d,.-]+)$/);
                     if (match && match[1]) {
                       setDisplayValue(match[1].replace(/,/g, ''));
                     }

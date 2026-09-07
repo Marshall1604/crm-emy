@@ -27,23 +27,8 @@ import { LanguageSwitcher } from '@/components/language-switcher';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Button } from '@/components/ui/button';
 
-const workspace = [
-  ['Dashboard', '/dashboard', '▦'],
-  ['Clients', '/clients', '♙'],
-  ['Businesses', '/businesses', '▣'],
-  ['Tax Returns', '/tax-returns', '▤'],
-  ['Fees', '/fees', '$'],
-  ['Insurance services', '/insurance', '🛡'],
-  ['Marketing Mail', '/marketing', '✉'],
-] as const;
-
-const manage = [
-  ['Team', '/team', '♚'],
-  ['Settings', '/settings', '⚙'],
-] as const;
-
 export function CrmShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const router = useRouter();
   const { user, profile, role, subscription, isLifetime, signOut } = useAuth();
   const { t } = useLanguage();
@@ -83,16 +68,13 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
 
   const active = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
-  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Amy Tran';
-  const displayEmail = user?.email || profile?.email || 'admin@crmemy.com';
-  const initials = displayName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+  const displayName = String(profile?.full_name || user?.email?.split('@')[0] || 'Amy Tran');
+  const displayEmail = String(user?.email || profile?.email || 'admin@crmemy.com');
+  const parts = displayName.trim().split(/\s+/).filter(Boolean);
+  const initials = (parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : parts[0]?.[0] || 'A').toUpperCase();
 
-  const isAdmin = role === 'super_admin' || role === 'admin';
+  const userRole = String(role || 'user');
+  const isAdmin = userRole === 'super_admin' || userRole === 'admin';
 
   const planLabel = isLifetime
     ? 'Lifetime License'
@@ -191,7 +173,7 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
             <div className="min-w-0 flex-1">
               <b className="truncate block">{displayName}</b>
               <div className="flex items-center gap-1">
-                <small className="capitalize">{role.replace('_', ' ')}</small>
+                <small className="capitalize">{userRole.replace(/_/g, ' ')}</small>
                 <span className="text-[10px] text-emerald-400 font-bold">· {planLabel}</span>
               </div>
             </div>
@@ -232,7 +214,13 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
 
               <button
                 type="button"
-                onClick={() => signOut()}
+                onClick={() => {
+                  try {
+                    signOut();
+                  } catch (e) {
+                    window.location.href = '/login';
+                  }
+                }}
                 className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-rose-950/60 text-rose-400 font-bold border-0 bg-transparent cursor-pointer text-left"
               >
                 <LogOut className="w-3.5 h-3.5" />
