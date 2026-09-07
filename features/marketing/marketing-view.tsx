@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   AlertCircle,
   BarChart3,
@@ -29,6 +29,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useAuth } from '@/lib/auth/auth-context';
 
 interface ClientAudience {
   id: string;
@@ -44,7 +45,7 @@ interface ClientAudience {
   taxYear: string;
 }
 
-const mockDatabaseAudience: ClientAudience[] = [
+const defaultSampleAudience: ClientAudience[] = [
   {
     id: 'c-1',
     name: 'David & Lisa Harrison',
@@ -285,13 +286,61 @@ const mockCampaignLogs: CampaignLog[] = [
 ];
 
 export function MarketingView() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'compose' | 'history' | 'integration'>('compose');
+
+  // Load Audience dynamically from user's clients and businesses
+  const [audienceList, setAudienceList] = useState<ClientAudience[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const clientKey = user?.id ? `crm_emy_clients_${user.id}` : 'crm_emy_clients_list';
+        const bizKey = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
+        const savedClientsStr = localStorage.getItem(clientKey);
+        const savedBizStr = localStorage.getItem(bizKey);
+
+        const clients = savedClientsStr ? JSON.parse(savedClientsStr) : [];
+        const businesses = savedBizStr ? JSON.parse(savedBizStr) : [];
+
+        const combined: ClientAudience[] = [
+          ...clients.filter((c: any) => c.email).map((c: any) => ({
+            id: `c-${c.id}`,
+            name: c.name,
+            email: c.email,
+            phone: c.phone || '',
+            type: 'individual' as const,
+            returnType: c.returnType || '1040',
+            status: (c.status === 'Missing Information' ? 'Missing Docs' : c.status || 'In Review') as ClientAudience['status'],
+            balance: Number(c.balance || 0),
+            assignedStaff: c.staff || 'Tax Preparer',
+            taxYear: c.year || '2025',
+          })),
+          ...businesses.filter((b: any) => b.email).map((b: any) => ({
+            id: `b-${b.id}`,
+            name: b.name,
+            businessName: b.name,
+            email: b.email,
+            phone: b.phone || '',
+            type: 'business' as const,
+            returnType: b.returnType || '1065',
+            status: (b.status === 'Missing Information' ? 'Missing Docs' : b.status || 'In Review') as ClientAudience['status'],
+            balance: Number(b.balance || 0),
+            assignedStaff: b.preparer || 'Tax Preparer',
+            taxYear: b.year || '2025',
+          })),
+        ];
+
+        if (combined.length > 0) return combined;
+        if (user) return [];
+      } catch (e) {}
+    }
+    return user ? [] : defaultSampleAudience;
+  });
 
   // Segmentation Filters
   const [selectedSegment, setSelectedSegment] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedClientIds, setSelectedClientIds] = useState<string[]>(
-    mockDatabaseAudience.map((c) => c.id)
+  const [selectedClientIds, setSelectedClientIds] = useState<string[]>(() =>
+    audienceList.map((c) => c.id)
   );
 
   // Template & Composer State
@@ -302,6 +351,79 @@ export function MarketingView() {
   );
   const [emailBody, setEmailBody] = useState(prebuiltTemplates[0].bodyTemplate);
 
+  // Campaign History State
+  const [campaignHistory, setCampaignHistory] = useState<CampaignLog[]>(() => {
+    if (typeof window !== 'undefined' && user) {
+      try {
+        const saved = localStorage.getItem(`crm_emy_campaigns_${user.id}`);
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return user ? [] : mockCampaignLogs;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const clientKey = user?.id ? `crm_emy_clients_${user.id}` : 'crm_emy_clients_list';
+        const bizKey = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
+        const savedClientsStr = localStorage.getItem(clientKey);
+        const savedBizStr = localStorage.getItem(bizKey);
+
+        const clients = savedClientsStr ? JSON.parse(savedClientsStr) : [];
+        const businesses = savedBizStr ? JSON.parse(savedBizStr) : [];
+
+        const combined: ClientAudience[] = [
+          ...clients.filter((c: any) => c.email).map((c: any) => ({
+            id: `c-${c.id}`,
+            name: c.name,
+            email: c.email,
+            phone: c.phone || '',
+            type: 'individual' as const,
+            returnType: c.returnType || '1040',
+            status: (c.status === 'Missing Information' ? 'Missing Docs' : c.status || 'In Review') as ClientAudience['status'],
+            balance: Number(c.balance || 0),
+            assignedStaff: c.staff || 'Tax Preparer',
+            taxYear: c.year || '2025',
+          })),
+          ...businesses.filter((b: any) => b.email).map((b: any) => ({
+            id: `b-${b.id}`,
+            name: b.name,
+            businessName: b.name,
+            email: b.email,
+            phone: b.phone || '',
+            type: 'business' as const,
+            returnType: b.returnType || '1065',
+            status: (b.status === 'Missing Information' ? 'Missing Docs' : b.status || 'In Review') as ClientAudience['status'],
+            balance: Number(b.balance || 0),
+            assignedStaff: b.preparer || 'Tax Preparer',
+            taxYear: b.year || '2025',
+          })),
+        ];
+
+        if (combined.length > 0) {
+          setAudienceList(combined);
+          setSelectedClientIds(combined.map((c) => c.id));
+        } else if (user) {
+          setAudienceList([]);
+          setSelectedClientIds([]);
+        } else {
+          setAudienceList(defaultSampleAudience);
+          setSelectedClientIds(defaultSampleAudience.map((c) => c.id));
+        }
+
+        const campSaved = localStorage.getItem(`crm_emy_campaigns_${user?.id}`);
+        if (campSaved) {
+          setCampaignHistory(JSON.parse(campSaved));
+        } else if (user) {
+          setCampaignHistory([]);
+        } else {
+          setCampaignHistory(mockCampaignLogs);
+        }
+      } catch (e) {}
+    }
+  }, [user]);
+
   // Test Email State
   const [testEmailRecipient, setTestEmailRecipient] = useState('');
   const [testEmailLoading, setTestEmailLoading] = useState(false);
@@ -309,6 +431,93 @@ export function MarketingView() {
     success: boolean;
     message: string;
   } | null>(null);
+
+  // Sending progress modal
+  const [isSending, setIsSending] = useState(false);
+  const [sendProgress, setSendProgress] = useState(0);
+  const [sendSuccessModal, setSendSuccessModal] = useState(false);
+
+  // Filter Audience List based on segment
+  const filteredAudience = useMemo(() => {
+    return audienceList.filter((c) => {
+      const matchesSearch =
+        !searchQuery ||
+        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.businessName && c.businessName.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      let matchesSegment = true;
+      if (selectedSegment === 'individual') matchesSegment = c.type === 'individual';
+      if (selectedSegment === 'business') matchesSegment = c.type === 'business';
+      if (selectedSegment === 'balance_due') matchesSegment = c.balance > 0;
+      if (selectedSegment === 'missing_docs') matchesSegment = c.status === 'Missing Docs';
+      if (selectedSegment === 'ready_to_file') matchesSegment = c.status === 'Ready to File';
+      if (selectedSegment === 'completed') matchesSegment = c.status === 'Completed';
+
+      return matchesSearch && matchesSegment;
+    });
+  }, [audienceList, selectedSegment, searchQuery]);
+
+  // Update selected IDs when segment changes
+  const handleSelectSegment = (segmentKey: string) => {
+    setSelectedSegment(segmentKey);
+    let matched = audienceList;
+    if (segmentKey === 'individual') matched = audienceList.filter((c) => c.type === 'individual');
+    if (segmentKey === 'business') matched = audienceList.filter((c) => c.type === 'business');
+    if (segmentKey === 'balance_due') matched = audienceList.filter((c) => c.balance > 0);
+    if (segmentKey === 'missing_docs') matched = audienceList.filter((c) => c.status === 'Missing Docs');
+    if (segmentKey === 'ready_to_file') matched = audienceList.filter((c) => c.status === 'Ready to File');
+    if (segmentKey === 'completed') matched = audienceList.filter((c) => c.status === 'Completed');
+    setSelectedClientIds(matched.map((c) => c.id));
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedClientIds.length === filteredAudience.length) {
+      setSelectedClientIds([]);
+    } else {
+      setSelectedClientIds(filteredAudience.map((c) => c.id));
+    }
+  };
+
+  const toggleClientSelection = (id: string) => {
+    setSelectedClientIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  // Switch Template
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    const tmpl = prebuiltTemplates.find((t) => t.id === templateId);
+    if (tmpl) {
+      setEmailSubject(tmpl.defaultSubject);
+      setEmailBody(tmpl.bodyTemplate);
+      setCampaignName(`${tmpl.title} Campaign`);
+    }
+  };
+
+  // Preview data rendering (Sample first selected client)
+  const sampleRecipient = useMemo(() => {
+    const found = audienceList.find((c) => selectedClientIds.includes(c.id));
+    return found || audienceList[0] || null;
+  }, [audienceList, selectedClientIds]);
+
+  const renderedPreviewBody = sampleRecipient
+    ? emailBody
+        .replace(/{{client_name}}/g, sampleRecipient.name)
+        .replace(/{{tax_year}}/g, sampleRecipient.taxYear)
+        .replace(/{{assigned_staff}}/g, sampleRecipient.assignedStaff)
+        .replace(/{{balance}}/g, sampleRecipient.balance.toLocaleString())
+        .replace(/{{return_type}}/g, sampleRecipient.returnType)
+        .replace(/{{return_status}}/g, sampleRecipient.status)
+    : emailBody;
+
+  const renderedPreviewSubject = sampleRecipient
+    ? emailSubject
+        .replace(/{{client_name}}/g, sampleRecipient.name)
+        .replace(/{{tax_year}}/g, sampleRecipient.taxYear)
+        .replace(/{{balance}}/g, sampleRecipient.balance.toLocaleString())
+    : emailSubject;
 
   // Test Email Handler
   const handleSendTestEmail = async () => {
@@ -348,94 +557,6 @@ export function MarketingView() {
     }
   };
 
-  // Sending progress modal
-  const [isSending, setIsSending] = useState(false);
-  const [sendProgress, setSendProgress] = useState(0);
-  const [sendSuccessModal, setSendSuccessModal] = useState(false);
-  const [campaignHistory, setCampaignHistory] = useState<CampaignLog[]>(mockCampaignLogs);
-
-  // Filter Audience List based on segment
-  const filteredAudience = useMemo(() => {
-    return mockDatabaseAudience.filter((c) => {
-      const matchesSearch =
-        !searchQuery ||
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (c.businessName && c.businessName.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      let matchesSegment = true;
-      if (selectedSegment === 'individual') matchesSegment = c.type === 'individual';
-      if (selectedSegment === 'business') matchesSegment = c.type === 'business';
-      if (selectedSegment === 'balance_due') matchesSegment = c.balance > 0;
-      if (selectedSegment === 'missing_docs') matchesSegment = c.status === 'Missing Docs';
-      if (selectedSegment === 'ready_to_file') matchesSegment = c.status === 'Ready to File';
-      if (selectedSegment === 'completed') matchesSegment = c.status === 'Completed';
-
-      return matchesSearch && matchesSegment;
-    });
-  }, [selectedSegment, searchQuery]);
-
-  // Update selected IDs when segment changes
-  const handleSelectSegment = (segmentKey: string) => {
-    setSelectedSegment(segmentKey);
-    let matched = mockDatabaseAudience;
-    if (segmentKey === 'individual') matched = mockDatabaseAudience.filter((c) => c.type === 'individual');
-    if (segmentKey === 'business') matched = mockDatabaseAudience.filter((c) => c.type === 'business');
-    if (segmentKey === 'balance_due') matched = mockDatabaseAudience.filter((c) => c.balance > 0);
-    if (segmentKey === 'missing_docs') matched = mockDatabaseAudience.filter((c) => c.status === 'Missing Docs');
-    if (segmentKey === 'ready_to_file') matched = mockDatabaseAudience.filter((c) => c.status === 'Ready to File');
-    if (segmentKey === 'completed') matched = mockDatabaseAudience.filter((c) => c.status === 'Completed');
-    setSelectedClientIds(matched.map((c) => c.id));
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedClientIds.length === filteredAudience.length) {
-      setSelectedClientIds([]);
-    } else {
-      setSelectedClientIds(filteredAudience.map((c) => c.id));
-    }
-  };
-
-  const toggleClientSelection = (id: string) => {
-    setSelectedClientIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
-  // Switch Template
-  const handleTemplateChange = (templateId: string) => {
-    setSelectedTemplateId(templateId);
-    const tmpl = prebuiltTemplates.find((t) => t.id === templateId);
-    if (tmpl) {
-      setEmailSubject(tmpl.defaultSubject);
-      setEmailBody(tmpl.bodyTemplate);
-      setCampaignName(`${tmpl.title} Campaign`);
-    }
-  };
-
-  // Preview data rendering (Sample first selected client)
-  const sampleRecipient = useMemo(() => {
-    const found = mockDatabaseAudience.find((c) => selectedClientIds.includes(c.id));
-    return found || mockDatabaseAudience[0];
-  }, [selectedClientIds]);
-
-  const renderedPreviewBody = sampleRecipient
-    ? emailBody
-        .replace(/{{client_name}}/g, sampleRecipient.name)
-        .replace(/{{tax_year}}/g, sampleRecipient.taxYear)
-        .replace(/{{assigned_staff}}/g, sampleRecipient.assignedStaff)
-        .replace(/{{balance}}/g, sampleRecipient.balance.toLocaleString())
-        .replace(/{{return_type}}/g, sampleRecipient.returnType)
-        .replace(/{{return_status}}/g, sampleRecipient.status)
-    : emailBody;
-
-  const renderedPreviewSubject = sampleRecipient
-    ? emailSubject
-        .replace(/{{client_name}}/g, sampleRecipient.name)
-        .replace(/{{tax_year}}/g, sampleRecipient.taxYear)
-        .replace(/{{balance}}/g, sampleRecipient.balance.toLocaleString())
-    : emailSubject;
-
   // Bulk Send Execution
   const handleSendBulkCampaign = async () => {
     if (selectedClientIds.length === 0) return;
@@ -443,7 +564,7 @@ export function MarketingView() {
     setSendProgress(15);
 
     try {
-      const selectedAudience = mockDatabaseAudience.filter((c) => selectedClientIds.includes(c.id));
+      const selectedAudience = audienceList.filter((c) => selectedClientIds.includes(c.id));
       const recipientPayload = selectedAudience.map((c) => ({
         email: c.email,
         personalizedSubject: emailSubject
@@ -486,7 +607,13 @@ export function MarketingView() {
         clickRate: '0.0%',
         status: 'Delivered',
       };
-      setCampaignHistory([newLog, ...campaignHistory]);
+      const updatedHistory = [newLog, ...campaignHistory];
+      setCampaignHistory(updatedHistory);
+      if (typeof window !== 'undefined' && user) {
+        try {
+          localStorage.setItem(`crm_emy_campaigns_${user.id}`, JSON.stringify(updatedHistory));
+        } catch {}
+      }
     } catch {
       setIsSending(false);
       setSendSuccessModal(true);
@@ -501,7 +628,7 @@ export function MarketingView() {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">Growth & Marketing Suite</span>
             <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200">
-              {mockDatabaseAudience.length} Verified Client Emails
+              {audienceList.length} Verified Client Emails
             </span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
@@ -555,7 +682,7 @@ export function MarketingView() {
             <span className="text-xs font-bold text-slate-500 uppercase">Tệp Khách Hàng Database</span>
             <Users className="w-4 h-4 text-blue-600" />
           </div>
-          <div className="text-3xl font-black text-slate-900 mt-2">{mockDatabaseAudience.length}</div>
+          <div className="text-3xl font-black text-slate-900 mt-2">{audienceList.length}</div>
           <p className="text-xs text-slate-500 mt-1">100% email đã được xác minh</p>
         </div>
 
@@ -564,8 +691,12 @@ export function MarketingView() {
             <span className="text-xs font-bold text-slate-500 uppercase">Email Đã Gửi Tháng Này</span>
             <Send className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-3xl font-black text-slate-900 mt-2">13</div>
-          <p className="text-xs text-emerald-700 font-semibold mt-1">3 chiến dịch gửi thành công</p>
+          <div className="text-3xl font-black text-slate-900 mt-2">
+            {campaignHistory.reduce((s, c) => s + c.recipientCount, 0)}
+          </div>
+          <p className="text-xs text-emerald-700 font-semibold mt-1">
+            {campaignHistory.length} chiến dịch gửi thành công
+          </p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
@@ -573,8 +704,12 @@ export function MarketingView() {
             <span className="text-xs font-bold text-slate-500 uppercase">Tỷ Lệ Mở Email (Open Rate)</span>
             <TrendingUp className="w-4 h-4 text-purple-600" />
           </div>
-          <div className="text-3xl font-black text-purple-950 mt-2">72.8%</div>
-          <p className="text-xs text-purple-700 font-semibold mt-1">Cao hơn mức chuẩn ngành (22%)</p>
+          <div className="text-3xl font-black text-purple-950 mt-2">
+            {campaignHistory.length > 0 ? '72.8%' : '0.0%'}
+          </div>
+          <p className="text-xs text-purple-700 font-semibold mt-1">
+            {campaignHistory.length > 0 ? 'Cao hơn mức chuẩn ngành (22%)' : 'Chưa có dữ liệu chiến dịch'}
+          </p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
@@ -582,8 +717,12 @@ export function MarketingView() {
             <span className="text-xs font-bold text-slate-500 uppercase">Tỷ Lệ Nhấp (Click Rate)</span>
             <BarChart3 className="w-4 h-4 text-amber-600" />
           </div>
-          <div className="text-3xl font-black text-slate-900 mt-2">35.4%</div>
-          <p className="text-xs text-amber-700 font-semibold mt-1">Khách mở link nộp giấy tờ</p>
+          <div className="text-3xl font-black text-slate-900 mt-2">
+            {campaignHistory.length > 0 ? '35.4%' : '0.0%'}
+          </div>
+          <p className="text-xs text-amber-700 font-semibold mt-1">
+            {campaignHistory.length > 0 ? 'Khách mở link nộp giấy tờ' : 'Chưa có lượt nhấp'}
+          </p>
         </div>
       </div>
 
@@ -609,12 +748,12 @@ export function MarketingView() {
               {/* Segment Buttons */}
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {[
-                  { key: 'all', label: 'Tất Cả Khách Hàng', count: mockDatabaseAudience.length, icon: Users },
-                  { key: 'individual', label: 'Cá Nhân (Form 1040)', count: mockDatabaseAudience.filter((c) => c.type === 'individual').length, icon: FileText },
-                  { key: 'business', label: 'Doanh Nghiệp (Corp/LLC)', count: mockDatabaseAudience.filter((c) => c.type === 'business').length, icon: Layers },
-                  { key: 'balance_due', label: 'Còn Nợ Phí (> $0)', count: mockDatabaseAudience.filter((c) => c.balance > 0).length, icon: DollarSign },
-                  { key: 'missing_docs', label: 'Thiếu Giấy Tờ', count: mockDatabaseAudience.filter((c) => c.status === 'Missing Docs').length, icon: AlertCircle },
-                  { key: 'ready_to_file', label: 'Chuẩn Bị Nộp (Ready)', count: mockDatabaseAudience.filter((c) => c.status === 'Ready to File').length, icon: FileCheck },
+                  { key: 'all', label: 'Tất Cả Khách Hàng', count: audienceList.length, icon: Users },
+                  { key: 'individual', label: 'Cá Nhân (Form 1040)', count: audienceList.filter((c) => c.type === 'individual').length, icon: FileText },
+                  { key: 'business', label: 'Doanh Nghiệp (Corp/LLC)', count: audienceList.filter((c) => c.type === 'business').length, icon: Layers },
+                  { key: 'balance_due', label: 'Còn Nợ Phí (> $0)', count: audienceList.filter((c) => c.balance > 0).length, icon: DollarSign },
+                  { key: 'missing_docs', label: 'Thiếu Giấy Tờ', count: audienceList.filter((c) => c.status === 'Missing Docs').length, icon: AlertCircle },
+                  { key: 'ready_to_file', label: 'Chuẩn Bị Nộp (Ready)', count: audienceList.filter((c) => c.status === 'Ready to File').length, icon: FileCheck },
                 ].map((s) => (
                   <button
                     key={s.key}
@@ -652,56 +791,64 @@ export function MarketingView() {
               <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">
                 <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 px-2 py-1">
                   <span>DANH SÁCH NGƯỜI NHẬN ({filteredAudience.length})</span>
-                  <button
-                    onClick={toggleSelectAll}
-                    className="text-blue-700 hover:underline cursor-pointer"
-                  >
-                    {selectedClientIds.length === filteredAudience.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
-                  </button>
+                  {filteredAudience.length > 0 && (
+                    <button
+                      onClick={toggleSelectAll}
+                      className="text-blue-700 hover:underline cursor-pointer"
+                    >
+                      {selectedClientIds.length === filteredAudience.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                    </button>
+                  )}
                 </div>
 
-                {filteredAudience.map((client) => {
-                  const isSelected = selectedClientIds.includes(client.id);
-                  return (
-                    <label
-                      key={client.id}
-                      onClick={() => toggleClientSelection(client.id)}
-                      className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 text-xs transition-all cursor-pointer ${
-                        isSelected
-                          ? 'border-blue-300 bg-blue-50/40 text-slate-900'
-                          : 'border-slate-100 bg-white text-slate-500 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {}}
-                          className="rounded text-blue-600 w-4 h-4 cursor-pointer"
-                        />
-                        <div className="truncate">
-                          <b className="font-bold text-slate-900 block truncate text-[12px]">
-                            {client.businessName || client.name}
-                          </b>
-                          <span className="text-[11px] text-slate-500 font-mono truncate block">
-                            {client.email}
-                          </span>
+                {filteredAudience.length === 0 ? (
+                  <div className="p-4 rounded-xl border border-dashed border-slate-200 text-center text-slate-400 text-xs">
+                    Chưa có email khách hàng nào trong danh sách.
+                  </div>
+                ) : (
+                  filteredAudience.map((client) => {
+                    const isSelected = selectedClientIds.includes(client.id);
+                    return (
+                      <label
+                        key={client.id}
+                        onClick={() => toggleClientSelection(client.id)}
+                        className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 text-xs transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-blue-300 bg-blue-50/40 text-slate-900'
+                            : 'border-slate-100 bg-white text-slate-500 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}}
+                            className="rounded text-blue-600 w-4 h-4 cursor-pointer"
+                          />
+                          <div className="truncate">
+                            <b className="font-bold text-slate-900 block truncate text-[12px]">
+                              {client.businessName || client.name}
+                            </b>
+                            <span className="text-[11px] text-slate-500 font-mono truncate block">
+                              {client.email}
+                            </span>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="text-right shrink-0 text-[11px]">
-                        <span className="inline-flex px-1.5 py-0.5 rounded bg-slate-100 font-bold text-slate-700">
-                          {client.returnType}
-                        </span>
-                        {client.balance > 0 && (
-                          <span className="block text-rose-600 font-bold text-[10px] mt-0.5">
-                            Nợ: ${client.balance}
+                        <div className="text-right shrink-0 text-[11px]">
+                          <span className="inline-flex px-1.5 py-0.5 rounded bg-slate-100 font-bold text-slate-700">
+                            {client.returnType}
                           </span>
-                        )}
-                      </div>
-                    </label>
-                  );
-                })}
+                          {client.balance > 0 && (
+                            <span className="block text-rose-600 font-bold text-[10px] mt-0.5">
+                              Nợ: ${client.balance}
+                            </span>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })
+                )}
               </div>
             </div>
 
