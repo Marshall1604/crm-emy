@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import React from 'react';
 
 export default function GlobalError({
   error,
@@ -9,90 +9,129 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    // Use sessionStorage to prevent infinite reload loops.
-    // Allow at most 2 automatic reloads per session.
-    try {
-      const key = 'global_error_reload_count';
-      const count = parseInt(sessionStorage.getItem(key) || '0', 10);
-      if (count < 2) {
-        sessionStorage.setItem(key, String(count + 1));
-        // Small delay so the browser doesn't flag as an immediate loop
-        setTimeout(() => {
-          window.location.reload();
-        }, 300);
-        return;
-      }
-    } catch (_) {
-      // sessionStorage not available — just reload once
-      window.location.reload();
-      return;
-    }
-
-    console.error('[Global Error — max reloads reached]', error);
-  }, [error]);
-
   return (
-    <html lang="en">
-      <body>
+    <html lang="vi">
+      <head>
+        <title>CRM Emy — Lỗi tải trang</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
+      <body
+        style={{
+          margin: 0,
+          padding: 0,
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          background: '#0f172a',
+          color: '#f8fafc',
+          display: 'flex',
+          minHeight: '100vh',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <div
           style={{
-            display: 'flex',
-            minHeight: '100vh',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: 'sans-serif',
-            background: '#f9fafb',
+            maxWidth: '480px',
+            width: '90%',
+            padding: '2.5rem 2rem',
+            background: '#1e293b',
+            borderRadius: '16px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            textAlign: 'center',
+            border: '1px solid #334155',
           }}
         >
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <h2
-              style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}
-            >
-              Đang tải lại trang...
-            </h2>
-            <p
-              style={{
-                color: '#6b7280',
-                marginBottom: '1.5rem',
-                fontSize: '0.875rem',
-              }}
-            >
-              Vui lòng chờ trong giây lát.
-            </p>
+          <div
+            style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '14px',
+              background: 'rgba(239, 68, 68, 0.15)',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem',
+              fontSize: '28px',
+              fontWeight: 'bold',
+            }}
+          >
+            !
+          </div>
+
+          <h1
+            style={{
+              fontSize: '1.35rem',
+              fontWeight: 800,
+              margin: '0 0 0.5rem',
+              color: '#ffffff',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Không thể tải trang lúc này
+          </h1>
+
+          <p
+            style={{
+              fontSize: '0.875rem',
+              color: '#94a3b8',
+              lineHeight: 1.6,
+              margin: '0 0 1.75rem',
+            }}
+          >
+            Đã xảy ra sự cố khi kết nối hoặc đồng bộ dữ liệu. Vui lòng bấm tải lại hoặc quay về trang chủ.
+          </p>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: '0.75rem',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
             <button
               onClick={() => {
                 try {
-                  sessionStorage.removeItem('global_error_reload_count');
+                  sessionStorage.clear();
                 } catch (_) {}
                 window.location.reload();
               }}
               style={{
-                padding: '0.5rem 1rem',
-                background: '#3b82f6',
-                color: '#fff',
+                padding: '0.65rem 1.25rem',
+                background: '#2563eb',
+                color: '#ffffff',
                 border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
+                borderRadius: '10px',
                 fontSize: '0.875rem',
-                marginRight: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)',
+                transition: 'background 0.2s',
               }}
             >
-              Tải lại ngay
+              🔄 Tải lại trang
             </button>
+
             <button
-              onClick={reset}
+              onClick={() => {
+                try {
+                  sessionStorage.clear();
+                } catch (_) {}
+                window.location.href = '/dashboard';
+              }}
               style={{
-                padding: '0.5rem 1rem',
+                padding: '0.65rem 1.25rem',
                 background: 'transparent',
-                color: '#374151',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
+                color: '#cbd5e1',
+                border: '1px solid #475569',
+                borderRadius: '10px',
                 fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
               }}
             >
-              Thử lại
+              Vào Dashboard
             </button>
           </div>
         </div>

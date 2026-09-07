@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import Link from 'next/link';
 import {
   Users,
@@ -145,6 +145,23 @@ const initialReturns: DashboardReturn[] = [
   },
 ];
 
+function safeInitials(name?: string | null): string {
+  if (!name || typeof name !== 'string') return '??';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '??';
+  if (parts.length === 1) return (parts[0][0] || '?').toUpperCase();
+  return ((parts[0][0] || '') + (parts[parts.length - 1][0] || '')).toUpperCase();
+}
+
+function safeNumber(val: any): number {
+  const num = Number(val);
+  return isNaN(num) ? 0 : num;
+}
+
+function formatCurrency(val: any): string {
+  return safeNumber(val).toLocaleString('en-US');
+}
+
 export function DashboardView() {
   const { user, role } = useAuth();
   const { t, language } = useLanguage();
@@ -166,33 +183,33 @@ export function DashboardView() {
         const businesses = savedBizStr ? JSON.parse(savedBizStr) : [];
 
         const combined: DashboardReturn[] = [
-          ...businesses.map((b: any) => ({
-            id: `biz-${b.id}`,
-            name: b.name,
+          ...(Array.isArray(businesses) ? businesses : []).map((b: any) => ({
+            id: `biz-${b?.id || Math.random().toString()}`,
+            name: String(b?.name || 'Unnamed Business'),
             type: 'Business' as const,
-            form: b.returnType || 'Form 1065',
-            year: b.year || '2025',
-            status: (b.status || 'Waiting Documents') as DashboardReturn['status'],
-            preparer: b.preparer || 'Amy Tran',
-            preparerInitials: (b.preparer || 'AT').split(' ').map((n: string) => n[0]).join(''),
-            fee: Number(b.fee || 0),
-            balance: Number(b.balance || 0),
-            link: `/businesses/${b.id}`,
-            updated: b.updated || 'Recently',
+            form: String(b?.returnType || 'Form 1065'),
+            year: String(b?.year || '2025'),
+            status: (b?.status || 'Waiting Documents') as DashboardReturn['status'],
+            preparer: String(b?.preparer || 'Amy Tran'),
+            preparerInitials: safeInitials(b?.preparer || 'Amy Tran'),
+            fee: safeNumber(b?.fee),
+            balance: safeNumber(b?.balance),
+            link: `/businesses/${b?.id || ''}`,
+            updated: String(b?.updated || 'Recently'),
           })),
-          ...clients.map((c: any) => ({
-            id: `cl-${c.id}`,
-            name: c.name,
+          ...(Array.isArray(clients) ? clients : []).map((c: any) => ({
+            id: `cl-${c?.id || Math.random().toString()}`,
+            name: String(c?.name || 'Unnamed Client'),
             type: 'Individual' as const,
-            form: c.returnType || 'Form 1040',
-            year: c.year || '2025',
-            status: (c.status || 'Waiting Documents') as DashboardReturn['status'],
-            preparer: c.staff || 'Amy Tran',
-            preparerInitials: (c.staff || 'AT').split(' ').map((n: string) => n[0]).join(''),
-            fee: Number(c.fee || 0),
-            balance: Number(c.balance || 0),
-            link: `/clients/${c.id}`,
-            updated: c.updated || 'Recently',
+            form: String(c?.returnType || 'Form 1040'),
+            year: String(c?.year || '2025'),
+            status: (c?.status || 'Waiting Documents') as DashboardReturn['status'],
+            preparer: String(c?.staff || 'Amy Tran'),
+            preparerInitials: safeInitials(c?.staff || 'Amy Tran'),
+            fee: safeNumber(c?.fee),
+            balance: safeNumber(c?.balance),
+            link: `/clients/${c?.id || ''}`,
+            updated: String(c?.updated || 'Recently'),
           })),
         ];
 
@@ -208,7 +225,10 @@ export function DashboardView() {
       try {
         const clientKey = user?.id ? `crm_emy_clients_${user.id}` : 'crm_emy_clients_list';
         const saved = localStorage.getItem(clientKey);
-        if (saved) return JSON.parse(saved).length;
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return Array.isArray(parsed) ? parsed.length : 0;
+        }
       } catch (e) {}
     }
     return user ? 0 : 8;
@@ -219,7 +239,10 @@ export function DashboardView() {
       try {
         const bizKey = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
         const saved = localStorage.getItem(bizKey);
-        if (saved) return JSON.parse(saved).length;
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return Array.isArray(parsed) ? parsed.length : 0;
+        }
       } catch (e) {}
     }
     return user ? 0 : 5;
@@ -236,37 +259,40 @@ export function DashboardView() {
         const clients = savedClientsStr ? JSON.parse(savedClientsStr) : [];
         const businesses = savedBizStr ? JSON.parse(savedBizStr) : [];
 
-        setTotalClientsCount(user ? clients.length : (clients.length || 8));
-        setTotalBizCount(user ? businesses.length : (businesses.length || 5));
+        const cLen = Array.isArray(clients) ? clients.length : 0;
+        const bLen = Array.isArray(businesses) ? businesses.length : 0;
+
+        setTotalClientsCount(user ? cLen : (cLen || 8));
+        setTotalBizCount(user ? bLen : (bLen || 5));
 
         const combined: DashboardReturn[] = [
-          ...businesses.map((b: any) => ({
-            id: `biz-${b.id}`,
-            name: b.name,
+          ...(Array.isArray(businesses) ? businesses : []).map((b: any) => ({
+            id: `biz-${b?.id || Math.random().toString()}`,
+            name: String(b?.name || 'Unnamed Business'),
             type: 'Business' as const,
-            form: b.returnType || 'Form 1065',
-            year: b.year || '2025',
-            status: (b.status || 'Waiting Documents') as DashboardReturn['status'],
-            preparer: b.preparer || 'Amy Tran',
-            preparerInitials: (b.preparer || 'AT').split(' ').map((n: string) => n[0]).join(''),
-            fee: Number(b.fee || 0),
-            balance: Number(b.balance || 0),
-            link: `/businesses/${b.id}`,
-            updated: b.updated || 'Recently',
+            form: String(b?.returnType || 'Form 1065'),
+            year: String(b?.year || '2025'),
+            status: (b?.status || 'Waiting Documents') as DashboardReturn['status'],
+            preparer: String(b?.preparer || 'Amy Tran'),
+            preparerInitials: safeInitials(b?.preparer || 'Amy Tran'),
+            fee: safeNumber(b?.fee),
+            balance: safeNumber(b?.balance),
+            link: `/businesses/${b?.id || ''}`,
+            updated: String(b?.updated || 'Recently'),
           })),
-          ...clients.map((c: any) => ({
-            id: `cl-${c.id}`,
-            name: c.name,
+          ...(Array.isArray(clients) ? clients : []).map((c: any) => ({
+            id: `cl-${c?.id || Math.random().toString()}`,
+            name: String(c?.name || 'Unnamed Client'),
             type: 'Individual' as const,
-            form: c.returnType || 'Form 1040',
-            year: c.year || '2025',
-            status: (c.status || 'Waiting Documents') as DashboardReturn['status'],
-            preparer: c.staff || 'Amy Tran',
-            preparerInitials: (c.staff || 'AT').split(' ').map((n: string) => n[0]).join(''),
-            fee: Number(c.fee || 0),
-            balance: Number(c.balance || 0),
-            link: `/clients/${c.id}`,
-            updated: c.updated || 'Recently',
+            form: String(c?.returnType || 'Form 1040'),
+            year: String(c?.year || '2025'),
+            status: (c?.status || 'Waiting Documents') as DashboardReturn['status'],
+            preparer: String(c?.staff || 'Amy Tran'),
+            preparerInitials: safeInitials(c?.staff || 'Amy Tran'),
+            fee: safeNumber(c?.fee),
+            balance: safeNumber(c?.balance),
+            link: `/clients/${c?.id || ''}`,
+            updated: String(c?.updated || 'Recently'),
           })),
         ];
 
@@ -295,12 +321,19 @@ export function DashboardView() {
   };
 
   const filteredReturns = useMemo(() => {
-    return activeReturns.filter((item) => {
+    const q = (search || '').toLowerCase().trim();
+    return (activeReturns || []).filter((item) => {
+      if (!item) return false;
+      const itemName = String(item.name || '').toLowerCase();
+      const itemPrep = String(item.preparer || '').toLowerCase();
+      const itemForm = String(item.form || '').toLowerCase();
+
       const matchesSearch =
-        search === '' ||
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.preparer.toLowerCase().includes(search.toLowerCase()) ||
-        item.form.toLowerCase().includes(search.toLowerCase());
+        q === '' ||
+        itemName.includes(q) ||
+        itemPrep.includes(q) ||
+        itemForm.includes(q);
+
       const matchesStatus = selectedStatus === 'ALL' || item.status === selectedStatus;
       const matchesType = selectedType === 'ALL' || item.type === selectedType;
       return matchesSearch && matchesStatus && matchesType;
@@ -308,33 +341,38 @@ export function DashboardView() {
   }, [activeReturns, search, selectedStatus, selectedType]);
 
   const totalClients = totalClientsCount + totalBizCount;
-  const inProgressReturns = activeReturns.filter((r) => r.status !== 'Completed').length;
-  const completedReturns = activeReturns.filter((r) => r.status === 'Completed').length;
-  const totalRevenue = activeReturns.reduce((sum, r) => sum + r.fee, 0);
-  const totalBalance = activeReturns.reduce((sum, r) => sum + r.balance, 0);
+  const inProgressReturns = (activeReturns || []).filter((r) => r?.status !== 'Completed').length;
+  const completedReturns = (activeReturns || []).filter((r) => r?.status === 'Completed').length;
+  const totalRevenue = (activeReturns || []).reduce((sum, r) => sum + safeNumber(r?.fee), 0);
+  const totalBalance = (activeReturns || []).reduce((sum, r) => sum + safeNumber(r?.balance), 0);
 
   const statusCounts = {
-    'Waiting Documents': activeReturns.filter((r) => r.status === 'Waiting Documents').length,
-    'In Preparation': activeReturns.filter((r) => r.status === 'In Preparation').length,
-    Review: activeReturns.filter((r) => r.status === 'Review').length,
-    'Ready to File': activeReturns.filter((r) => r.status === 'Ready to File').length,
-    Completed: activeReturns.filter((r) => r.status === 'Completed').length,
+    'Waiting Documents': (activeReturns || []).filter((r) => r?.status === 'Waiting Documents').length,
+    'In Preparation': (activeReturns || []).filter((r) => r?.status === 'In Preparation').length,
+    Review: (activeReturns || []).filter((r) => r?.status === 'Review').length,
+    'Ready to File': (activeReturns || []).filter((r) => r?.status === 'Ready to File').length,
+    Completed: (activeReturns || []).filter((r) => r?.status === 'Completed').length,
   };
 
   const { members } = useMemberStore();
 
   const preparerWorkload = useMemo(() => {
-    if (!members || members.length === 0) return [];
-    const totalActive = activeReturns.length;
+    if (!members || !Array.isArray(members) || members.length === 0) return [];
+    const totalActive = (activeReturns || []).length;
 
     return members
-      .filter((m) => m.status === 'Active')
+      .filter((m) => m && m.status === 'Active')
       .map((m, idx) => {
-        const count = activeReturns.filter((r) => {
-          if (!r.preparer) return false;
-          const prepLower = r.preparer.toLowerCase();
-          const memLower = m.name.toLowerCase();
-          return prepLower.includes(memLower) || memLower.includes(prepLower) || (r.preparerInitials && r.preparerInitials === m.initials);
+        const memName = String(m?.name || '').toLowerCase();
+        const memInitials = String(m?.initials || '');
+
+        const count = (activeReturns || []).filter((r) => {
+          if (!r || !r.preparer) return false;
+          const prepLower = String(r.preparer).toLowerCase();
+          return (
+            (memName && (prepLower.includes(memName) || memName.includes(prepLower))) ||
+            (memInitials && r.preparerInitials === memInitials)
+          );
         }).length;
 
         const percentage = totalActive > 0 ? Math.round((count / totalActive) * 100) : 0;
@@ -348,10 +386,10 @@ export function DashboardView() {
         const color = colors[idx % colors.length];
 
         return {
-          id: m.id,
-          name: m.name,
-          role: m.role,
-          initials: m.initials,
+          id: m.id || String(idx),
+          name: m.name || 'Member',
+          role: m.role || 'Staff',
+          initials: safeInitials(m.name || m.initials || 'M'),
           count,
           percentage,
           color,
@@ -465,9 +503,9 @@ export function DashboardView() {
               </div>
             </div>
             <div className="mt-3">
-              <div className="text-3xl font-extrabold text-slate-900">${totalRevenue.toLocaleString()}</div>
+              <div className="text-3xl font-extrabold text-slate-900">${formatCurrency(totalRevenue)}</div>
               <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-rose-600">
-                <span>{t('kpi_unpaid_balance')} ${totalBalance.toLocaleString()}</span>
+                <span>{t('kpi_unpaid_balance')} ${formatCurrency(totalBalance)}</span>
               </div>
             </div>
           </div>
@@ -658,9 +696,9 @@ export function DashboardView() {
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
                 {filteredReturns.map((r, i) => (
-                  <tr key={r.id} className="hover:bg-slate-50/70 transition-colors">
+                  <tr key={r.id || `ret-${i}`} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-3.5 px-4">
-                      <Link href={r.link} className="flex items-center gap-3 group">
+                      <Link href={r.link || '#'} className="flex items-center gap-3 group">
                         <div
                           className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
                             r.type === 'Business'
@@ -668,24 +706,26 @@ export function DashboardView() {
                               : 'bg-blue-100 text-blue-800'
                           }`}
                         >
-                          {r.name.slice(0, 2).toUpperCase()}
+                          {safeInitials(r.name)}
                         </div>
                         <div>
                           <div className="font-bold text-slate-900 group-hover:text-blue-700 text-[13.5px]">
-                            {r.name}
+                            {r.name || 'Unnamed'}
                           </div>
-                          <div className="text-xs text-slate-500 font-medium">{r.type === 'Business' ? (language === 'vi' ? 'Doanh nghiệp' : 'Business') : (language === 'vi' ? 'Cá nhân' : 'Individual')}</div>
+                          <div className="text-xs text-slate-500 font-medium">
+                            {r.type === 'Business' ? (language === 'vi' ? 'Doanh nghiệp' : 'Business') : (language === 'vi' ? 'Cá nhân' : 'Individual')}
+                          </div>
                         </div>
                       </Link>
                     </td>
 
                     <td className="py-3.5 px-3">
                       <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                        {r.form}
+                        {r.form || '1040'}
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-3 font-semibold text-slate-800">{r.year}</td>
+                    <td className="py-3.5 px-3 font-semibold text-slate-800">{r.year || '2025'}</td>
 
                     <td className="py-3.5 px-3">
                       <span
@@ -714,25 +754,25 @@ export function DashboardView() {
                               : 'bg-emerald-600'
                           }`}
                         ></span>
-                        {getStatusText(r.status)}
+                        {getStatusText(r.status || 'Waiting Documents')}
                       </span>
                     </td>
 
                     <td className="py-3.5 px-3">
                       <div className="flex items-center gap-2">
                         <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center justify-center border border-slate-200">
-                          {r.preparerInitials}
+                          {r.preparerInitials || 'AT'}
                         </span>
-                        <span className="text-xs font-medium text-slate-700">{r.preparer}</span>
+                        <span className="text-xs font-medium text-slate-700">{r.preparer || 'Amy Tran'}</span>
                       </div>
                     </td>
 
                     {isAdmin && (
                       <td className="py-3.5 px-4 text-right">
-                        <div className="font-bold text-slate-900 text-xs">${r.fee.toLocaleString()}</div>
-                        {r.balance > 0 ? (
+                        <div className="font-bold text-slate-900 text-xs">${formatCurrency(r.fee)}</div>
+                        {safeNumber(r.balance) > 0 ? (
                           <div className="text-[11px] font-semibold text-rose-600">
-                            {t('due_label')} ${r.balance.toLocaleString()}
+                            {t('due_label')} ${formatCurrency(r.balance)}
                           </div>
                         ) : (
                           <div className="text-[11px] font-semibold text-emerald-600">{t('paid_in_full')}</div>
@@ -741,7 +781,7 @@ export function DashboardView() {
                     )}
 
                     <td className="py-3.5 px-3 text-center">
-                      <Link href={r.link}>
+                      <Link href={r.link || '#'}>
                         <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-blue-700 hover:text-blue-900">
                           {t('btn_view')} <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                         </Button>
@@ -762,7 +802,7 @@ export function DashboardView() {
           </div>
 
           <footer className="p-4 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
-            <span>{language === 'vi' ? `Hiển thị ${filteredReturns.length} trên ${activeReturns.length} hồ sơ` : `Showing ${filteredReturns.length} of ${activeReturns.length} engagements`}</span>
+            <span>{language === 'vi' ? `Hiển thị ${filteredReturns.length} trên ${(activeReturns || []).length} hồ sơ` : `Showing ${filteredReturns.length} of ${(activeReturns || []).length} engagements`}</span>
             <Link href="/tax-returns" className="font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1">
               {language === 'vi' ? 'Xem chi tiết tất cả tờ khai' : 'View all returns in detail'} <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
@@ -833,7 +873,7 @@ export function DashboardView() {
               </Link>
             </div>
 
-            {preparerWorkload.length === 0 || activeReturns.length === 0 ? (
+            {preparerWorkload.length === 0 || (activeReturns || []).length === 0 ? (
               <div className="text-center py-6 text-slate-400 text-xs">
                 <Users className="w-7 h-7 text-slate-300 mx-auto mb-2" />
                 <p className="font-semibold text-slate-500">

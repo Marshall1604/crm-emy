@@ -21,7 +21,7 @@ function readCache(request: NextRequest, userId: string): AuthCache | null {
   try {
     const raw = request.cookies.get(CACHE_COOKIE)?.value;
     if (!raw) return null;
-    const cache: AuthCache = JSON.parse(atob(raw));
+    const cache: AuthCache = JSON.parse(decodeURIComponent(raw));
     if (cache.uid !== userId || cache.exp < Date.now()) return null;
     return cache;
   } catch {
@@ -31,7 +31,7 @@ function readCache(request: NextRequest, userId: string): AuthCache | null {
 
 function writeCache(response: NextResponse, data: AuthCache): void {
   try {
-    response.cookies.set(CACHE_COOKIE, btoa(JSON.stringify(data)), {
+    response.cookies.set(CACHE_COOKIE, encodeURIComponent(JSON.stringify(data)), {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
