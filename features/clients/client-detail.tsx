@@ -46,6 +46,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useStaffList } from '@/features/team/member-store';
 import {
   type PermanentClient,
   type TaxReturnEngagement,
@@ -99,6 +100,7 @@ const selectClass =
 
 export function ClientDetail({ id }: { id: string }) {
   const { user, role } = useAuth();
+  const { staffNames } = useStaffList();
   const isAdmin = role === 'super_admin' || role === 'admin';
 
   // 1. Permanent Client Profile State
@@ -1538,7 +1540,8 @@ export function ClientDetail({ id }: { id: string }) {
                         value={profileForm.assignedStaff ?? latestReturn.assignedStaff}
                         onChange={(e) => setProfileForm({ ...profileForm, assignedStaff: e.target.value })}
                       >
-                        {staffMembers.map((s) => (
+                        <option value="">-- Select Staff --</option>
+                        {staffNames.map((s) => (
                           <option key={s} value={s}>{s}</option>
                         ))}
                       </select>
@@ -1710,7 +1713,8 @@ export function ClientDetail({ id }: { id: string }) {
                       value={newReturnForm.assignedStaff}
                       onChange={(e) => setNewReturnForm({ ...newReturnForm, assignedStaff: e.target.value })}
                     >
-                      {staffMembers.map((sm) => (
+                      <option value="">-- Select Staff --</option>
+                      {staffNames.map((sm) => (
                         <option key={sm} value={sm}>
                           {sm}
                         </option>

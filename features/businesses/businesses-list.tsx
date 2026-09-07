@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useStaffList } from '@/features/team/member-store';
 import { CreateBusinessModal } from '@/features/businesses/create-business-modal';
 
 export interface BusinessItem {
@@ -130,6 +131,7 @@ const initialBusinesses: BusinessItem[] = [
 
 export function BusinessesList() {
   const { user, role } = useAuth();
+  const { staffNames } = useStaffList();
   const isAdmin = role === 'super_admin' || role === 'admin';
   const { language } = useLanguage();
   const [modalOpen, setModalOpen] = useState(false);
@@ -384,9 +386,11 @@ export function BusinessesList() {
               className="h-10 px-3 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-700 focus:outline-none focus:border-blue-600"
             >
               <option value="">{language === 'vi' ? 'Tất cả nhân viên' : 'All Preparers'}</option>
-              <option value="Amy Tran">Amy Tran</option>
-              <option value="Daniel Lee">Daniel Lee</option>
-              <option value="Sarah Kim">Sarah Kim</option>
+              {staffNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
             </select>
           </div>
 

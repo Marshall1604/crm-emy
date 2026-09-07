@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { useLanguage } from '@/lib/i18n/language-context';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useStaffList } from '@/features/team/member-store';
 
 export interface BusinessData {
   name: string;
@@ -44,6 +45,7 @@ export function EditBusinessModal({
 }: EditBusinessModalProps) {
   const { language } = useLanguage();
   const { role } = useAuth();
+  const { staffNames } = useStaffList();
   const isAdmin = role === 'super_admin' || role === 'admin';
   const [formData, setFormData] = useState<BusinessData>(initialData);
 
@@ -181,9 +183,12 @@ export function EditBusinessModal({
                   onChange={(e) => handleChange('assignedStaff', e.target.value)}
                   className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm bg-white focus:outline-none focus:border-blue-500 cursor-pointer"
                 >
-                  <option value="Amy Tran">Amy Tran (Admin)</option>
-                  <option value="Daniel Lee">Daniel Lee (Preparer)</option>
-                  <option value="Sarah Kim">Sarah Kim (Reviewer)</option>
+                  <option value="">{language === 'vi' ? '-- Chọn nhân viên --' : '-- Select Staff --'}</option>
+                  {staffNames.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

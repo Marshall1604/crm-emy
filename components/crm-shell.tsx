@@ -33,6 +33,7 @@ const workspace = [
   ['Businesses', '/businesses', '▣'],
   ['Tax Returns', '/tax-returns', '▤'],
   ['Fees', '/fees', '$'],
+  ['Insurance services', '/insurance', '🛡'],
   ['Marketing Mail', '/marketing', '✉'],
 ] as const;
 
@@ -65,6 +66,7 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
       '/dashboard',
       '/clients',
       '/businesses',
+      '/insurance',
       '/tax-returns',
       '/fees',
       '/marketing',
@@ -122,13 +124,19 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
 
   const canViewFees = isAdmin;
 
-  const workspaceNavItems = [
-    [t('nav_dashboard'), '/dashboard', '▦'],
-    [t('nav_clients'), '/clients', '♙'],
-    [t('nav_businesses'), '/businesses', '▣'],
-    [t('nav_tax_returns'), '/tax-returns', '▤'],
-    ...(canViewFees ? [[t('nav_fees'), '/fees', '$'] as const] : []),
-    [t('nav_marketing_mail'), '/marketing', '✉'],
+  const workspaceNavItems: Array<{
+    label: string;
+    href: string;
+    icon: string;
+    badge?: string;
+  }> = [
+    { label: t('nav_dashboard'), href: '/dashboard', icon: '▦' },
+    { label: t('nav_clients'), href: '/clients', icon: '♙' },
+    { label: t('nav_businesses'), href: '/businesses', icon: '▣' },
+    { label: t('nav_tax_returns'), href: '/tax-returns', icon: '▤' },
+    ...(canViewFees ? [{ label: t('nav_fees'), href: '/fees', icon: '$' }] : []),
+    { label: t('nav_insurance_services'), href: '/insurance', icon: '🛡', badge: 'Beta' },
+    { label: t('nav_marketing_mail'), href: '/marketing', icon: '✉' },
   ];
 
   return (
@@ -142,7 +150,7 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
         {/* WORKSPACE SECTION */}
         <nav>
           <p>{t('nav_workspace')}</p>
-          {workspaceNavItems.map(([label, href, icon]) => (
+          {workspaceNavItems.map(({ label, href, icon, badge }) => (
             <Link
               key={href}
               href={href}
@@ -152,6 +160,11 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
             >
               <span>{icon}</span>
               {label}
+              {badge && (
+                <b className="!ml-auto !text-[10px] !font-black !px-1.5 !py-0.5 !rounded-md !bg-amber-100 !text-amber-800 !border !border-amber-200">
+                  {badge}
+                </b>
+              )}
             </Link>
           ))}
         </nav>

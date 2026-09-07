@@ -7,6 +7,7 @@ import { ChevronDown, Plus, RotateCcw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useStaffList } from '@/features/team/member-store';
 
 const defaultSampleReturns = [
   { id: 'tr-minh-2025', name: 'Minh Nguyen', kind: 'Individual', initials: 'MN', year: '2025', returnType: '1040', entity: 'Individual', federal: 4850, state: 920, status: 'Waiting Documents', preparer: 'Amy Tran', fee: 650, balance: 325, updated: 'Aug 29, 2026' },
@@ -39,6 +40,7 @@ const statusMapVi: Record<string, string> = {
 export function TaxReturnsList() {
   const { user, role } = useAuth();
   const { language } = useLanguage();
+  const { staffNames } = useStaffList();
   const isAdmin = role === 'super_admin' || role === 'admin';
   const [search, setSearch] = useState('');
   const [year, setYear] = useState('');
@@ -212,7 +214,7 @@ export function TaxReturnsList() {
         <Filter label={language === 'vi' ? 'Phân loại' : 'Client Type'} value={kind} setValue={setKind} options={['Individual', 'Business']} optionsVi={['Cá nhân', 'Doanh nghiệp']} />
         <Filter label={language === 'vi' ? 'Mẫu tờ khai' : 'Return Type'} value={type} setValue={setType} options={returnTypes} />
         <Filter label={language === 'vi' ? 'Trạng thái' : 'Status'} value={status} setValue={setStatus} options={statuses} optionsVi={statuses.map(s => statusMapVi[s] || s)} />
-        <Filter label={language === 'vi' ? 'Nhân viên phụ trách' : 'Assigned Preparer'} value={preparer} setValue={setPreparer} options={['Amy Tran', 'Daniel Lee', 'Sarah Kim']} />
+        <Filter label={language === 'vi' ? 'Nhân viên phụ trách' : 'Assigned Preparer'} value={preparer} setValue={setPreparer} options={staffNames} />
         <Button variant="ghost" size="sm" onClick={reset} className="cursor-pointer">
           <RotateCcw size={13} />
           {language === 'vi' ? 'Đặt lại' : 'Reset'}

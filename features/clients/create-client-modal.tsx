@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useLanguage } from '@/lib/i18n/language-context';
+import { useStaffList } from '@/features/team/member-store';
 
 export interface ClientRecord {
   // Summary / display
@@ -158,6 +159,9 @@ export function CreateClientModal({
   onOpenChange: (open: boolean) => void;
   onClientCreated?: (newClient: ClientRecord) => void;
 }) {
+  const { staffNames } = useStaffList();
+  const defaultStaff = staffNames[0] || '';
+
   const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
@@ -180,7 +184,7 @@ export function CreateClientModal({
       taxYear: '2026',
       returnType: '1040',
       status: 'New',
-      assignedStaff: 'Amy Tran',
+      assignedStaff: defaultStaff,
       federalTax: 0,
       stateTaxes: [],
       preparationFee: 650,
@@ -473,9 +477,12 @@ export function CreateClientModal({
 
                 <FormField label={language === 'vi' ? 'Nhân Viên Phụ Trách' : 'Assigned Staff'} error={form.formState.errors.assignedStaff?.message} required>
                   <select className={selectClass} {...form.register('assignedStaff')}>
-                    <option value="Amy Tran">Amy Tran</option>
-                    <option value="Daniel Lee">Daniel Lee</option>
-                    <option value="Sarah Kim">Sarah Kim</option>
+                    <option value="">{language === 'vi' ? '-- Chọn nhân viên --' : '-- Select Staff --'}</option>
+                    {staffNames.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
                   </select>
                 </FormField>
               </div>

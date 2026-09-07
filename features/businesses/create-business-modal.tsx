@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useLanguage } from '@/lib/i18n/language-context';
+import { useStaffList } from '@/features/team/member-store';
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required`);
 const money = z.coerce.number().min(0, 'Amount cannot be negative');
@@ -77,6 +78,9 @@ export function CreateBusinessModal({
   onBusinessCreated?: (business: any) => void;
 }) {
   const { language } = useLanguage();
+  const { staffNames } = useStaffList();
+  const defaultStaff = staffNames[0] || '';
+
   const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -100,7 +104,7 @@ export function CreateBusinessModal({
       amountPaid: 0,
       financeCategory: 'tax_preparation',
       status: 'new',
-      assignedStaff: 'amy_tran',
+      assignedStaff: defaultStaff,
       notes: '',
     },
   });
@@ -500,9 +504,12 @@ export function CreateBusinessModal({
                 </FormField>
                 <FormField label={language === 'vi' ? 'Nhân Viên Phụ Trách' : 'Assigned Staff'} required>
                   <select className={selectClass} {...form.register('assignedStaff')}>
-                    <option value="amy_tran">Amy Tran</option>
-                    <option value="daniel_lee">Daniel Lee</option>
-                    <option value="sarah_kim">Sarah Kim</option>
+                    <option value="">{language === 'vi' ? '-- Chọn nhân viên --' : '-- Select Staff --'}</option>
+                    {staffNames.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
                   </select>
                 </FormField>
                 <FormField label={language === 'vi' ? 'Ghi Chú Nội Bộ' : 'Notes'} span="span-3">

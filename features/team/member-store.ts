@@ -40,7 +40,7 @@ export function useMemberStore() {
     if (typeof window !== 'undefined' && user) {
       try {
         const saved = localStorage.getItem(`crm_emy_team_${user.id}`);
-        if (saved) return JSON.parse(saved);
+        if (saved !== null) return JSON.parse(saved);
       } catch {}
       const ownerName = profile?.full_name || user.email?.split('@')[0] || 'Administrator';
       const ownerEmail = user.email || 'admin@crmemy.com';
@@ -67,7 +67,7 @@ export function useMemberStore() {
       if (user) {
         try {
           const saved = localStorage.getItem(`crm_emy_team_${user.id}`);
-          if (saved) {
+          if (saved !== null) {
             setMembers(JSON.parse(saved));
             return;
           }
@@ -270,11 +270,27 @@ export function useMemberStore() {
       }
     };
 
+    const onTeamUpdated = () => {
+      if (typeof window !== 'undefined' && user) {
+        try {
+          const saved = localStorage.getItem(`crm_emy_team_${user.id}`);
+          if (saved !== null) {
+            setMembers(JSON.parse(saved));
+          }
+        } catch {}
+      }
+    };
+
+    window.addEventListener('crm_team_updated', onTeamUpdated);
+    window.addEventListener('storage', onTeamUpdated);
+
     void load();
     return () => {
       active = false;
+      window.removeEventListener('crm_team_updated', onTeamUpdated);
+      window.removeEventListener('storage', onTeamUpdated);
     };
-  }, []);
+  }, [user]);
 
   const addMember = useCallback(
     async (data: Omit<TeamMember, 'id' | 'initials' | 'assigned' | 'lastActive'>) => {
@@ -325,6 +341,7 @@ export function useMemberStore() {
         if (typeof window !== 'undefined' && user) {
           try {
             localStorage.setItem(`crm_emy_team_${user.id}`, JSON.stringify(updated));
+            window.dispatchEvent(new CustomEvent('crm_team_updated'));
           } catch {}
         }
         return updated;
@@ -384,6 +401,7 @@ export function useMemberStore() {
         if (typeof window !== 'undefined' && user) {
           try {
             localStorage.setItem(`crm_emy_team_${user.id}`, JSON.stringify(updated));
+            window.dispatchEvent(new CustomEvent('crm_team_updated'));
           } catch {}
         }
         return updated;
@@ -413,6 +431,7 @@ export function useMemberStore() {
       if (typeof window !== 'undefined' && user) {
         try {
           localStorage.setItem(`crm_emy_team_${user.id}`, JSON.stringify(updated));
+          window.dispatchEvent(new CustomEvent('crm_team_updated'));
         } catch {}
       }
       return updated;
@@ -420,4 +439,15 @@ export function useMemberStore() {
   }, [user]);
 
   return { members, isLoading, error, addMember, updateMember, deleteMember, refreshMembers: fetchMembers };
+}
+
+export function useStaffList() {
+  const { members, isLoading } = useMemberStore();
+
+  const staffNames = members
+    .filter((m) => m.status !== 'Inactive')
+    .map((m) => m.name.trim())
+    .filter(Boolean);
+
+  return { staffNames, members, isLoading };
 }

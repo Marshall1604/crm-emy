@@ -34,6 +34,7 @@ import {
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
+import { useStaffList } from '@/features/team/member-store';
 import {
   Dialog,
   DialogContent,
@@ -164,6 +165,7 @@ export function ClientsList() {
     return user ? [] : defaultSampleClients;
   });
 
+  const { staffNames } = useStaffList();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [year, setYear] = useState('');
@@ -598,9 +600,11 @@ export function ClientsList() {
           className="h-10 px-3 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 bg-white cursor-pointer outline-none"
         >
           <option value="">{language === 'vi' ? 'Tất cả nhân viên' : 'All Preparers'}</option>
-          <option value="Amy Tran">Amy Tran</option>
-          <option value="Daniel Lee">Daniel Lee</option>
-          <option value="Sarah Kim">Sarah Kim</option>
+          {staffNames.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
         </select>
 
         <Button variant="ghost" size="sm" onClick={reset} className="h-10 text-slate-600 gap-1.5 cursor-pointer">
