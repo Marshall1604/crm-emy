@@ -290,57 +290,13 @@ export function MarketingView() {
   const [activeTab, setActiveTab] = useState<'compose' | 'history' | 'integration'>('compose');
 
   // Load Audience dynamically from user's clients and businesses
-  const [audienceList, setAudienceList] = useState<ClientAudience[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const clientKey = user?.id ? `crm_emy_clients_${user.id}` : 'crm_emy_clients_list';
-        const bizKey = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
-        const savedClientsStr = localStorage.getItem(clientKey);
-        const savedBizStr = localStorage.getItem(bizKey);
-
-        const clients = savedClientsStr ? JSON.parse(savedClientsStr) : [];
-        const businesses = savedBizStr ? JSON.parse(savedBizStr) : [];
-
-        const combined: ClientAudience[] = [
-          ...clients.filter((c: any) => c.email).map((c: any) => ({
-            id: `c-${c.id}`,
-            name: c.name,
-            email: c.email,
-            phone: c.phone || '',
-            type: 'individual' as const,
-            returnType: c.returnType || '1040',
-            status: (c.status === 'Missing Information' ? 'Missing Docs' : c.status || 'In Review') as ClientAudience['status'],
-            balance: Number(c.balance || 0),
-            assignedStaff: c.staff || 'Tax Preparer',
-            taxYear: c.year || '2025',
-          })),
-          ...businesses.filter((b: any) => b.email).map((b: any) => ({
-            id: `b-${b.id}`,
-            name: b.name,
-            businessName: b.name,
-            email: b.email,
-            phone: b.phone || '',
-            type: 'business' as const,
-            returnType: b.returnType || '1065',
-            status: (b.status === 'Missing Information' ? 'Missing Docs' : b.status || 'In Review') as ClientAudience['status'],
-            balance: Number(b.balance || 0),
-            assignedStaff: b.preparer || 'Tax Preparer',
-            taxYear: b.year || '2025',
-          })),
-        ];
-
-        if (combined.length > 0) return combined;
-        if (user) return [];
-      } catch (e) {}
-    }
-    return user ? [] : defaultSampleAudience;
-  });
+  const [audienceList, setAudienceList] = useState<ClientAudience[]>(defaultSampleAudience);
 
   // Segmentation Filters
   const [selectedSegment, setSelectedSegment] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>(() =>
-    audienceList.map((c) => c.id)
+    defaultSampleAudience.map((c) => c.id)
   );
 
   // Template & Composer State
@@ -352,15 +308,7 @@ export function MarketingView() {
   const [emailBody, setEmailBody] = useState(prebuiltTemplates[0].bodyTemplate);
 
   // Campaign History State
-  const [campaignHistory, setCampaignHistory] = useState<CampaignLog[]>(() => {
-    if (typeof window !== 'undefined' && user) {
-      try {
-        const saved = localStorage.getItem(`crm_emy_campaigns_${user.id}`);
-        if (saved) return JSON.parse(saved);
-      } catch {}
-    }
-    return user ? [] : mockCampaignLogs;
-  });
+  const [campaignHistory, setCampaignHistory] = useState<CampaignLog[]>(mockCampaignLogs);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -374,9 +322,9 @@ export function MarketingView() {
         const businesses = savedBizStr ? JSON.parse(savedBizStr) : [];
 
         const combined: ClientAudience[] = [
-          ...clients.filter((c: any) => c.email).map((c: any) => ({
+          ...clients.filter((c: any) => c && c.email).map((c: any) => ({
             id: `c-${c.id}`,
-            name: c.name,
+            name: c.name || 'Khách hàng',
             email: c.email,
             phone: c.phone || '',
             type: 'individual' as const,
@@ -386,9 +334,9 @@ export function MarketingView() {
             assignedStaff: c.staff || 'Tax Preparer',
             taxYear: c.year || '2025',
           })),
-          ...businesses.filter((b: any) => b.email).map((b: any) => ({
+          ...businesses.filter((b: any) => b && b.email).map((b: any) => ({
             id: `b-${b.id}`,
-            name: b.name,
+            name: b.name || 'Doanh nghiệp',
             businessName: b.name,
             email: b.email,
             phone: b.phone || '',
@@ -420,7 +368,9 @@ export function MarketingView() {
         } else {
           setCampaignHistory(mockCampaignLogs);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error loading audience list:', e);
+      }
     }
   }, [user]);
 
@@ -496,28 +446,41 @@ export function MarketingView() {
     }
   };
 
-  // Preview data rendering (Sample first selected client)
-  const sampleRecipient = useMemo(() => {
+  // Preview data rendering (Sample first selected client or fallback)
+  const sampleRecipient: ClientAudience = useMemo(() => {
     const found = audienceList.find((c) => selectedClientIds.includes(c.id));
-    return found || audienceList[0] || null;
+    if (found) return found;
+    if (audienceList.length > 0) return audienceList[0];
+    return {
+      id: 'preview-sample',
+      name: 'Nguyen Van A (Mẫu)',
+      email: 'khachhang@example.com',
+      phone: '(714) 555-0199',
+      type: 'individual' as const,
+      returnType: '1040 MFJ',
+      status: 'Ready to File' as const,
+      balance: 0,
+      assignedStaff: 'Amy Tran',
+      taxYear: '2025',
+    };
   }, [audienceList, selectedClientIds]);
 
-  const renderedPreviewBody = sampleRecipient
-    ? emailBody
-        .replace(/{{client_name}}/g, sampleRecipient.name)
-        .replace(/{{tax_year}}/g, sampleRecipient.taxYear)
-        .replace(/{{assigned_staff}}/g, sampleRecipient.assignedStaff)
-        .replace(/{{balance}}/g, sampleRecipient.balance.toLocaleString())
-        .replace(/{{return_type}}/g, sampleRecipient.returnType)
-        .replace(/{{return_status}}/g, sampleRecipient.status)
-    : emailBody;
+  const renderedPreviewBody = useMemo(() => {
+    return emailBody
+      .replace(/{{client_name}}/g, sampleRecipient.name || 'Quý Khách Hàng')
+      .replace(/{{tax_year}}/g, sampleRecipient.taxYear || '2025')
+      .replace(/{{assigned_staff}}/g, sampleRecipient.assignedStaff || 'Chuyên viên thuế')
+      .replace(/{{balance}}/g, (sampleRecipient.balance || 0).toLocaleString())
+      .replace(/{{return_type}}/g, sampleRecipient.returnType || '1040')
+      .replace(/{{return_status}}/g, sampleRecipient.status || 'Đang xử lý');
+  }, [emailBody, sampleRecipient]);
 
-  const renderedPreviewSubject = sampleRecipient
-    ? emailSubject
-        .replace(/{{client_name}}/g, sampleRecipient.name)
-        .replace(/{{tax_year}}/g, sampleRecipient.taxYear)
-        .replace(/{{balance}}/g, sampleRecipient.balance.toLocaleString())
-    : emailSubject;
+  const renderedPreviewSubject = useMemo(() => {
+    return emailSubject
+      .replace(/{{client_name}}/g, sampleRecipient.name || 'Quý Khách Hàng')
+      .replace(/{{tax_year}}/g, sampleRecipient.taxYear || '2025')
+      .replace(/{{balance}}/g, (sampleRecipient.balance || 0).toLocaleString());
+  }, [emailSubject, sampleRecipient]);
 
   // Test Email Handler
   const handleSendTestEmail = async () => {
