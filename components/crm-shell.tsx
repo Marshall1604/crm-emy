@@ -136,7 +136,7 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
     { label: t('nav_tax_returns'), href: '/tax-returns', icon: '▤' },
     ...(canViewFees ? [{ label: t('nav_fees'), href: '/fees', icon: '$' }] : []),
     { label: t('nav_insurance_services'), href: '/insurance', icon: '🛡', badge: 'Beta' },
-    { label: t('nav_marketing_mail'), href: '/marketing', icon: '✉' },
+    { label: t('nav_marketing_mail'), href: '/marketing', icon: '✉', badge: 'Beta' },
   ];
 
   return (

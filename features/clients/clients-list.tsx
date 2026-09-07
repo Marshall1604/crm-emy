@@ -463,11 +463,21 @@ export function ClientsList() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportToExcel}
+            className="h-10 px-3.5 text-xs font-bold border-slate-300 gap-1.5 bg-white shadow-xs cursor-pointer hover:bg-slate-50 text-slate-800"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-600" />
+            {language === 'vi' ? 'Xuất Excel / CSV' : 'Export Excel / CSV'}
+          </Button>
+
           <Link href="/businesses">
             <Button
               variant="outline"
-              className="h-10 px-4 text-sm font-bold gap-2 border-slate-300 bg-white hover:bg-slate-50 hover:border-blue-400 text-slate-800 shadow-xs cursor-pointer"
+              className="h-10 px-4 text-xs font-bold gap-2 border-slate-300 bg-white hover:bg-slate-50 hover:border-blue-400 text-slate-800 shadow-xs cursor-pointer"
             >
               <Building2 className="w-4 h-4 text-[#092c5c]" />
               {language === 'vi' ? 'Danh Sách Doanh Nghiệp' : 'Business List'}
@@ -476,7 +486,7 @@ export function ClientsList() {
 
           <Button
             onClick={() => setIsAddModalOpen(true)}
-            className="h-10 text-sm font-bold gap-2 bg-[#092c5c] hover:bg-[#072247] text-white shadow-sm cursor-pointer"
+            className="h-10 px-4 text-xs font-bold gap-2 bg-[#092c5c] hover:bg-[#072247] text-white shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             {language === 'vi' ? 'Thêm Khách Hàng' : 'Add Client'}

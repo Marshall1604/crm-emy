@@ -596,7 +596,10 @@ export function MarketingView() {
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
             <Megaphone className="w-7 h-7 text-[#092c5c]" />
-            Marketing Mail & Bulk Campaigns
+            <span>Marketing Mail & Bulk Campaigns</span>
+            <span className="text-xs font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
+              Beta
+            </span>
           </h1>
           <p className="text-sm text-slate-600 mt-0.5">
             Phân loại tệp khách hàng từ Database, chọn mẫu email thuế và gửi email tự động hàng loạt.

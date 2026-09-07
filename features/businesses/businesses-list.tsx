@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import Link from 'next/link';
 import {
   Building2,
@@ -202,6 +203,36 @@ export function BusinessesList() {
     setPreparerFilter('');
   };
 
+  const exportToExcel = () => {
+    if (filtered.length === 0) {
+      alert(language === 'vi' ? 'Chưa có dữ liệu để xuất file.' : 'No data to export.');
+      return;
+    }
+
+    const rows = filtered.map((b) => ({
+      'Business ID': b.id,
+      'Legal Name': b.name,
+      'DBA': b.dba || '',
+      'EIN': b.ein,
+      'Entity Type': b.entityType,
+      'Tax Year': b.year,
+      'Return Type': b.returnType,
+      'Workflow Status': b.status,
+      'Assigned Staff': b.preparer,
+      'Phone': b.phone || '',
+      'Email': b.email || '',
+      'Preparation Fee ($)': b.fee,
+      'Balance Due ($)': b.balance,
+      'Last Updated': b.updated,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Businesses');
+    const date = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `CRM-EMY-Businesses-${date}.xlsx`);
+  };
+
   const totalBusinesses = businessList.length;
   const inPrepCount = businessList.filter((b) => b.status === 'In Preparation').length;
   const waitingCount = businessList.filter((b) => b.status === 'Waiting Documents').length;
@@ -253,16 +284,27 @@ export function BusinessesList() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportToExcel}
+            className="h-10 px-3.5 text-xs font-bold border-slate-300 gap-1.5 bg-white shadow-xs cursor-pointer hover:bg-slate-50 text-slate-800"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-600" />
+            {language === 'vi' ? 'Xuất Excel / CSV' : 'Export Excel / CSV'}
+          </Button>
+
           <Link href="/clients">
-            <Button variant="outline" className="h-10 text-sm font-semibold gap-1.5 border-slate-300 hover:bg-slate-50 cursor-pointer">
+            <Button variant="outline" className="h-10 text-xs font-bold gap-1.5 border-slate-300 hover:bg-slate-50 cursor-pointer">
               <UsersRound className="w-4 h-4 text-slate-600" />
               {language === 'vi' ? 'Danh Sách Cá Nhân' : 'Clients List'}
             </Button>
           </Link>
+
           <Button
             onClick={() => setModalOpen(true)}
-            className="h-10 px-4 bg-[#092c5c] hover:bg-[#072247] text-white font-bold text-sm rounded-lg shadow-xs flex items-center gap-2 cursor-pointer transition-all"
+            className="h-10 px-4 bg-[#092c5c] hover:bg-[#072247] text-white font-bold text-xs rounded-lg shadow-xs flex items-center gap-2 cursor-pointer transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>{language === 'vi' ? 'Thêm Doanh Nghiệp Mới' : 'New Business Client'}</span>
