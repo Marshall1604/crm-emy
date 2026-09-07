@@ -174,7 +174,6 @@ export function BusinessesList() {
     if (typeof window !== 'undefined') {
       const key = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
       localStorage.setItem(key, JSON.stringify(updated));
-      localStorage.setItem('crm_emy_businesses_list', JSON.stringify(updated));
     }
   };
 

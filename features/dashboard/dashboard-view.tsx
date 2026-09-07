@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Users,
@@ -223,6 +223,62 @@ export function DashboardView() {
     }
     return user ? 0 : 5;
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const clientKey = user?.id ? `crm_emy_clients_${user.id}` : 'crm_emy_clients_list';
+        const bizKey = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
+        const savedClientsStr = localStorage.getItem(clientKey);
+        const savedBizStr = localStorage.getItem(bizKey);
+
+        const clients = savedClientsStr ? JSON.parse(savedClientsStr) : [];
+        const businesses = savedBizStr ? JSON.parse(savedBizStr) : [];
+
+        setTotalClientsCount(user ? clients.length : (clients.length || 8));
+        setTotalBizCount(user ? businesses.length : (businesses.length || 5));
+
+        const combined: DashboardReturn[] = [
+          ...businesses.map((b: any) => ({
+            id: `biz-${b.id}`,
+            name: b.name,
+            type: 'Business' as const,
+            form: b.returnType || 'Form 1065',
+            year: b.year || '2025',
+            status: (b.status || 'Waiting Documents') as DashboardReturn['status'],
+            preparer: b.preparer || 'Amy Tran',
+            preparerInitials: (b.preparer || 'AT').split(' ').map((n: string) => n[0]).join(''),
+            fee: Number(b.fee || 0),
+            balance: Number(b.balance || 0),
+            link: `/businesses/${b.id}`,
+            updated: b.updated || 'Recently',
+          })),
+          ...clients.map((c: any) => ({
+            id: `cl-${c.id}`,
+            name: c.name,
+            type: 'Individual' as const,
+            form: c.returnType || 'Form 1040',
+            year: c.year || '2025',
+            status: (c.status || 'Waiting Documents') as DashboardReturn['status'],
+            preparer: c.staff || 'Amy Tran',
+            preparerInitials: (c.staff || 'AT').split(' ').map((n: string) => n[0]).join(''),
+            fee: Number(c.fee || 0),
+            balance: Number(c.balance || 0),
+            link: `/clients/${c.id}`,
+            updated: c.updated || 'Recently',
+          })),
+        ];
+
+        if (combined.length > 0) {
+          setActiveReturns(combined);
+        } else if (user) {
+          setActiveReturns([]);
+        } else {
+          setActiveReturns(initialReturns);
+        }
+      } catch (e) {}
+    }
+  }, [user]);
 
   const statusLabels: Record<string, { en: string; vi: string }> = {
     'Waiting Documents': { en: 'Waiting Docs', vi: 'Chờ Giấy Tờ' },

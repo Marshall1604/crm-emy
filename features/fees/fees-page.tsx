@@ -97,6 +97,53 @@ export function FeesPage() {
     return user ? [] : defaultSampleFeeRecords;
   });
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const clientKey = user?.id ? `crm_emy_clients_${user.id}` : 'crm_emy_clients_list';
+        const bizKey = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
+        const savedClients = localStorage.getItem(clientKey);
+        const savedBiz = localStorage.getItem(bizKey);
+
+        const clients = savedClients ? JSON.parse(savedClients) : [];
+        const businesses = savedBiz ? JSON.parse(savedBiz) : [];
+
+        const combined: FeeRecord[] = [
+          ...businesses.map((b: any) => ({
+            taxReturnId: `tr-${b.id}`,
+            clientRecord: `/businesses/${b.id}`,
+            name: b.name,
+            clientType: 'Business' as const,
+            year: b.year || '2025',
+            returnType: b.returnType || 'Form 1065',
+            totalFee: Number(b.fee || 0),
+            amountPaid: Number(b.fee || 0) - Number(b.balance || 0),
+            invoiceStatus: (Number(b.balance || 0) === 0 ? 'Paid' : 'Sent') as FeeRecord['invoiceStatus'],
+          })),
+          ...clients.map((c: any) => ({
+            taxReturnId: `tr-${c.id}`,
+            clientRecord: `/clients/${c.id}`,
+            name: c.name,
+            clientType: 'Individual' as const,
+            year: c.year || '2025',
+            returnType: c.returnType || 'Form 1040',
+            totalFee: Number(c.fee || 0),
+            amountPaid: Number(c.amountPaid || 0),
+            invoiceStatus: (Number(c.balance || 0) === 0 ? 'Paid' : 'Sent') as FeeRecord['invoiceStatus'],
+          })),
+        ];
+
+        if (combined.length > 0) {
+          setFeeRecords(combined);
+        } else if (user) {
+          setFeeRecords([]);
+        } else {
+          setFeeRecords(defaultSampleFeeRecords);
+        }
+      } catch (e) {}
+    }
+  }, [user]);
+
   const filtered = useMemo(
     () =>
       feeRecords.filter(

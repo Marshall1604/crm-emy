@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth/auth-context';
 
 export type MemberRole = 'Super Admin' | 'Tax Preparer' | 'Reviewer' | 'Staff';
 export type MemberStatus = 'Active' | 'Invited' | 'Inactive';
@@ -34,13 +35,60 @@ const seedMembers: TeamMember[] = [
 ];
 
 export function useMemberStore() {
-  const [members, setMembers] = useState<TeamMember[]>(seedMembers);
+  const { user, profile } = useAuth();
+  const [members, setMembers] = useState<TeamMember[]>(() => {
+    if (typeof window !== 'undefined' && user) {
+      try {
+        const saved = localStorage.getItem(`crm_emy_team_${user.id}`);
+        if (saved) return JSON.parse(saved);
+      } catch {}
+      const ownerName = profile?.full_name || user.email?.split('@')[0] || 'Administrator';
+      const ownerEmail = user.email || 'admin@crmemy.com';
+      return [
+        {
+          id: user.id,
+          name: ownerName,
+          email: ownerEmail,
+          role: 'Super Admin',
+          status: 'Active',
+          assigned: 0,
+          lastActive: 'Just now',
+          initials: makeInitials(ownerName),
+        },
+      ];
+    }
+    return user ? [] : seedMembers;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchMembers = useCallback(async () => {
     if (!supabase || !isSupabaseConfigured) {
-      setMembers(seedMembers);
+      if (user) {
+        try {
+          const saved = localStorage.getItem(`crm_emy_team_${user.id}`);
+          if (saved) {
+            setMembers(JSON.parse(saved));
+            return;
+          }
+        } catch {}
+        const ownerName = profile?.full_name || user.email?.split('@')[0] || 'Administrator';
+        const ownerEmail = user.email || 'admin@crmemy.com';
+        setMembers([
+          {
+            id: user.id,
+            name: ownerName,
+            email: ownerEmail,
+            role: 'Super Admin',
+            status: 'Active',
+            assigned: 0,
+            lastActive: 'Just now',
+            initials: makeInitials(ownerName),
+          },
+        ]);
+      } else {
+        setMembers(seedMembers);
+      }
       return;
     }
 
@@ -68,6 +116,21 @@ export function useMemberStore() {
             initials: makeInitials(p.full_name || p.email),
           }));
           setMembers(mapped);
+        } else if (user) {
+          const ownerName = profile?.full_name || user.email?.split('@')[0] || 'Administrator';
+          const ownerEmail = user.email || 'admin@crmemy.com';
+          setMembers([
+            {
+              id: user.id,
+              name: ownerName,
+              email: ownerEmail,
+              role: 'Super Admin',
+              status: 'Active',
+              assigned: 0,
+              lastActive: 'Just now',
+              initials: makeInitials(ownerName),
+            },
+          ]);
         }
         return;
       }
@@ -257,10 +320,18 @@ export function useMemberStore() {
         }
       }
 
-      setMembers((prev) => [...prev, newMember]);
+      setMembers((prev) => {
+        const updated = [...prev, newMember];
+        if (typeof window !== 'undefined' && user) {
+          try {
+            localStorage.setItem(`crm_emy_team_${user.id}`, JSON.stringify(updated));
+          } catch {}
+        }
+        return updated;
+      });
       return newMember;
     },
-    []
+    [user]
   );
 
   const updateMember = useCallback(
@@ -304,15 +375,21 @@ export function useMemberStore() {
         }
       }
 
-      setMembers((prev) =>
-        prev.map((m) =>
+      setMembers((prev) => {
+        const updated = prev.map((m) =>
           m.id === id
             ? { ...m, ...data, initials: data.name ? makeInitials(data.name) : m.initials }
             : m
-        )
-      );
+        );
+        if (typeof window !== 'undefined' && user) {
+          try {
+            localStorage.setItem(`crm_emy_team_${user.id}`, JSON.stringify(updated));
+          } catch {}
+        }
+        return updated;
+      });
     },
-    []
+    [user]
   );
 
   const deleteMember = useCallback(async (id: string) => {
@@ -331,8 +408,16 @@ export function useMemberStore() {
       }
     }
 
-    setMembers((prev) => prev.filter((m) => m.id !== id));
-  }, []);
+    setMembers((prev) => {
+      const updated = prev.filter((m) => m.id !== id);
+      if (typeof window !== 'undefined' && user) {
+        try {
+          localStorage.setItem(`crm_emy_team_${user.id}`, JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
+  }, [user]);
 
   return { members, isLoading, error, addMember, updateMember, deleteMember, refreshMembers: fetchMembers };
 }

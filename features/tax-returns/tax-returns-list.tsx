@@ -2,13 +2,13 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { ChevronDown, Plus, RotateCcw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
 import { useAuth } from '@/lib/auth/auth-context';
 
-const returns = [
+const defaultSampleReturns = [
   { id: 'tr-minh-2025', name: 'Minh Nguyen', kind: 'Individual', initials: 'MN', year: '2025', returnType: '1040', entity: 'Individual', federal: 4850, state: 920, status: 'Waiting Documents', preparer: 'Amy Tran', fee: 650, balance: 325, updated: 'Aug 29, 2026' },
   { id: 'tr-abc-2025', name: 'ABC Logistics LLC', kind: 'Business', initials: 'AL', year: '2025', returnType: '1065', entity: 'Partnership', federal: 18200, state: 3750, status: 'In Preparation', preparer: 'Daniel Lee', fee: 2400, balance: 1200, updated: 'Aug 29, 2026' },
   { id: 'tr-olivia-2025', name: 'Olivia Johnson', kind: 'Individual', initials: 'OJ', year: '2025', returnType: '1040', entity: 'Individual', federal: 3200, state: 640, status: 'Review', preparer: 'Daniel Lee', fee: 875, balance: 0, updated: 'Aug 28, 2026' },
@@ -37,8 +37,8 @@ const statusMapVi: Record<string, string> = {
 };
 
 export function TaxReturnsList() {
+  const { user, role } = useAuth();
   const { language } = useLanguage();
-  const { role } = useAuth();
   const isAdmin = role === 'super_admin' || role === 'admin';
   const [search, setSearch] = useState('');
   const [year, setYear] = useState('');
@@ -47,9 +47,119 @@ export function TaxReturnsList() {
   const [status, setStatus] = useState('');
   const [preparer, setPreparer] = useState('');
 
+  const [returnItems, setReturnItems] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const clientKey = user?.id ? `crm_emy_clients_${user.id}` : 'crm_emy_clients_list';
+        const bizKey = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
+        const savedClientsStr = localStorage.getItem(clientKey);
+        const savedBizStr = localStorage.getItem(bizKey);
+
+        const clients = savedClientsStr ? JSON.parse(savedClientsStr) : [];
+        const businesses = savedBizStr ? JSON.parse(savedBizStr) : [];
+
+        const combined = [
+          ...businesses.map((b: any) => ({
+            id: `biz-${b.id}`,
+            name: b.name,
+            kind: 'Business',
+            initials: (b.name || 'BZ').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase(),
+            year: b.year || '2025',
+            returnType: b.returnType || '1065',
+            entity: b.entityType || 'Business',
+            federal: Number(b.federal || 0),
+            state: Number(b.state || 0),
+            status: b.status || 'Waiting Documents',
+            preparer: b.preparer || 'Amy Tran',
+            fee: Number(b.fee || 0),
+            balance: Number(b.balance || 0),
+            updated: b.updated || 'Recently',
+          })),
+          ...clients.map((c: any) => ({
+            id: `cl-${c.id}`,
+            name: c.name,
+            kind: 'Individual',
+            initials: (c.name || 'CL').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase(),
+            year: c.year || '2025',
+            returnType: c.returnType || '1040',
+            entity: 'Individual',
+            federal: Number(c.federalTax || 0),
+            state: Number(c.stateTaxes?.[0]?.amount || 0),
+            status: c.status || 'Waiting Documents',
+            preparer: c.staff || 'Amy Tran',
+            fee: Number(c.fee || 0),
+            balance: Number(c.balance || 0),
+            updated: c.updated || 'Recently',
+          })),
+        ];
+
+        if (combined.length > 0) return combined;
+        if (user) return [];
+      } catch (e) {}
+    }
+    return user ? [] : defaultSampleReturns;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const clientKey = user?.id ? `crm_emy_clients_${user.id}` : 'crm_emy_clients_list';
+        const bizKey = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
+        const savedClientsStr = localStorage.getItem(clientKey);
+        const savedBizStr = localStorage.getItem(bizKey);
+
+        const clients = savedClientsStr ? JSON.parse(savedClientsStr) : [];
+        const businesses = savedBizStr ? JSON.parse(savedBizStr) : [];
+
+        const combined = [
+          ...businesses.map((b: any) => ({
+            id: `biz-${b.id}`,
+            name: b.name,
+            kind: 'Business',
+            initials: (b.name || 'BZ').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase(),
+            year: b.year || '2025',
+            returnType: b.returnType || '1065',
+            entity: b.entityType || 'Business',
+            federal: Number(b.federal || 0),
+            state: Number(b.state || 0),
+            status: b.status || 'Waiting Documents',
+            preparer: b.preparer || 'Amy Tran',
+            fee: Number(b.fee || 0),
+            balance: Number(b.balance || 0),
+            updated: b.updated || 'Recently',
+          })),
+          ...clients.map((c: any) => ({
+            id: `cl-${c.id}`,
+            name: c.name,
+            kind: 'Individual',
+            initials: (c.name || 'CL').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase(),
+            year: c.year || '2025',
+            returnType: c.returnType || '1040',
+            entity: 'Individual',
+            federal: Number(c.federalTax || 0),
+            state: Number(c.stateTaxes?.[0]?.amount || 0),
+            status: c.status || 'Waiting Documents',
+            preparer: c.staff || 'Amy Tran',
+            fee: Number(c.fee || 0),
+            balance: Number(c.balance || 0),
+            updated: c.updated || 'Recently',
+          })),
+        ];
+
+        if (combined.length > 0) {
+          setReturnItems(combined);
+        } else if (user) {
+          setReturnItems([]);
+        } else {
+          setReturnItems(defaultSampleReturns);
+        }
+      } catch (e) {}
+    }
+  }, [user]);
+
   const filtered = useMemo(
     () =>
-      returns.filter(
+      returnItems.filter(
         (r) =>
           (!search || r.name.toLowerCase().includes(search.toLowerCase())) &&
           (!year || r.year === year) &&
@@ -58,7 +168,7 @@ export function TaxReturnsList() {
           (!status || r.status === status) &&
           (!preparer || r.preparer === preparer)
       ),
-    [search, year, kind, type, status, preparer]
+    [returnItems, search, year, kind, type, status, preparer]
   );
 
   const reset = () => {
@@ -170,8 +280,8 @@ export function TaxReturnsList() {
                     </span>
                   </td>
                   <td>
-                    <span className="staff-mini">{r.preparer.split(' ').map((n) => n[0]).join('')}</span>
-                    {r.preparer}
+                    <span className="staff-mini">{(r.preparer || 'AT').split(' ').map((n: string) => n[0]).join('')}</span>
+                    {r.preparer || 'Unassigned'}
                   </td>
                   {isAdmin && (
                     <>
