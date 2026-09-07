@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Calendar,
   Clock,
@@ -17,48 +17,69 @@ import { Button } from '@/components/ui/button';
 
 export function AuditLogsView() {
   const [search, setSearch] = useState('');
+  const [usersList, setUsersList] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('crm_emy_saas_users_v2');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return parsed.filter(
+            (u: any) =>
+              ![
+                'admin@crmemy.com',
+                'daniel.lee@taxoffice.com',
+                'sarah.kim@taxoffice.com',
+                'michael.chen@abclogistics.com',
+                'minh.nguyen@taxpayer.com',
+              ].includes(u.email?.toLowerCase())
+          );
+        }
+      } catch {}
+    }
+    return [];
+  });
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('/api/admin/users');
+      if (res.ok) {
+        const data: any = await res.json();
+        if (data && data.users && data.users.length > 0) {
+          setUsersList(data.users);
+        }
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const sampleLogs = [
     {
-      id: 'log-01',
-      actor: 'Amy Tran (Super Admin)',
-      action: 'subscription_extended_30days',
-      target: 'daniel.lee@taxoffice.com',
-      entity: 'subscription',
-      ip: '192.168.1.10',
-      time: 'Aug 29, 2026 · 6:45 PM',
+      id: 'log-sys-init',
+      actor: 'Super Admin (Phan Hong)',
+      action: 'system_root_initialized',
+      target: 'www.junky3@yahoo.com',
+      entity: 'system_core',
+      ip: '127.0.0.1',
+      time: 'Aug 01, 2026 · 10:00 AM',
       tone: 'blue',
     },
-    {
-      id: 'log-02',
-      actor: 'Amy Tran (Super Admin)',
-      action: 'role_changed → admin',
-      target: 'sarah.kim@taxoffice.com',
-      entity: 'user_roles',
-      ip: '192.168.1.10',
-      time: 'Aug 28, 2026 · 11:20 AM',
-      tone: 'purple',
-    },
-    {
-      id: 'log-03',
-      actor: 'System Auto-Trigger',
-      action: 'trial_subscription_created',
-      target: 'minh.nguyen@taxpayer.com',
-      entity: 'subscription',
-      ip: '127.0.0.1',
-      time: 'Aug 26, 2026 · 8:15 AM',
-      tone: 'emerald',
-    },
-    {
-      id: 'log-04',
-      actor: 'Amy Tran (Super Admin)',
-      action: 'user_blocked',
-      target: 'spammer.blocked@suspicious.com',
-      entity: 'profile',
-      ip: '192.168.1.10',
-      time: 'Aug 18, 2026 · 5:12 AM',
-      tone: 'rose',
-    },
+    ...usersList
+      .filter((u) => u.email !== 'www.junky3@yahoo.com')
+      .map((u, idx) => ({
+        id: `log-usr-${u.id}`,
+        actor: u.full_name || u.email.split('@')[0],
+        action: u.status === 'blocked' ? 'account_blocked' : 'user_registered',
+        target: u.email,
+        entity: 'auth_profile',
+        ip: '192.168.1.' + (10 + idx),
+        time: u.created_at
+          ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+          : 'Recently',
+        tone: u.status === 'blocked' ? 'rose' : 'emerald',
+      })),
   ];
 
   return (

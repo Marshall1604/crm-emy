@@ -100,7 +100,7 @@ export function HomeLanding() {
             <Link href="/register">
               <Button className="h-8 sm:h-10 px-2.5 sm:px-5 text-xs sm:text-sm font-extrabold bg-gradient-to-r from-[#092c5c] to-[#12427c] hover:from-[#072247] hover:to-[#092c5c] text-white shadow-md hover:shadow-lg transition-all gap-1 cursor-pointer">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span className="whitespace-nowrap">{isVi ? 'Dùng Thử' : 'Free Trial'}</span>
+                <span className="whitespace-nowrap">{isVi ? 'Dùng Miễn Phí' : 'Use Free'}</span>
               </Button>
             </Link>
           </div>
@@ -1060,7 +1060,23 @@ export function HomeLanding() {
                     {isVi ? 'Dung Lượng' : 'File Size'}
                   </span>
                   <p className="font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 text-xs">
-                    ~8.4 MB (Siêu nhẹ)
+                    {isVi ? '~8.4 MB (Siêu nhẹ)' : '~8.4 MB (Ultra lightweight)'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Step by step guide */}
+              <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 space-y-2">
+                <div className="flex items-center gap-2 text-blue-900 dark:text-blue-200 font-extrabold text-xs">
+                  <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span>{isVi ? 'Quy trình kích hoạt dễ dàng:' : 'Quick Activation Steps:'}</span>
+                </div>
+                <div className="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300 pl-6 list-decimal">
+                  <p className="relative before:content-['1.'] before:absolute before:-left-5 before:font-bold before:text-blue-600">
+                    {isVi ? 'Bấm tải file .EXE cài đặt miễn phí bên dưới.' : 'Click to download the free .EXE installer.'}
+                  </p>
+                  <p className="relative before:content-['2.'] before:absolute before:-left-5 before:font-bold before:text-blue-600">
+                    {isVi ? 'Mở app trên máy tính và Đăng ký / Đăng nhập tài khoản để sử dụng.' : 'Open app on PC and Sign Up / Sign In to use.'}
                   </p>
                 </div>
               </div>

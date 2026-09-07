@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useMemberStore } from '@/features/team/member-store';
 
 interface DashboardReturn {
   id: string;
@@ -319,6 +320,44 @@ export function DashboardView() {
     'Ready to File': activeReturns.filter((r) => r.status === 'Ready to File').length,
     Completed: activeReturns.filter((r) => r.status === 'Completed').length,
   };
+
+  const { members } = useMemberStore();
+
+  const preparerWorkload = useMemo(() => {
+    if (!members || members.length === 0) return [];
+    const totalActive = activeReturns.length;
+
+    return members
+      .filter((m) => m.status === 'Active')
+      .map((m, idx) => {
+        const count = activeReturns.filter((r) => {
+          if (!r.preparer) return false;
+          const prepLower = r.preparer.toLowerCase();
+          const memLower = m.name.toLowerCase();
+          return prepLower.includes(memLower) || memLower.includes(prepLower) || (r.preparerInitials && r.preparerInitials === m.initials);
+        }).length;
+
+        const percentage = totalActive > 0 ? Math.round((count / totalActive) * 100) : 0;
+
+        const colors = [
+          { bg: 'bg-blue-100', text: 'text-blue-800', bar: 'bg-[#092c5c]' },
+          { bg: 'bg-purple-100', text: 'text-purple-800', bar: 'bg-purple-600' },
+          { bg: 'bg-emerald-100', text: 'text-emerald-800', bar: 'bg-emerald-600' },
+          { bg: 'bg-amber-100', text: 'text-amber-800', bar: 'bg-amber-600' },
+        ];
+        const color = colors[idx % colors.length];
+
+        return {
+          id: m.id,
+          name: m.name,
+          role: m.role,
+          initials: m.initials,
+          count,
+          percentage,
+          color,
+        };
+      });
+  }, [members, activeReturns]);
 
   return (
     <main className="p-6 md:p-8 max-w-[1480px] mx-auto space-y-7">
@@ -794,58 +833,46 @@ export function DashboardView() {
               </Link>
             </div>
 
-            <div className="space-y-3.5">
-              {/* Amy Tran */}
-              <div>
-                <div className="flex items-center justify-between text-xs font-semibold mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold flex items-center justify-center">
-                      AT
-                    </span>
-                    <span className="text-slate-800 font-bold">Amy Tran</span>
-                    <span className="text-[10px] text-slate-400">(Admin)</span>
-                  </div>
-                  <span className="text-slate-600">3 returns</span>
-                </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-[#092c5c] h-full rounded-full" style={{ width: '60%' }}></div>
-                </div>
+            {preparerWorkload.length === 0 || activeReturns.length === 0 ? (
+              <div className="text-center py-6 text-slate-400 text-xs">
+                <Users className="w-7 h-7 text-slate-300 mx-auto mb-2" />
+                <p className="font-semibold text-slate-500">
+                  {language === 'vi' ? 'Chưa có phân công hồ sơ' : 'No active staff return assignments'}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {language === 'vi' ? 'Dữ liệu phân công sẽ hiển thị khi bạn tạo khách hàng hoặc thêm nhân sự.' : 'Assignments will appear here once you create clients or add staff.'}
+                </p>
+                <Link href="/team" className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline mt-2.5">
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{language === 'vi' ? 'Quản lý nhóm' : 'Manage Team'}</span>
+                </Link>
               </div>
-
-              {/* Daniel Lee */}
-              <div>
-                <div className="flex items-center justify-between text-xs font-semibold mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-800 text-[10px] font-bold flex items-center justify-center">
-                      DL
-                    </span>
-                    <span className="text-slate-800 font-bold">Daniel Lee</span>
-                    <span className="text-[10px] text-slate-400">(Preparer)</span>
+            ) : (
+              <div className="space-y-3.5">
+                {preparerWorkload.map((item) => (
+                  <div key={item.id}>
+                    <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-6 h-6 rounded-full ${item.color.bg} ${item.color.text} text-[10px] font-bold flex items-center justify-center`}>
+                          {item.initials}
+                        </span>
+                        <span className="text-slate-800 font-bold">{item.name}</span>
+                        <span className="text-[10px] text-slate-400">({item.role})</span>
+                      </div>
+                      <span className="text-slate-600 font-medium">
+                        {item.count} {item.count === 1 ? 'return' : 'returns'}
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                      <div
+                        className={`${item.color.bar} h-full rounded-full transition-all duration-500`}
+                        style={{ width: `${Math.max(item.percentage, item.count > 0 ? 8 : 0)}%` }}
+                      />
+                    </div>
                   </div>
-                  <span className="text-slate-600">2 returns</span>
-                </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-purple-600 h-full rounded-full" style={{ width: '40%' }}></div>
-                </div>
+                ))}
               </div>
-
-              {/* Sarah Kim */}
-              <div>
-                <div className="flex items-center justify-between text-xs font-semibold mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold flex items-center justify-center">
-                      SK
-                    </span>
-                    <span className="text-slate-800 font-bold">Sarah Kim</span>
-                    <span className="text-[10px] text-slate-400">(Reviewer)</span>
-                  </div>
-                  <span className="text-slate-600">2 returns</span>
-                </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-emerald-600 h-full rounded-full" style={{ width: '40%' }}></div>
-                </div>
-              </div>
-            </div>
+            )}
           </section>
         </div>
       </div>

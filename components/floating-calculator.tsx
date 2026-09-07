@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import {
   Calculator,
   X,
@@ -18,6 +19,23 @@ import {
 type CalcMode = 'currency' | 'calculator';
 
 export function FloatingCalculator() {
+  const pathname = usePathname();
+
+  // Hide Floating Calculator on Home/Landing & Auth pages. Only show when user enters Dashboard / Workspace.
+  const isExcludedPage =
+    pathname === '/' ||
+    pathname === '/home' ||
+    pathname === '/checkout' ||
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password' ||
+    pathname === '/verify-email' ||
+    pathname === '/account-blocked' ||
+    pathname === '/subscription-expired' ||
+    pathname === '/unauthorized' ||
+    pathname.startsWith('/auth/');
+
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<CalcMode>('calculator');
 
@@ -27,6 +45,11 @@ export function FloatingCalculator() {
   const [isDraggingBubble, setIsDraggingBubble] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0, initialX: 0, initialY: 0 });
   const hasMovedRef = useRef(false);
+
+  // Early return if excluded page
+  if (isExcludedPage) {
+    return null;
+  }
 
   // Window Position State (Draggable Window)
   const windowRef = useRef<HTMLDivElement>(null);

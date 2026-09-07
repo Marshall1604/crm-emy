@@ -29,56 +29,24 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth/auth-context';
 
-const defaultFallbackUsers = [
-  {
-    id: 'usr-1',
-    email: 'www.junky3@yahoo.com',
-    full_name: 'Phan Hong (Super Admin)',
-    primaryRole: 'super_admin',
-    status: 'active',
-    subscription: { plan: 'lifetime', status: 'active', lifetime: true },
-  },
-  {
-    id: 'usr-2',
-    email: 'admin@crmemy.com',
-    full_name: 'Amy Tran',
-    primaryRole: 'super_admin',
-    status: 'active',
-    subscription: { plan: 'monthly', status: 'active', lifetime: false },
-  },
-  {
-    id: 'usr-3',
-    email: 'daniel.lee@taxoffice.com',
-    full_name: 'Daniel Lee',
-    primaryRole: 'staff',
-    status: 'active',
-    subscription: { plan: 'yearly', status: 'active', lifetime: false },
-  },
-  {
-    id: 'usr-4',
-    email: 'sarah.kim@taxoffice.com',
-    full_name: 'Sarah Kim',
-    primaryRole: 'admin',
-    status: 'active',
-    subscription: { plan: 'monthly', status: 'active', lifetime: false },
-  },
-  {
-    id: 'usr-5',
-    email: 'michael.chen@abclogistics.com',
-    full_name: 'Michael Chen',
-    primaryRole: 'user',
-    status: 'active',
-    subscription: { plan: 'monthly', status: 'active', lifetime: false },
-  },
-  {
-    id: 'usr-6',
-    email: 'minh.nguyen@taxpayer.com',
-    full_name: 'Minh Nguyen',
-    primaryRole: 'user',
-    status: 'active',
-    subscription: { plan: 'trial', status: 'trial', lifetime: false },
-  },
+const defaultAdminUser = {
+  id: 'usr-admin-1',
+  email: 'www.junky3@yahoo.com',
+  full_name: 'Phan Hong (Super Admin)',
+  primaryRole: 'super_admin',
+  status: 'active',
+  subscription: { plan: 'lifetime', status: 'active', lifetime: true },
+};
+
+const OLD_MOCK_EMAILS = [
+  'admin@crmemy.com',
+  'daniel.lee@taxoffice.com',
+  'sarah.kim@taxoffice.com',
+  'michael.chen@abclogistics.com',
+  'minh.nguyen@taxpayer.com',
 ];
+
+const defaultFallbackUsers = [defaultAdminUser];
 
 export function AdminDashboard() {
   const { user, profile, role } = useAuth();
@@ -87,7 +55,11 @@ export function AdminDashboard() {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('crm_emy_saas_users_v2');
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const filtered = parsed.filter((u: any) => !OLD_MOCK_EMAILS.includes(u.email?.toLowerCase()));
+          if (filtered && filtered.length > 0) return filtered;
+        }
       } catch {}
     }
     return defaultFallbackUsers;

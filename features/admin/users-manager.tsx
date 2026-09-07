@@ -72,133 +72,36 @@ export interface AdminUserRecord {
 const STORAGE_USERS_KEY = 'crm_emy_saas_users_v2';
 const STORAGE_DELETED_KEY = 'crm_emy_saas_deleted_users_v2';
 
-const mockDefaultUsers: AdminUserRecord[] = [
-  {
-    id: 'usr-1',
-    email: 'www.junky3@yahoo.com',
-    full_name: 'Phan Hong (Super Admin)',
-    phone: '(714) 555-0188',
-    avatar_url: null,
+const defaultAdminUser: AdminUserRecord = {
+  id: 'usr-admin-1',
+  email: 'www.junky3@yahoo.com',
+  full_name: 'Phan Hong (Super Admin)',
+  phone: '(714) 555-0188',
+  avatar_url: null,
+  status: 'active',
+  created_at: '2026-08-01T10:00:00Z',
+  last_sign_in_at: '2026-09-07T10:00:00Z',
+  primaryRole: 'super_admin',
+  roles: ['super_admin'],
+  subscription: {
+    plan: 'lifetime',
     status: 'active',
-    created_at: '2026-08-01T10:00:00Z',
-    last_sign_in_at: '2026-08-29T19:50:00Z',
-    primaryRole: 'super_admin',
-    roles: ['super_admin'],
-    subscription: {
-      plan: 'lifetime',
-      status: 'active',
-      start_date: '2026-08-01T10:00:00Z',
-      expire_date: null,
-      lifetime: true,
-      payment_provider: 'manual',
-      amount: 0,
-    },
+    start_date: '2026-08-01T10:00:00Z',
+    expire_date: null,
+    lifetime: true,
+    payment_provider: 'manual',
+    amount: 0,
   },
-  {
-    id: 'usr-2',
-    email: 'admin@crmemy.com',
-    full_name: 'Amy Tran',
-    phone: '(714) 555-0188',
-    avatar_url: null,
-    status: 'active',
-    created_at: '2026-08-01T10:00:00Z',
-    last_sign_in_at: '2026-08-29T18:00:00Z',
-    primaryRole: 'super_admin',
-    roles: ['super_admin'],
-    subscription: {
-      plan: 'lifetime',
-      status: 'active',
-      start_date: '2026-08-01T10:00:00Z',
-      expire_date: null,
-      lifetime: true,
-      payment_provider: 'manual',
-      amount: 0,
-    },
-  },
-  {
-    id: 'usr-3',
-    email: 'daniel.lee@taxoffice.com',
-    full_name: 'Daniel Lee',
-    phone: '(415) 555-0199',
-    avatar_url: null,
-    status: 'active',
-    created_at: '2026-08-10T11:30:00Z',
-    last_sign_in_at: '2026-08-29T17:15:00Z',
-    primaryRole: 'staff',
-    roles: ['staff'],
-    subscription: {
-      plan: 'yearly',
-      status: 'active',
-      start_date: '2026-08-10T11:30:00Z',
-      expire_date: '2027-08-10T11:30:00Z',
-      lifetime: false,
-      payment_provider: 'stripe',
-      amount: 199,
-    },
-  },
-  {
-    id: 'usr-4',
-    email: 'sarah.kim@taxoffice.com',
-    full_name: 'Sarah Kim',
-    phone: '(212) 555-0133',
-    avatar_url: null,
-    status: 'active',
-    created_at: '2026-08-15T09:00:00Z',
-    last_sign_in_at: '2026-08-28T14:20:00Z',
-    primaryRole: 'admin',
-    roles: ['admin'],
-    subscription: {
-      plan: 'monthly',
-      status: 'active',
-      start_date: '2026-08-15T09:00:00Z',
-      expire_date: '2026-09-15T09:00:00Z',
-      lifetime: false,
-      payment_provider: 'zelle',
-      amount: 19,
-    },
-  },
-  {
-    id: 'usr-5',
-    email: 'michael.chen@abclogistics.com',
-    full_name: 'Michael Chen',
-    phone: '(415) 555-0182',
-    avatar_url: null,
-    status: 'active',
-    created_at: '2026-08-20T14:40:00Z',
-    last_sign_in_at: '2026-08-27T10:10:00Z',
-    primaryRole: 'user',
-    roles: ['user'],
-    subscription: {
-      plan: 'monthly',
-      status: 'active',
-      start_date: '2026-08-20T14:40:00Z',
-      expire_date: '2026-09-20T14:40:00Z',
-      lifetime: false,
-      payment_provider: 'stripe',
-      amount: 19,
-    },
-  },
-  {
-    id: 'usr-6',
-    email: 'minh.nguyen@taxpayer.com',
-    full_name: 'Minh Nguyen',
-    phone: '(714) 555-0184',
-    avatar_url: null,
-    status: 'active',
-    created_at: '2026-08-26T08:15:00Z',
-    last_sign_in_at: '2026-08-29T12:00:00Z',
-    primaryRole: 'user',
-    roles: ['user'],
-    subscription: {
-      plan: 'trial',
-      status: 'trial',
-      start_date: '2026-08-26T08:15:00Z',
-      expire_date: '2026-09-02T08:15:00Z',
-      lifetime: false,
-      payment_provider: 'manual',
-      amount: 0,
-    },
-  },
+};
+
+const mockDefaultUsers: AdminUserRecord[] = [defaultAdminUser];
+
+const OLD_MOCK_EMAILS = [
+  'admin@crmemy.com',
+  'daniel.lee@taxoffice.com',
+  'sarah.kim@taxoffice.com',
+  'michael.chen@abclogistics.com',
+  'minh.nguyen@taxpayer.com',
 ];
 
 // Helper functions for persistent storage
@@ -211,9 +114,20 @@ function loadSavedUsers(): AdminUserRecord[] {
     const savedStr = localStorage.getItem(STORAGE_USERS_KEY);
     if (savedStr) {
       const parsed: AdminUserRecord[] = JSON.parse(savedStr);
-      return parsed.filter((u) => !deletedIds.includes(u.id) && !deletedIds.includes(u.email));
+      const filtered = parsed.filter(
+        (u) =>
+          !deletedIds.includes(u.id) &&
+          !deletedIds.includes(u.email) &&
+          !OLD_MOCK_EMAILS.includes(u.email.toLowerCase())
+      );
+      if (filtered.length > 0) return filtered;
     }
-    return mockDefaultUsers.filter((u) => !deletedIds.includes(u.id) && !deletedIds.includes(u.email));
+    return mockDefaultUsers.filter(
+      (u) =>
+        !deletedIds.includes(u.id) &&
+        !deletedIds.includes(u.email) &&
+        !OLD_MOCK_EMAILS.includes(u.email.toLowerCase())
+    );
   } catch {
     return mockDefaultUsers;
   }
@@ -305,16 +219,11 @@ export function UsersManager() {
             (u: any) => !deletedIds.includes(u.id) && !deletedIds.includes(u.email)
           );
 
-          // Merge with mock defaults that were not deleted
-          const dbEmails = new Set(validDbUsers.map((u: any) => u.email.toLowerCase()));
-          const extraMocks = mockDefaultUsers.filter(
-            (m) => !dbEmails.has(m.email.toLowerCase()) && !deletedIds.includes(m.id) && !deletedIds.includes(m.email)
-          );
-
-          const merged = [...validDbUsers, ...extraMocks];
-          setUsers(merged);
-          persistUsers(merged);
-          return;
+          if (validDbUsers.length > 0) {
+            setUsers(validDbUsers);
+            persistUsers(validDbUsers);
+            return;
+          }
         }
       }
 
