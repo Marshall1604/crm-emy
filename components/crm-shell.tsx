@@ -60,26 +60,6 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Preload all workspace tabs into browser memory on mount for instant 0ms transitions
-  useEffect(() => {
-    const routesToPreload = [
-      '/dashboard',
-      '/clients',
-      '/businesses',
-      '/insurance',
-      '/tax-returns',
-      '/fees',
-      '/marketing',
-      '/team',
-      '/settings',
-    ];
-    routesToPreload.forEach((route) => {
-      try {
-        router.prefetch(route);
-      } catch (e) {}
-    });
-  }, [router]);
-
   // Hide CRM layout on Auth, Admin, Public Landing, and Checkout pages
   const isAuthPage =
     pathname === '/' ||
@@ -154,7 +134,6 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
             <Link
               key={href}
               href={href}
-              prefetch={true}
               className={active(href) ? 'active' : ''}
               aria-current={active(href) ? 'page' : undefined}
             >
@@ -179,7 +158,6 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
             <Link
               key={href}
               href={href}
-              prefetch={true}
               className={active(href) ? 'active' : ''}
               aria-current={active(href) ? 'page' : undefined}
             >
@@ -192,7 +170,6 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
           {isAdmin && (
             <Link
               href="/admin"
-              prefetch={true}
               className={`mt-2 font-bold !text-amber-400 hover:!bg-amber-950/40 border border-amber-500/20 rounded-lg ${
                 active('/admin') ? 'active !bg-amber-500/20' : ''
               }`}
@@ -236,7 +213,6 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
               {isAdmin && (
                 <Link
                   href="/admin"
-                  prefetch={true}
                   onClick={() => setIsUserMenuOpen(false)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800 text-amber-300 font-semibold"
                 >
@@ -247,7 +223,6 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
 
               <Link
                 href="/settings"
-                prefetch={true}
                 onClick={() => setIsUserMenuOpen(false)}
                 className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800"
               >
