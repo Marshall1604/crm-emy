@@ -10,19 +10,26 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    const isChunkError =
-      error?.message?.includes('ChunkLoadError') ||
-      error?.message?.includes('Loading chunk') ||
-      error?.message?.includes('Failed to fetch dynamically imported module') ||
-      error?.message?.includes('Importing a module script failed') ||
-      error?.name === 'ChunkLoadError';
-
-    if (isChunkError) {
+    // Use sessionStorage to prevent infinite reload loops.
+    // Allow at most 2 automatic reloads per session.
+    try {
+      const key = 'global_error_reload_count';
+      const count = parseInt(sessionStorage.getItem(key) || '0', 10);
+      if (count < 2) {
+        sessionStorage.setItem(key, String(count + 1));
+        // Small delay so the browser doesn't flag as an immediate loop
+        setTimeout(() => {
+          window.location.reload();
+        }, 300);
+        return;
+      }
+    } catch (_) {
+      // sessionStorage not available — just reload once
       window.location.reload();
       return;
     }
 
-    console.error('[Global Error]', error);
+    console.error('[Global Error — max reloads reached]', error);
   }, [error]);
 
   return (
@@ -39,14 +46,27 @@ export default function GlobalError({
           }}
         >
           <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>
-              Đã xảy ra lỗi nghiêm trọng
+            <h2
+              style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}
+            >
+              Đang tải lại trang...
             </h2>
-            <p style={{ color: '#6b7280', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
-              Trang không thể tải được. Hãy thử tải lại.
+            <p
+              style={{
+                color: '#6b7280',
+                marginBottom: '1.5rem',
+                fontSize: '0.875rem',
+              }}
+            >
+              Vui lòng chờ trong giây lát.
             </p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                try {
+                  sessionStorage.removeItem('global_error_reload_count');
+                } catch (_) {}
+                window.location.reload();
+              }}
               style={{
                 padding: '0.5rem 1rem',
                 background: '#3b82f6',
@@ -58,7 +78,7 @@ export default function GlobalError({
                 marginRight: '0.75rem',
               }}
             >
-              Tải lại trang
+              Tải lại ngay
             </button>
             <button
               onClick={reset}

@@ -2,6 +2,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import type { Database, UserRole, UserStatus } from '@/lib/supabase/types';
 
+// Wrap a promise with a timeout — returns null on timeout instead of throwing
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), ms));
+  return Promise.race([promise, timeout]);
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -72,10 +78,15 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // Check auth user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Check auth user — with 4s timeout to avoid hanging on slow Supabase
+  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>['data']['user'] = null;
+  try {
+    const authResult = await withTimeout(supabase.auth.getUser(), 4000);
+    user = authResult?.data?.user ?? null;
+  } catch {
+    // On error, treat as unauthenticated
+    user = null;
+  }
 
   // A. Unauthenticated user trying to access protected routes
   if (!user) {
@@ -92,14 +103,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // C. Fetch Profile & Subscription Status for route enforcement
+  // C. Fetch Profile & Subscription Status for route enforcement (with timeouts)
   try {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('status')
-      .eq('id', user.id)
-      .maybeSingle();
-
+    // Profile check — 3s timeout
+    const profileResult = await withTimeout(
+      Promise.resolve(supabase.from('profiles').select('status').eq('id', user.id).maybeSingle()),
+      3000
+    );
+    const profile = profileResult?.data ?? null;
     const profileStatus = (profile as { status?: UserStatus } | null)?.status;
 
     // Check if account is blocked or suspended
@@ -107,12 +118,12 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/account-blocked', request.url));
     }
 
-    // Check User Roles
-    const { data: userRoles } = await supabase
-      .from('user_roles')
-      .select('role_id')
-      .eq('user_id', user.id);
-
+    // User Roles check — 3s timeout
+    const rolesResult = await withTimeout(
+      Promise.resolve(supabase.from('user_roles').select('role_id').eq('user_id', user.id)),
+      3000
+    );
+    const userRoles = rolesResult?.data ?? [];
     const roles: UserRole[] = (userRoles || []).map((r: { role_id: UserRole }) => r.role_id);
     const isSuperAdmin = roles.includes('super_admin');
     const isAdmin = isSuperAdmin || roles.includes('admin');
@@ -129,15 +140,21 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Check Subscription Expiry on CRM App Routes (exclude /subscription-expired & /unauthorized)
+    // Subscription check — 3s timeout
     if (!isSubscriptionExpiredRoute && !isUnauthorizedRoute && !pathname.startsWith('/admin') && !isAdmin) {
-      const { data: sub } = await supabase
-        .from('subscriptions')
-        .select('status, expire_date, lifetime')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const subResult = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from('subscriptions')
+            .select('status, expire_date, lifetime')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+        ),
+        3000
+      );
+      const sub = subResult?.data ?? null;
 
       if (sub) {
         const isExpired =
