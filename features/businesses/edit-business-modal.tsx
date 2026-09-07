@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useLanguage } from '@/lib/i18n/language-context';
+import { useAuth } from '@/lib/auth/auth-context';
 
 export interface BusinessData {
   name: string;
@@ -42,6 +43,8 @@ export function EditBusinessModal({
   onSave,
 }: EditBusinessModalProps) {
   const { language } = useLanguage();
+  const { role } = useAuth();
+  const isAdmin = role === 'super_admin' || role === 'admin';
   const [formData, setFormData] = useState<BusinessData>(initialData);
 
   // Sync initialData when modal opens
@@ -243,71 +246,73 @@ export function EditBusinessModal({
           </div>
 
           {/* 3. Financial & Tax Fees */}
-          <div className="pt-4 border-t border-slate-200">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-              {language === 'vi' ? '3. Biểu Phí & Nghĩa Vụ Thuế' : '3. Tax & Fee Engagements'}
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {language === 'vi' ? 'Ước Tính Thuế Liên Bang ($)' : 'Estimated Federal Tax ($)'}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.federalTax}
-                  onChange={(e) => handleChange('federalTax', Number(e.target.value) || 0)}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500"
-                />
+          {isAdmin && (
+            <div className="pt-4 border-t border-slate-200">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                {language === 'vi' ? '3. Biểu Phí & Nghĩa Vụ Thuế' : '3. Tax & Fee Engagements'}
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    {language === 'vi' ? 'Ước Tính Thuế Liên Bang ($)' : 'Estimated Federal Tax ($)'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.federalTax}
+                    onChange={(e) => handleChange('federalTax', Number(e.target.value) || 0)}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    {language === 'vi' ? 'Ước Tính Thuế Tiểu Bang ($)' : 'Estimated State Tax ($)'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.stateTax}
+                    onChange={(e) => handleChange('stateTax', Number(e.target.value) || 0)}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    {language === 'vi' ? 'Phí Dịch Vụ Khai Thuế ($)' : 'Preparation Fee ($)'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.fee}
+                    onChange={(e) => handleChange('fee', Number(e.target.value) || 0)}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    {language === 'vi' ? 'Số Tiền Đã Thanh Toán ($)' : 'Amount Paid ($)'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.amountPaid}
+                    onChange={(e) => handleChange('amountPaid', Number(e.target.value) || 0)}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {language === 'vi' ? 'Ước Tính Thuế Tiểu Bang ($)' : 'Estimated State Tax ($)'}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.stateTax}
-                  onChange={(e) => handleChange('stateTax', Number(e.target.value) || 0)}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {language === 'vi' ? 'Phí Dịch Vụ Khai Thuế ($)' : 'Preparation Fee ($)'}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.fee}
-                  onChange={(e) => handleChange('fee', Number(e.target.value) || 0)}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {language === 'vi' ? 'Số Tiền Đã Thanh Toán ($)' : 'Amount Paid ($)'}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.amountPaid}
-                  onChange={(e) => handleChange('amountPaid', Number(e.target.value) || 0)}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm focus:outline-none focus:border-blue-500"
-                />
+              <div className="mt-4 p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 flex items-center justify-between">
+                <span className="text-xs font-bold text-blue-950">{language === 'vi' ? 'Số Tiền Còn Nợ Phải Thu:' : 'Calculated Balance Due:'}</span>
+                <span className={`text-base font-extrabold ${balance > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                  ${balance.toLocaleString()}
+                </span>
               </div>
             </div>
-
-            <div className="mt-4 p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 flex items-center justify-between">
-              <span className="text-xs font-bold text-blue-950">{language === 'vi' ? 'Số Tiền Còn Nợ Phải Thu:' : 'Calculated Balance Due:'}</span>
-              <span className={`text-base font-extrabold ${balance > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
-                ${balance.toLocaleString()}
-              </span>
-            </div>
-          </div>
+          )}
         </form>
 
         <div className="p-4 sm:p-5 border-t border-slate-200 bg-slate-50/70 flex items-center justify-end gap-3">

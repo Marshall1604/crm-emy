@@ -67,7 +67,15 @@ const states = [
 const selectClass =
   'h-10 w-full rounded-md border border-[#d9e0e7] bg-white px-3 text-sm text-[#263142] outline-none focus:border-[#4b7ead] focus:ring-2 focus:ring-[#2b69a5]/10';
 
-export function CreateBusinessModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function CreateBusinessModal({
+  open,
+  onOpenChange,
+  onBusinessCreated,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onBusinessCreated?: (business: any) => void;
+}) {
   const { language } = useLanguage();
   const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
@@ -118,11 +126,45 @@ export function CreateBusinessModal({ open, onOpenChange }: { open: boolean; onO
   };
 
   const submit = (values: FormValues) => {
-    console.info('Validated business payload', {
-      ...values,
-      partners: values.partners.map((p) => ({ ...p, ssn: '***-**-' + p.ssn.slice(-4) })),
-      ein: '**-***' + values.ein.slice(-4),
-    });
+    const id =
+      values.legalName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || `biz-${Date.now()}`;
+
+    const newBusiness = {
+      id,
+      name: values.legalName,
+      dba: values.dba || undefined,
+      ein: values.ein,
+      entityType: values.entityType.includes('1065')
+        ? 'Partnership'
+        : values.entityType.includes('1120-S') || values.entityType.includes('s_corp')
+        ? 'S Corporation'
+        : values.entityType.includes('1120') || values.entityType.includes('c_corp')
+        ? 'C Corporation'
+        : 'Sole Proprietor',
+      returnType: values.returnType.startsWith('Form') ? values.returnType : `Form ${values.returnType}`,
+      year: values.taxYear,
+      status: values.status === 'new' ? 'Waiting Documents' : values.status || 'Waiting Documents',
+      preparer: values.assignedStaff === 'amy_tran' ? 'Amy Tran' : values.assignedStaff === 'daniel_lee' ? 'Daniel Lee' : 'Sarah Kim',
+      fee: Number(values.preparationFee || 0),
+      balance: Number(values.preparationFee || 0) - Number(values.amountPaid || 0),
+      phone: values.phone || '',
+      email: values.email || '',
+      address: `${values.address}, ${values.city}, ${values.state} ${values.zip}`,
+      city: values.city,
+      state: values.state,
+      zip: values.zip,
+      partners: values.partners,
+      updated: 'Just now',
+      link: `/businesses/${id}`,
+    };
+
+    if (onBusinessCreated) {
+      onBusinessCreated(newBusiness);
+    }
+
     form.reset();
     onOpenChange(false);
   };

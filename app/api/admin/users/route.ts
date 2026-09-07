@@ -17,6 +17,18 @@ const CreateUserSchema = z.object({
   }),
 });
 
+const InviteUserSchema = z.object({
+  action: z.literal('invite_user'),
+  payload: z.object({
+    email: z.string().email(),
+    fullName: z.string().min(1),
+    phone: z.string().optional().nullable(),
+    role: z.enum(['super_admin', 'admin', 'staff', 'user']).default('staff'),
+    plan: z.enum(['trial', 'monthly', 'yearly', 'lifetime']).default('monthly'),
+    redirectTo: z.string().optional(),
+  }),
+});
+
 const DeleteUserSchema = z.object({
   action: z.literal('delete_user'),
   targetUserId: z.string().uuid(),
@@ -117,6 +129,103 @@ export async function POST(request: NextRequest) {
         .eq('user_id', targetId);
       return (targetRoles || []).some((r) => r.role_id === 'super_admin');
     };
+
+    // ─── 0. INVITE USER (SENDS EMAIL VIA SUPABASE AUTH) ───
+    if (action === 'invite_user') {
+      const parseResult = InviteUserSchema.safeParse(rawBody);
+      if (!parseResult.success) {
+        return NextResponse.json(
+          { error: 'Invalid user invitation payload.', details: parseResult.error.flatten() },
+          { status: 400 }
+        );
+      }
+
+      const { email, fullName, phone, role, plan, redirectTo } = parseResult.data.payload;
+
+      if (role === 'super_admin' && !isSuperAdmin) {
+        return NextResponse.json(
+          { error: 'Forbidden: Only Super Administrators can invite another Super Administrator.' },
+          { status: 403 }
+        );
+      }
+
+      const origin = request.nextUrl.origin || 'http://localhost:3000';
+      const redirectUrl = redirectTo || `${origin}/auth/callback?next=/reset-password`;
+
+      // Supabase Auth sends invitation email with magic confirmation token
+      const { data: authData, error: authError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+        data: { full_name: fullName, phone },
+        redirectTo: redirectUrl,
+      });
+
+      if (authError || !authData?.user) {
+        return NextResponse.json(
+          { error: authError?.message || 'Failed to send invitation email.' },
+          { status: 400 }
+        );
+      }
+
+      const createdUserId = authData.user.id;
+
+      // Upsert profile
+      await adminClient.from('profiles').upsert({
+        id: createdUserId,
+        email,
+        full_name: fullName,
+        phone: phone || null,
+        status: 'active' as UserStatus,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+      // Upsert role
+      await adminClient.from('user_roles').upsert({
+        user_id: createdUserId,
+        role_id: role as UserRole,
+      });
+
+      // Upsert subscription
+      const isLifetime = plan === 'lifetime';
+      const now = new Date();
+      const expireDate = isLifetime
+        ? null
+        : plan === 'yearly'
+        ? new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString()
+        : plan === 'monthly'
+        ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        : new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      await adminClient.from('subscriptions').upsert({
+        user_id: createdUserId,
+        plan: plan as SubscriptionPlan,
+        status: 'active',
+        start_date: now.toISOString(),
+        expire_date: expireDate,
+        lifetime: isLifetime,
+        payment_provider: isLifetime ? 'manual' : 'stripe',
+        amount: isLifetime ? 999 : plan === 'yearly' ? 490 : plan === 'monthly' ? 49 : 0,
+      });
+
+      // Audit Log
+      await recordAuditLog(actorUser.id, 'user_invited', 'profile', createdUserId, {
+        email,
+        role,
+        plan,
+      });
+
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: createdUserId,
+          email,
+          full_name: fullName,
+          phone: phone || null,
+          status: 'active',
+          primaryRole: role,
+          roles: [role],
+        },
+      });
+    }
 
     // ─── 1. CREATE USER ───
     if (action === 'create_user') {

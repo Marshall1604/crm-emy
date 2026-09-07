@@ -19,7 +19,7 @@ type CalcMode = 'currency' | 'calculator';
 
 export function FloatingCalculator() {
   const [isOpen, setIsOpen] = useState(false);
-  const [mode, setMode] = useState<CalcMode>('currency');
+  const [mode, setMode] = useState<CalcMode>('calculator');
 
   // Bubble Position State (Draggable with fallback to CSS fixed position)
   const bubbleRef = useRef<HTMLDivElement>(null);
@@ -42,6 +42,33 @@ export function FloatingCalculator() {
   const [historyList, setHistoryList] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Load calculation history from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('crm_calc_history');
+      if (saved) {
+        setHistoryList(JSON.parse(saved));
+      }
+    } catch (e) {}
+  }, []);
+
+  const addHistoryItem = (item: string) => {
+    setHistoryList((prev) => {
+      const updated = [item, ...prev.slice(0, 19)];
+      try {
+        localStorage.setItem('crm_calc_history', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const clearHistory = () => {
+    setHistoryList([]);
+    try {
+      localStorage.removeItem('crm_calc_history');
+    } catch (e) {}
+  };
 
   // Currency Converter State (USD <-> VND)
   const [currencySource, setCurrencySource] = useState<'VND' | 'USD'>('VND');
@@ -206,7 +233,7 @@ export function FloatingCalculator() {
     const result = current * (1 + percentage / 100);
     const formatted = parseFloat(result.toFixed(4)).toString();
     setDisplayValue(formatted);
-    setHistoryList((prev) => [`${formatNumber(displayValue)} + ${percentage}% Tax = ${formatNumber(formatted)}`, ...prev.slice(0, 9)]);
+    addHistoryItem(`${formatNumber(displayValue)} + ${percentage}% Tax = ${formatNumber(formatted)}`);
   };
 
   const performOperation = (nextOperator: string) => {
@@ -223,7 +250,7 @@ export function FloatingCalculator() {
       setPreviousValue(resultString);
 
       const logItem = `${formatNumber(currentValue)} ${operation} ${formatNumber(displayValue)} = ${formatNumber(resultString)}`;
-      setHistoryList((prev) => [logItem, ...prev.slice(0, 9)]);
+      addHistoryItem(logItem);
     }
 
     setWaitingForOperand(true);
@@ -247,7 +274,7 @@ export function FloatingCalculator() {
       const resultString = parseFloat(result.toFixed(6)).toString();
 
       const logItem = `${formatNumber(previousValue)} ${operation} ${formatNumber(displayValue)} = ${formatNumber(resultString)}`;
-      setHistoryList((prev) => [logItem, ...prev.slice(0, 9)]);
+      addHistoryItem(logItem);
 
       setDisplayValue(resultString);
       setPreviousValue(null);
@@ -548,10 +575,18 @@ export function FloatingCalculator() {
                 </div>
               </div>
             ) : (
-              /* Standard Calculator Display */
+              /* Standard Calculator Display with Live Formula & History */
               <div className="space-y-1">
-                <div className="text-right text-xs font-mono text-slate-400 h-4">
-                  {previousValue != null && operation ? `${formatNumber(previousValue)} ${operation}` : ''}
+                <div className="text-right text-xs font-mono text-slate-400 h-4 flex items-center justify-end gap-1.5">
+                  {previousValue != null && operation ? (
+                    <span className="text-amber-400 font-bold">{`${formatNumber(previousValue)} ${operation}`}</span>
+                  ) : historyList.length > 0 ? (
+                    <span className="text-slate-400 truncate max-w-[220px]" title="Phép tính gần nhất">
+                      {historyList[0]}
+                    </span>
+                  ) : (
+                    <span className="text-slate-500 text-[11px]">Sẵn sàng</span>
+                  )}
                 </div>
                 <div className="text-right overflow-x-auto scrollbar-none font-mono text-3xl font-black tracking-tight text-white">
                   {formatNumber(displayValue)}
@@ -578,6 +613,41 @@ export function FloatingCalculator() {
               )}
             </button>
           </div>
+
+          {/* ──────────────────────────────────────────────────────────
+              RECENT CALCULATION TAPE / QUICK HISTORY STRIP
+          ────────────────────────────────────────────────────────── */}
+          {historyList.length > 0 && (
+            <div className="bg-slate-800 text-white px-3 py-1.5 border-b border-slate-700 flex items-center justify-between gap-2 text-[11px]">
+              <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
+                  <History className="w-3 h-3" />
+                  Gần đây:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const match = historyList[0].match(/=\s*([\d,.-]+)$/);
+                    if (match && match[1]) {
+                      setDisplayValue(match[1].replace(/,/g, ''));
+                    }
+                  }}
+                  title="Bấm để lấy lại kết quả này"
+                  className="font-mono text-slate-200 hover:text-white bg-slate-700/70 hover:bg-slate-700 px-2 py-0.5 rounded-md text-[10px] truncate max-w-[200px] transition cursor-pointer"
+                >
+                  {historyList[0]}
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowHistory((prev) => !prev)}
+                className="text-[10px] font-bold text-blue-400 hover:underline shrink-0 cursor-pointer"
+              >
+                {showHistory ? 'Đóng nhật ký' : `Xem tất cả (${historyList.length})`}
+              </button>
+            </div>
+          )}
 
           {/* ──────────────────────────────────────────────────────────
               QUICK TAX PRESETS BAR (+5%, +10%, +15%, +20%)

@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
+import { useAuth } from '@/lib/auth/auth-context';
 
 interface DashboardReturn {
   id: string;
@@ -82,7 +83,7 @@ const initialReturns: DashboardReturn[] = [
     preparerInitials: 'SK',
     fee: 3100,
     balance: 1550,
-    link: '/businesses',
+    link: '/businesses/xyz-tech',
     updated: 'Yesterday',
   },
   {
@@ -110,7 +111,7 @@ const initialReturns: DashboardReturn[] = [
     preparerInitials: 'AT',
     fee: 1450,
     balance: 0,
-    link: '/businesses',
+    link: '/businesses/luxury-nails',
     updated: 'Aug 27, 2026',
   },
   {
@@ -144,10 +145,84 @@ const initialReturns: DashboardReturn[] = [
 ];
 
 export function DashboardView() {
+  const { user, role } = useAuth();
   const { t, language } = useLanguage();
   const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedType, setSelectedType] = useState<string>('ALL');
+
+  const isAdmin = role === 'super_admin' || role === 'admin';
+
+  const [activeReturns, setActiveReturns] = useState<DashboardReturn[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const clientKey = user?.id ? `crm_emy_clients_${user.id}` : 'crm_emy_clients_list';
+        const bizKey = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
+        const savedClientsStr = localStorage.getItem(clientKey);
+        const savedBizStr = localStorage.getItem(bizKey);
+
+        const clients = savedClientsStr ? JSON.parse(savedClientsStr) : [];
+        const businesses = savedBizStr ? JSON.parse(savedBizStr) : [];
+
+        const combined: DashboardReturn[] = [
+          ...businesses.map((b: any) => ({
+            id: `biz-${b.id}`,
+            name: b.name,
+            type: 'Business' as const,
+            form: b.returnType || 'Form 1065',
+            year: b.year || '2025',
+            status: (b.status || 'Waiting Documents') as DashboardReturn['status'],
+            preparer: b.preparer || 'Amy Tran',
+            preparerInitials: (b.preparer || 'AT').split(' ').map((n: string) => n[0]).join(''),
+            fee: Number(b.fee || 0),
+            balance: Number(b.balance || 0),
+            link: `/businesses/${b.id}`,
+            updated: b.updated || 'Recently',
+          })),
+          ...clients.map((c: any) => ({
+            id: `cl-${c.id}`,
+            name: c.name,
+            type: 'Individual' as const,
+            form: c.returnType || 'Form 1040',
+            year: c.year || '2025',
+            status: (c.status || 'Waiting Documents') as DashboardReturn['status'],
+            preparer: c.staff || 'Amy Tran',
+            preparerInitials: (c.staff || 'AT').split(' ').map((n: string) => n[0]).join(''),
+            fee: Number(c.fee || 0),
+            balance: Number(c.balance || 0),
+            link: `/clients/${c.id}`,
+            updated: c.updated || 'Recently',
+          })),
+        ];
+
+        if (combined.length > 0) return combined;
+        if (user) return [];
+      } catch (e) {}
+    }
+    return user ? [] : initialReturns;
+  });
+
+  const [totalClientsCount, setTotalClientsCount] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const clientKey = user?.id ? `crm_emy_clients_${user.id}` : 'crm_emy_clients_list';
+        const saved = localStorage.getItem(clientKey);
+        if (saved) return JSON.parse(saved).length;
+      } catch (e) {}
+    }
+    return user ? 0 : 8;
+  });
+
+  const [totalBizCount, setTotalBizCount] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const bizKey = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
+        const saved = localStorage.getItem(bizKey);
+        if (saved) return JSON.parse(saved).length;
+      } catch (e) {}
+    }
+    return user ? 0 : 5;
+  });
 
   const statusLabels: Record<string, { en: string; vi: string }> = {
     'Waiting Documents': { en: 'Waiting Docs', vi: 'Chờ Giấy Tờ' },
@@ -163,7 +238,7 @@ export function DashboardView() {
   };
 
   const filteredReturns = useMemo(() => {
-    return initialReturns.filter((item) => {
+    return activeReturns.filter((item) => {
       const matchesSearch =
         search === '' ||
         item.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -173,20 +248,20 @@ export function DashboardView() {
       const matchesType = selectedType === 'ALL' || item.type === selectedType;
       return matchesSearch && matchesStatus && matchesType;
     });
-  }, [search, selectedStatus, selectedType]);
+  }, [activeReturns, search, selectedStatus, selectedType]);
 
-  const totalClients = 8;
-  const inProgressReturns = initialReturns.filter((r) => r.status !== 'Completed').length;
-  const completedReturns = initialReturns.filter((r) => r.status === 'Completed').length;
-  const totalRevenue = initialReturns.reduce((sum, r) => sum + r.fee, 0);
-  const totalBalance = initialReturns.reduce((sum, r) => sum + r.balance, 0);
+  const totalClients = totalClientsCount + totalBizCount;
+  const inProgressReturns = activeReturns.filter((r) => r.status !== 'Completed').length;
+  const completedReturns = activeReturns.filter((r) => r.status === 'Completed').length;
+  const totalRevenue = activeReturns.reduce((sum, r) => sum + r.fee, 0);
+  const totalBalance = activeReturns.reduce((sum, r) => sum + r.balance, 0);
 
   const statusCounts = {
-    'Waiting Documents': initialReturns.filter((r) => r.status === 'Waiting Documents').length,
-    'In Preparation': initialReturns.filter((r) => r.status === 'In Preparation').length,
-    Review: initialReturns.filter((r) => r.status === 'Review').length,
-    'Ready to File': initialReturns.filter((r) => r.status === 'Ready to File').length,
-    Completed: initialReturns.filter((r) => r.status === 'Completed').length,
+    'Waiting Documents': activeReturns.filter((r) => r.status === 'Waiting Documents').length,
+    'In Preparation': activeReturns.filter((r) => r.status === 'In Preparation').length,
+    Review: activeReturns.filter((r) => r.status === 'Review').length,
+    'Ready to File': activeReturns.filter((r) => r.status === 'Ready to File').length,
+    Completed: activeReturns.filter((r) => r.status === 'Completed').length,
   };
 
   return (
@@ -285,21 +360,42 @@ export function DashboardView() {
           </div>
         </div>
 
-        {/* Revenue */}
-        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('kpi_total_fees')}</span>
-            <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
-              <DollarSign className="w-5 h-5" />
+        {/* 4th KPI Card: Revenue for Admin, Workload for Staff */}
+        {isAdmin ? (
+          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('kpi_total_fees')}</span>
+              <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                <DollarSign className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <div className="text-3xl font-extrabold text-slate-900">${totalRevenue.toLocaleString()}</div>
+              <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-rose-600">
+                <span>{t('kpi_unpaid_balance')} ${totalBalance.toLocaleString()}</span>
+              </div>
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-3xl font-extrabold text-slate-900">${totalRevenue.toLocaleString()}</div>
-            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-rose-600">
-              <span>{t('kpi_unpaid_balance')} ${totalBalance.toLocaleString()}</span>
+        ) : (
+          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                {language === 'vi' ? 'HỒ SƠ CẦN XỬ LÝ' : 'PENDING ACTIONS'}
+              </span>
+              <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
+                <Briefcase className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <div className="text-3xl font-extrabold text-slate-900">
+                {statusCounts['Waiting Documents'] + statusCounts['Review']}
+              </div>
+              <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-purple-700">
+                <span>{language === 'vi' ? 'Đang đợi tài liệu & kiểm tra' : 'Waiting docs & in review'}</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* 3. WORKFLOW PIPELINE INTERACTIVE STATUS BAR */}
@@ -461,7 +557,7 @@ export function DashboardView() {
                   <th className="py-3 px-3">{t('th_tax_year')}</th>
                   <th className="py-3 px-3">{t('th_status')}</th>
                   <th className="py-3 px-3">{t('th_preparer')}</th>
-                  <th className="py-3 px-4 text-right">{t('th_fee_balance')}</th>
+                  {isAdmin && <th className="py-3 px-4 text-right">{t('th_fee_balance')}</th>}
                   <th className="py-3 px-3 text-center">{t('th_action')}</th>
                 </tr>
               </thead>
@@ -536,16 +632,18 @@ export function DashboardView() {
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="font-bold text-slate-900 text-xs">${r.fee.toLocaleString()}</div>
-                      {r.balance > 0 ? (
-                        <div className="text-[11px] font-semibold text-rose-600">
-                          {t('due_label')} ${r.balance.toLocaleString()}
-                        </div>
-                      ) : (
-                        <div className="text-[11px] font-semibold text-emerald-600">{t('paid_in_full')}</div>
-                      )}
-                    </td>
+                    {isAdmin && (
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="font-bold text-slate-900 text-xs">${r.fee.toLocaleString()}</div>
+                        {r.balance > 0 ? (
+                          <div className="text-[11px] font-semibold text-rose-600">
+                            {t('due_label')} ${r.balance.toLocaleString()}
+                          </div>
+                        ) : (
+                          <div className="text-[11px] font-semibold text-emerald-600">{t('paid_in_full')}</div>
+                        )}
+                      </td>
+                    )}
 
                     <td className="py-3.5 px-3 text-center">
                       <Link href={r.link}>
@@ -569,7 +667,7 @@ export function DashboardView() {
           </div>
 
           <footer className="p-4 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
-            <span>{language === 'vi' ? `Hiển thị ${filteredReturns.length} trên ${initialReturns.length} hồ sơ` : `Showing ${filteredReturns.length} of ${initialReturns.length} engagements`}</span>
+            <span>{language === 'vi' ? `Hiển thị ${filteredReturns.length} trên ${activeReturns.length} hồ sơ` : `Showing ${filteredReturns.length} of ${activeReturns.length} engagements`}</span>
             <Link href="/tax-returns" className="font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1">
               {language === 'vi' ? 'Xem chi tiết tất cả tờ khai' : 'View all returns in detail'} <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>

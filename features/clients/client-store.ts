@@ -371,3 +371,121 @@ export const initialTaxReturnsList: TaxReturnEngagement[] = [
     updatedAt: 'Mar 20, 2024',
   },
 ];
+
+// ─────────────────────────────────────────────────────────────
+// USER-SCOPED STORAGE & UNIFIED LOOKUP HELPERS
+// ─────────────────────────────────────────────────────────────
+
+export function getClientStorageKey(userId?: string): string {
+  return userId ? `crm_emy_clients_${userId}` : 'crm_emy_clients_list';
+}
+
+export function getTaxReturnStorageKey(userId?: string): string {
+  return userId ? `crm_emy_returns_${userId}` : 'crm_emy_tax_returns_list';
+}
+
+export function getUserClients(userId?: string): PermanentClient[] {
+  if (typeof window === 'undefined') return userId ? [] : initialClientsList;
+
+  try {
+    const key = getClientStorageKey(userId);
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    // Also check legacy shared key
+    const shared = localStorage.getItem('crm_emy_clients_list');
+    if (shared && !userId) {
+      return JSON.parse(shared);
+    }
+  } catch (e) {
+    console.warn('Error reading clients from storage:', e);
+  }
+
+  // If user is authenticated, start clean with empty array!
+  if (userId) {
+    return [];
+  }
+  return initialClientsList;
+}
+
+export function findClientById(id: string, userId?: string): PermanentClient | null {
+  const userClients = getUserClients(userId);
+  const found = userClients.find((c) => c.id === id);
+  if (found) return found;
+
+  // Fallback to sample clients only in preview / guest mode
+  if (!userId) {
+    return initialClientsList.find((c) => c.id === id) || null;
+  }
+  return null;
+}
+
+export function saveClientRecord(client: PermanentClient, userId?: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = getClientStorageKey(userId);
+    const existing = getUserClients(userId);
+    const idx = existing.findIndex((c) => c.id === client.id);
+    let updated: PermanentClient[];
+    if (idx >= 0) {
+      updated = [...existing];
+      updated[idx] = client;
+    } else {
+      updated = [client, ...existing];
+    }
+    localStorage.setItem(key, JSON.stringify(updated));
+  } catch (e) {
+    console.warn('Error saving client to storage:', e);
+  }
+}
+
+export function getUserTaxReturns(userId?: string): TaxReturnEngagement[] {
+  if (typeof window === 'undefined') return userId ? [] : initialTaxReturnsList;
+
+  try {
+    const key = getTaxReturnStorageKey(userId);
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.warn('Error reading returns from storage:', e);
+  }
+
+  if (userId) {
+    return [];
+  }
+  return initialTaxReturnsList;
+}
+
+export function findTaxReturnById(id: string, userId?: string): TaxReturnEngagement | null {
+  const userReturns = getUserTaxReturns(userId);
+  const found = userReturns.find((r) => r.id === id);
+  if (found) return found;
+
+  if (!userId) {
+    return initialTaxReturnsList.find((r) => r.id === id) || null;
+  }
+  return null;
+}
+
+export function saveTaxReturnRecord(taxReturn: TaxReturnEngagement, userId?: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = getTaxReturnStorageKey(userId);
+    const existing = getUserTaxReturns(userId);
+    const idx = existing.findIndex((r) => r.id === taxReturn.id);
+    let updated: TaxReturnEngagement[];
+    if (idx >= 0) {
+      updated = [...existing];
+      updated[idx] = taxReturn;
+    } else {
+      updated = [taxReturn, ...existing];
+    }
+    localStorage.setItem(key, JSON.stringify(updated));
+  } catch (e) {
+    console.warn('Error saving tax return to storage:', e);
+  }
+}
+

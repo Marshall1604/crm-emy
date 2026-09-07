@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { ChevronDown, Plus, RotateCcw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
+import { useAuth } from '@/lib/auth/auth-context';
 
 const returns = [
   { id: 'tr-minh-2025', name: 'Minh Nguyen', kind: 'Individual', initials: 'MN', year: '2025', returnType: '1040', entity: 'Individual', federal: 4850, state: 920, status: 'Waiting Documents', preparer: 'Amy Tran', fee: 650, balance: 325, updated: 'Aug 29, 2026' },
@@ -37,6 +38,8 @@ const statusMapVi: Record<string, string> = {
 
 export function TaxReturnsList() {
   const { language } = useLanguage();
+  const { role } = useAuth();
+  const isAdmin = role === 'super_admin' || role === 'admin';
   const [search, setSearch] = useState('');
   const [year, setYear] = useState('');
   const [kind, setKind] = useState('');
@@ -126,8 +129,12 @@ export function TaxReturnsList() {
                 <th>{language === 'vi' ? 'THUẾ LIÊN BANG / TIỂU BANG' : 'FEDERAL / STATE'}</th>
                 <th>{language === 'vi' ? 'TRẠNG THÁI' : 'STATUS'}</th>
                 <th>{language === 'vi' ? 'NHÂN VIÊN PHỤ TRÁCH' : 'ASSIGNED PREPARER'}</th>
-                <th>{language === 'vi' ? 'PHÍ DỊCH VỤ' : 'FEE'}</th>
-                <th>{language === 'vi' ? 'CÒN NỢ' : 'BALANCE'}</th>
+                {isAdmin && (
+                  <>
+                    <th>{language === 'vi' ? 'PHÍ DỊCH VỤ' : 'FEE'}</th>
+                    <th>{language === 'vi' ? 'CÒN NỢ' : 'BALANCE'}</th>
+                  </>
+                )}
                 <th>{language === 'vi' ? 'CẬP NHẬT' : 'LAST UPDATED'}</th>
               </tr>
             </thead>
@@ -166,12 +173,16 @@ export function TaxReturnsList() {
                     <span className="staff-mini">{r.preparer.split(' ').map((n) => n[0]).join('')}</span>
                     {r.preparer}
                   </td>
-                  <td>
-                    <b>${r.fee.toLocaleString()}</b>
-                  </td>
-                  <td className={r.balance ? 'return-balance' : 'return-paid'}>
-                    {r.balance ? `$${r.balance.toLocaleString()}` : language === 'vi' ? 'Đã thu đủ' : '$0'}
-                  </td>
+                  {isAdmin && (
+                    <>
+                      <td>
+                        <b>${r.fee.toLocaleString()}</b>
+                      </td>
+                      <td className={r.balance ? 'return-balance' : 'return-paid'}>
+                        {r.balance ? `$${r.balance.toLocaleString()}` : language === 'vi' ? 'Đã thu đủ' : '$0'}
+                      </td>
+                    </>
+                  )}
                   <td>{r.updated}</td>
                 </tr>
               ))}

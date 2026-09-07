@@ -70,7 +70,6 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
       '/marketing',
       '/team',
       '/settings',
-      '/checkout',
     ];
     routesToPreload.forEach((route) => {
       try {
@@ -121,6 +120,17 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
     ? 'Monthly Pro'
     : '7-Day Trial';
 
+  const canViewFees = isAdmin;
+
+  const workspaceNavItems = [
+    [t('nav_dashboard'), '/dashboard', '▦'],
+    [t('nav_clients'), '/clients', '♙'],
+    [t('nav_businesses'), '/businesses', '▣'],
+    [t('nav_tax_returns'), '/tax-returns', '▤'],
+    ...(canViewFees ? [[t('nav_fees'), '/fees', '$'] as const] : []),
+    [t('nav_marketing_mail'), '/marketing', '✉'],
+  ];
+
   return (
     <div className="route-shell">
       <aside className="route-sidebar">
@@ -132,14 +142,7 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
         {/* WORKSPACE SECTION */}
         <nav>
           <p>{t('nav_workspace')}</p>
-          {[
-            [t('nav_dashboard'), '/dashboard', '▦'],
-            [t('nav_clients'), '/clients', '♙'],
-            [t('nav_businesses'), '/businesses', '▣'],
-            [t('nav_tax_returns'), '/tax-returns', '▤'],
-            [t('nav_fees'), '/fees', '$'],
-            [t('nav_marketing_mail'), '/marketing', '✉'],
-          ].map(([label, href, icon]) => (
+          {workspaceNavItems.map(([label, href, icon]) => (
             <Link
               key={href}
               href={href}
@@ -187,67 +190,8 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
           )}
         </nav>
 
-        {/* ─── PRO WORKSPACE UPGRADE CARD (MINIMALIST SILICON-VALLEY SAAS STYLE) ─── */}
-        <div className="mx-2.5 my-3 p-4 rounded-2xl bg-white dark:bg-[#1E232B] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700/80 shadow-xs hover:border-slate-300 dark:hover:border-slate-600 transition-all flex flex-col justify-between min-h-[250px]">
-          <div>
-            {/* Header with Clean Badge */}
-            <div className="flex items-center justify-between gap-2 mb-2.5">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 font-bold text-[10px] tracking-wider uppercase border border-blue-200/60 dark:border-blue-900/40">
-                <Sparkles className="w-3 h-3 text-amber-500" />
-                PRO UPGRADE
-              </span>
-              <span className="text-[10px] font-bold text-slate-400">All-in-one</span>
-            </div>
-
-            <h4 className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight mb-1">
-              Unlock Pro Features
-            </h4>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug mb-3.5">
-              Scale your tax practice with automated client workflows.
-            </p>
-
-            {/* Feature List with Clean Monochromatic Badges */}
-            <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-200 mb-4 font-normal">
-              <li className="flex items-start gap-2">
-                <span className="w-4 h-4 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                </span>
-                <span className="leading-tight">Auto Marketing Email Suite</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-4 h-4 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                </span>
-                <span className="leading-tight">Unlimited Rate Conversions</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-4 h-4 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                </span>
-                <span className="leading-tight">1-Click Excel / CSV Export</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-4 h-4 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                </span>
-                <span className="leading-tight">Fees & Payments Dashboard</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Action Button */}
-          <Link href="/checkout" className="block w-full pt-1">
-            <Button
-              className="w-full h-9.5 bg-[#092c5c] hover:bg-[#072247] dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-xs gap-1.5 transition-all cursor-pointer"
-            >
-              <span>Upgrade to Pro</span>
-              <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
-            </Button>
-          </Link>
-        </div>
-
         {/* USER PROFILE & SUBSCRIPTION FOOTER */}
-        <div className="route-user relative" ref={userMenuRef}>
+        <div className="route-user relative mt-auto" ref={userMenuRef}>
           <button
             type="button"
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -313,35 +257,17 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
 
       <section className="route-content">
         <header className="route-topbar">
-          {/* ─── PRO WORKSPACE TOPBAR BANNER ─── */}
-          <div className="flex-1 min-w-0 mr-2 sm:mr-4" id="topbar-ad-slot">
-            <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E232B] border border-slate-200/90 dark:border-slate-700/80 overflow-hidden shadow-2xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#092c5c] text-white dark:bg-blue-600 font-black text-[10px] uppercase tracking-wider shadow-2xs">
-                  <Crown className="w-3 h-3 text-amber-400" />
-                  PRO
+          {/* Practice Status Header */}
+          <div className="flex-1 min-w-0 mr-2 sm:mr-4">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#1E232B] border border-slate-200/80 dark:border-slate-700/80 shadow-2xs max-w-xl">
+              <span className="shrink-0 w-2 h-2 rounded-full bg-emerald-500" />
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate">
+                <span className="font-extrabold text-slate-900 dark:text-white">Tax Practice Workspace</span>
+                <span className="text-slate-400 dark:text-slate-500 mx-1.5">·</span>
+                <span className="text-slate-500 dark:text-slate-400 font-normal">
+                  Tax Year 2025 • Form 1040, 1065, 1120-S Tracker
                 </span>
-                <p className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
-                  <strong className="font-extrabold text-slate-900 dark:text-white">Upgrade to Pro:</strong>{' '}
-                  <span className="text-slate-600 dark:text-slate-400 hidden lg:inline">
-                    Automated Marketing Mail • Unlimited Conversions • Excel Export • Fees & Payments Dashboard
-                  </span>
-                  <span className="text-slate-600 dark:text-slate-400 hidden md:inline lg:hidden">
-                    Auto Email • Excel Export • Fees & Payments
-                  </span>
-                  <span className="text-slate-600 dark:text-slate-400 md:hidden">
-                    Auto Mail • Excel • Fees
-                  </span>
-                </p>
-              </div>
-
-              <Link
-                href="/checkout"
-                className="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-[#092c5c] hover:bg-[#072247] dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-bold text-[11px] shadow-xs hover:shadow-md transition-all whitespace-nowrap cursor-pointer"
-              >
-                <span>Upgrade Now</span>
-                <ArrowRight className="w-3 h-3 text-amber-400" />
-              </Link>
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2.5 shrink-0 ml-auto">

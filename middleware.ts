@@ -27,13 +27,13 @@ export async function middleware(request: NextRequest) {
     pathname === '/account-blocked' ||
     pathname === '/subscription-expired' ||
     pathname === '/unauthorized' ||
+    pathname === '/checkout' ||
     pathname.startsWith('/auth/callback');
 
   const isAuthOnlyRoute =
     pathname === '/login' ||
     pathname === '/register' ||
-    pathname === '/forgot-password' ||
-    pathname === '/reset-password';
+    pathname === '/forgot-password';
 
   const isSubscriptionExpiredRoute = pathname === '/subscription-expired';
   const isUnauthorizedRoute = pathname === '/unauthorized';

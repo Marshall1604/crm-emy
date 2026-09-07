@@ -9,14 +9,16 @@ import {
   Building2,
   Check,
   CheckCircle2,
+  Copy,
   CreditCard,
   Crown,
-  Download,
+  ExternalLink,
   HelpCircle,
   Lock,
   Mail,
   QrCode,
   ShieldCheck,
+  Smartphone,
   Sparkles,
   Zap,
 } from 'lucide-react';
@@ -26,19 +28,22 @@ import { useLanguage } from '@/lib/i18n/language-context';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { user, profile, isLifetime } = useAuth();
-  const { t, language } = useLanguage();
+  const { user, profile } = useAuth();
+  const { language } = useLanguage();
   const isVi = language === 'vi';
 
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly' | 'lifetime'>('yearly');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'zelle' | 'vietqr'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'us_qr' | 'ach'>('stripe');
+  const [usQrType, setUsQrType] = useState<'zelle' | 'venmo' | 'cashapp'>('zelle');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Form fields
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvc, setCardCvc] = useState('');
+  const [cardZip, setCardZip] = useState('');
   const [billingName, setBillingName] = useState(profile?.full_name || 'Tax Office Manager');
   const [billingEmail, setBillingEmail] = useState(user?.email || 'office@crmemy.com');
 
@@ -94,6 +99,13 @@ export default function CheckoutPage() {
   };
 
   const activePlan = plans[selectedPlan];
+  const orderMemo = `CRM-${user?.email?.split('@')[0]?.toUpperCase() || 'USER'}-${selectedPlan.toUpperCase()}`;
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   const handleCompletePayment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,47 +275,53 @@ export default function CheckoutPage() {
               {/* Payment Method Selector */}
               <div className="pt-3">
                 <h3 className="text-sm font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-                  2. {isVi ? 'Phương Thức Thanh Toán' : 'Payment Method'}
+                  2. {isVi ? 'Phương Thức Thanh Toán (US & Quốc Tế)' : 'Payment Method (US & International)'}
                 </h3>
 
                 <div className="grid grid-cols-3 gap-2.5">
+                  {/* STRIPE CARD / APPLE PAY */}
                   <button
                     type="button"
-                    onClick={() => setPaymentMethod('card')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition cursor-pointer text-xs font-bold ${
-                      paymentMethod === 'card'
-                        ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-600 dark:border-blue-500 text-blue-900 dark:text-blue-200 shadow-xs'
+                    onClick={() => setPaymentMethod('stripe')}
+                    className={`p-3.5 rounded-2xl border flex flex-col items-center gap-1.5 transition cursor-pointer text-xs font-bold ${
+                      paymentMethod === 'stripe'
+                        ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-600 dark:border-blue-500 text-blue-900 dark:text-blue-200 shadow-xs ring-2 ring-blue-500/20'
                         : 'bg-white dark:bg-[#1E232B] border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    <CreditCard className="w-5 h-5" />
-                    <span>Credit Card</span>
+                    <CreditCard className="w-5 h-5 text-blue-600" />
+                    <span>Stripe / Card</span>
+                    <span className="text-[9px] text-slate-400 font-normal">Apple & Google Pay</span>
                   </button>
 
+                  {/* US INSTANT QR (ZELLE / VENMO / CASH APP) */}
                   <button
                     type="button"
-                    onClick={() => setPaymentMethod('zelle')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition cursor-pointer text-xs font-bold ${
-                      paymentMethod === 'zelle'
-                        ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-600 dark:border-blue-500 text-blue-900 dark:text-blue-200 shadow-xs'
+                    onClick={() => setPaymentMethod('us_qr')}
+                    className={`p-3.5 rounded-2xl border flex flex-col items-center gap-1.5 transition cursor-pointer text-xs font-bold ${
+                      paymentMethod === 'us_qr'
+                        ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-600 dark:border-blue-500 text-blue-900 dark:text-blue-200 shadow-xs ring-2 ring-blue-500/20'
                         : 'bg-white dark:bg-[#1E232B] border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    <Zap className="w-5 h-5 text-purple-600" />
-                    <span>Zelle / ACH</span>
+                    <QrCode className="w-5 h-5 text-purple-600" />
+                    <span>US QR Pay</span>
+                    <span className="text-[9px] text-slate-400 font-normal">Zelle • Venmo • CashApp</span>
                   </button>
 
+                  {/* US ACH / WIRE */}
                   <button
                     type="button"
-                    onClick={() => setPaymentMethod('vietqr')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition cursor-pointer text-xs font-bold ${
-                      paymentMethod === 'vietqr'
-                        ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-600 dark:border-blue-500 text-blue-900 dark:text-blue-200 shadow-xs'
+                    onClick={() => setPaymentMethod('ach')}
+                    className={`p-3.5 rounded-2xl border flex flex-col items-center gap-1.5 transition cursor-pointer text-xs font-bold ${
+                      paymentMethod === 'ach'
+                        ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-600 dark:border-blue-500 text-blue-900 dark:text-blue-200 shadow-xs ring-2 ring-blue-500/20'
                         : 'bg-white dark:bg-[#1E232B] border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    <QrCode className="w-5 h-5 text-emerald-600" />
-                    <span>VietQR Banking</span>
+                    <Building2 className="w-5 h-5 text-emerald-600" />
+                    <span>US Bank Transfer</span>
+                    <span className="text-[9px] text-slate-400 font-normal">ACH & Wire Transfer</span>
                   </button>
                 </div>
               </div>
@@ -312,7 +330,7 @@ export default function CheckoutPage() {
             {/* RIGHT COLUMN: PAYMENT FORM & ORDER SUMMARY (5 COLS) */}
             <div className="lg:col-span-5 space-y-4">
               <h3 className="text-sm font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                3. {isVi ? 'Thông Tin & Xác Nhận' : 'Review & Checkout'}
+                3. {isVi ? 'Thông Tin & Thanh Toán' : 'Review & Complete Payment'}
               </h3>
 
               <div className="bg-white dark:bg-[#1E232B] rounded-3xl p-6 border border-slate-200 dark:border-slate-700/80 shadow-lg space-y-5 text-left">
@@ -327,17 +345,25 @@ export default function CheckoutPage() {
                     <span className="text-xs font-medium text-slate-700 dark:text-slate-300 capitalize">{selectedPlan}</span>
                   </div>
                   <div className="flex justify-between items-baseline pt-2 border-t border-dashed border-slate-200 dark:border-slate-700">
-                    <span className="text-sm font-black text-slate-900 dark:text-white">{isVi ? 'Tổng thanh toán:' : 'Total Due Today:'}</span>
+                    <span className="text-sm font-black text-slate-900 dark:text-white">{isVi ? 'Tổng thanh toán:' : 'Total Due (USD):'}</span>
                     <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{activePlan.price}</span>
                   </div>
                 </div>
 
-                {/* Dynamic Form based on payment method */}
-                {paymentMethod === 'card' && (
+                {/* ─── 1. STRIPE CREDIT / DEBIT CARD / APPLE PAY ─── */}
+                {paymentMethod === 'stripe' && (
                   <form onSubmit={handleCompletePayment} className="space-y-3.5">
+                    <div className="flex items-center justify-between pb-1 text-[11px] text-slate-500">
+                      <span className="font-bold flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                        <Lock className="w-3.5 h-3.5 text-blue-600" />
+                        Stripe 3D-Secure Processing
+                      </span>
+                      <span className="font-mono text-[10px]">Visa • MC • Amex • Apple Pay</span>
+                    </div>
+
                     <div className="space-y-1">
                       <label className="text-[11px] font-bold text-slate-500 uppercase">
-                        {isVi ? 'Tên Trên Thẻ' : 'Cardholder Name'}
+                        {isVi ? 'Tên Chủ Thẻ' : 'Cardholder Name'}
                       </label>
                       <input
                         type="text"
@@ -345,7 +371,7 @@ export default function CheckoutPage() {
                         value={billingName}
                         onChange={(e) => setBillingName(e.target.value)}
                         className="w-full h-10 px-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800 text-xs font-semibold focus:outline-blue-600"
-                        placeholder="e.g. John Doe"
+                        placeholder="e.g. Johnathan Nguyen"
                       />
                     </div>
 
@@ -367,9 +393,9 @@ export default function CheckoutPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-3 gap-2">
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-500 uppercase">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">
                           {isVi ? 'Hạn Thẻ' : 'Exp Date'}
                         </label>
                         <input
@@ -378,20 +404,32 @@ export default function CheckoutPage() {
                           maxLength={5}
                           value={cardExpiry}
                           onChange={(e) => setCardExpiry(e.target.value)}
-                          className="w-full h-10 px-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800 text-xs font-mono font-semibold focus:outline-blue-600"
+                          className="w-full h-10 px-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800 text-xs font-mono font-semibold focus:outline-blue-600 text-center"
                           placeholder="MM/YY"
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-slate-500 uppercase">CVC / CVV</label>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">CVC / CVV</label>
                         <input
                           type="password"
                           required
                           maxLength={4}
                           value={cardCvc}
                           onChange={(e) => setCardCvc(e.target.value)}
-                          className="w-full h-10 px-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800 text-xs font-mono font-semibold focus:outline-blue-600"
+                          className="w-full h-10 px-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800 text-xs font-mono font-semibold focus:outline-blue-600 text-center"
                           placeholder="•••"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase">Zip Code</label>
+                        <input
+                          type="text"
+                          required
+                          maxLength={5}
+                          value={cardZip}
+                          onChange={(e) => setCardZip(e.target.value)}
+                          className="w-full h-10 px-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800 text-xs font-mono font-semibold focus:outline-blue-600 text-center"
+                          placeholder="92683"
                         />
                       </div>
                     </div>
@@ -402,66 +440,146 @@ export default function CheckoutPage() {
                       className="w-full h-12 bg-gradient-to-r from-[#092c5c] via-[#104380] to-[#092c5c] hover:from-[#072247] hover:to-[#092c5c] text-white font-extrabold text-sm rounded-xl shadow-lg mt-3 gap-2 cursor-pointer"
                     >
                       {isProcessing ? (
-                        <span>{isVi ? 'Đang Xử Lý Giao Dịch...' : 'Processing Payment...'}</span>
+                        <span>{isVi ? 'Đang Xử Lý Giao Dịch...' : 'Processing Stripe Payment...'}</span>
                       ) : (
                         <>
                           <Lock className="w-4 h-4 text-amber-400" />
-                          <span>{isVi ? `Thanh Toán ${activePlan.price} & Kích Hoạt` : `Pay ${activePlan.price} & Upgrade Now`}</span>
+                          <span>{isVi ? `Thanh Toán ${activePlan.price} Qua Stripe` : `Pay ${activePlan.price} with Stripe`}</span>
                         </>
                       )}
                     </Button>
                   </form>
                 )}
 
-                {paymentMethod === 'zelle' && (
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-2xl bg-purple-50/80 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900/50 text-xs space-y-2">
-                      <p className="font-extrabold text-purple-900 dark:text-purple-300">
-                        {isVi ? 'Thông Tin Chuyển Khoản Zelle (US):' : 'Zelle Transfer Instructions:'}
-                      </p>
-                      <div className="flex justify-between">
-                        <span className="text-slate-600 dark:text-slate-400">Zelle ID / Email:</span>
-                        <strong className="font-mono text-purple-900 dark:text-purple-200 select-all">billing@businesssolutions.agency</strong>
+                {/* ─── 2. US INSTANT QR CODE (ZELLE / VENMO / CASH APP) ─── */}
+                {paymentMethod === 'us_qr' && (
+                  <div className="space-y-3.5">
+                    {/* US Sub-tabs */}
+                    <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
+                      <button
+                        type="button"
+                        onClick={() => setUsQrType('zelle')}
+                        className={`py-1.5 rounded-lg transition cursor-pointer ${
+                          usQrType === 'zelle' ? 'bg-white dark:bg-[#1E232B] text-purple-700 shadow-xs' : 'text-slate-500'
+                        }`}
+                      >
+                        ⚡ Zelle QR
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUsQrType('venmo')}
+                        className={`py-1.5 rounded-lg transition cursor-pointer ${
+                          usQrType === 'venmo' ? 'bg-white dark:bg-[#1E232B] text-blue-600 shadow-xs' : 'text-slate-500'
+                        }`}
+                      >
+                        📱 Venmo QR
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUsQrType('cashapp')}
+                        className={`py-1.5 rounded-lg transition cursor-pointer ${
+                          usQrType === 'cashapp' ? 'bg-white dark:bg-[#1E232B] text-emerald-600 shadow-xs' : 'text-slate-500'
+                        }`}
+                      >
+                        💵 Cash App
+                      </button>
+                    </div>
+
+                    {/* QR Code Container with Scan-to-Pay styling */}
+                    <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-50 to-white dark:from-slate-800/80 dark:to-[#1E232B] border border-slate-200 dark:border-slate-700 text-center space-y-3">
+                      <div className="w-44 h-44 mx-auto rounded-2xl bg-white p-3 border-2 border-slate-200 shadow-md flex flex-col items-center justify-center relative">
+                        <QrCode className="w-36 h-36 text-slate-900" />
+                        <span className="absolute bottom-2 px-2 py-0.5 rounded-md bg-slate-900 text-white font-mono text-[9px] font-bold">
+                          {activePlan.price} USD
+                        </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-600 dark:text-slate-400">{isVi ? 'Tên Người Nhận:' : 'Account Name:'}</span>
-                        <strong className="text-slate-900 dark:text-white">EMLY TAX SERVICES LLC</strong>
+
+                      <div className="text-left space-y-1.5 text-xs bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-medium">
+                            {usQrType === 'zelle' ? 'Zelle ID / Email:' : usQrType === 'venmo' ? 'Venmo Handle:' : 'Cashtag:'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              copyToClipboard(
+                                usQrType === 'zelle' ? 'billing@businesssolutions.agency' : usQrType === 'venmo' ? '@EmlyTax-CRM' : '$EmlyTaxCRM',
+                                'id'
+                              )
+                            }
+                            className="font-mono font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>{usQrType === 'zelle' ? 'billing@businesssolutions.agency' : usQrType === 'venmo' ? '@EmlyTax-CRM' : '$EmlyTaxCRM'}</span>
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-medium">Account Name:</span>
+                          <strong className="text-slate-900 dark:text-white">EMLY TAX SERVICES LLC</strong>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 font-medium">Memo / Note:</span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(orderMemo, 'memo')}
+                            className="font-mono font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>{orderMemo}</span>
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-600 dark:text-slate-400">{isVi ? 'Nội Dung:' : 'Memo:'}</span>
-                        <strong className="font-mono text-blue-600 select-all">{user?.email || 'CRM-PRO'}</strong>
-                      </div>
+
+                      {copiedField && (
+                        <p className="text-[11px] font-bold text-emerald-600 flex items-center justify-center gap-1 animate-in fade-in">
+                          <Check className="w-3.5 h-3.5" />
+                          Copied {copiedField} to clipboard!
+                        </p>
+                      )}
                     </div>
 
                     <Button
                       type="button"
                       onClick={handleCompletePayment}
                       disabled={isProcessing}
-                      className="w-full h-12 bg-purple-700 hover:bg-purple-800 text-white font-extrabold text-sm rounded-xl shadow-lg gap-2 cursor-pointer"
+                      className="w-full h-12 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white font-extrabold text-sm rounded-xl shadow-lg gap-2 cursor-pointer"
                     >
                       <Check className="w-4 h-4" />
-                      <span>{isVi ? 'Tôi Đã Chuyển Khoản Zelle' : 'I Have Completed Zelle Transfer'}</span>
+                      <span>{isVi ? 'Tôi Đã Quét Mã & Chuyển Tiền Thành Công' : 'I Have Completed US QR Payment'}</span>
                     </Button>
                   </div>
                 )}
 
-                {paymentMethod === 'vietqr' && (
+                {/* ─── 3. US BANK TRANSFER / ACH WIRE ─── */}
+                {paymentMethod === 'ach' && (
                   <div className="space-y-3">
-                    <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-xs space-y-2 text-center">
-                      <p className="font-extrabold text-emerald-900 dark:text-emerald-300">
-                        {isVi ? 'Quét Mã VietQR Chuyển Khoản Nhanh 24/7' : 'Scan VietQR to Pay (Instant 24/7)'}
+                    <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-xs space-y-2">
+                      <p className="font-extrabold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                        <Building2 className="w-4 h-4" />
+                        <span>US Bank ACH / Wire Details:</span>
                       </p>
-                      <div className="w-40 h-40 mx-auto rounded-xl bg-white p-2 border border-slate-200 flex items-center justify-center shadow-xs">
-                        <QrCode className="w-32 h-32 text-slate-800" />
-                      </div>
-                      <div className="text-left space-y-1 pt-1 text-[11px]">
+                      <div className="space-y-1.5 text-slate-700 dark:text-slate-300">
                         <div className="flex justify-between">
-                          <span className="text-slate-600">Ngân hàng:</span>
-                          <strong className="text-slate-900 dark:text-white">Techcombank / Vietcombank</strong>
+                          <span className="text-slate-500">Bank Name:</span>
+                          <strong className="text-slate-900 dark:text-white">JPMorgan Chase Bank, N.A.</strong>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-600">Quy đổi VND:</span>
-                          <strong className="text-emerald-600 font-bold">~{(activePlan.numericPrice * 25400).toLocaleString('vi-VN')} đ</strong>
+                          <span className="text-slate-500">Beneficiary:</span>
+                          <strong className="text-slate-900 dark:text-white">EMLY TAX SERVICES LLC</strong>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Routing Number (ACH):</span>
+                          <strong className="font-mono text-slate-900 dark:text-white select-all">122000496</strong>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Account Number:</span>
+                          <strong className="font-mono text-slate-900 dark:text-white select-all">8930482910</strong>
+                        </div>
+                        <div className="flex justify-between pt-1 border-t border-emerald-200 dark:border-emerald-800">
+                          <span className="text-slate-500">Transfer Memo:</span>
+                          <strong className="font-mono text-blue-600 select-all">{orderMemo}</strong>
                         </div>
                       </div>
                     </div>
@@ -473,7 +591,7 @@ export default function CheckoutPage() {
                       className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-sm rounded-xl shadow-lg gap-2 cursor-pointer"
                     >
                       <Check className="w-4 h-4" />
-                      <span>{isVi ? 'Xác Nhận Đã Thanh Toán' : 'Confirm Payment'}</span>
+                      <span>{isVi ? 'Xác Nhận Đã Chuyển Khoản Ngân Hàng' : 'Confirm ACH / Wire Payment'}</span>
                     </Button>
                   </div>
                 )}
@@ -482,7 +600,7 @@ export default function CheckoutPage() {
                 <div className="pt-2 text-center text-[11px] text-slate-400 space-y-1">
                   <p className="flex items-center justify-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>{isVi ? 'Cam kết hoàn tiền trong 14 ngày nếu không hài lòng' : '14-Day 100% Money-Back Guarantee'}</span>
+                    <span>{isVi ? 'Bảo lãnh hoàn tiền 100% trong 14 ngày nếu không hài lòng' : '14-Day 100% Money-Back Guarantee'}</span>
                   </p>
                 </div>
               </div>

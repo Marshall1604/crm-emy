@@ -29,8 +29,8 @@ const makeInitials = (name: string) =>
 const seedMembers: TeamMember[] = [
   { id: '1', name: 'Amy Tran',     email: 'amy@crmemy.com',     role: 'Super Admin',  status: 'Active',  assigned: 48, lastActive: 'Just now',           initials: 'AT' },
   { id: '2', name: 'Daniel Lee',   email: 'daniel@crmemy.com',  role: 'Tax Preparer', status: 'Active',  assigned: 37, lastActive: '12 minutes ago',      initials: 'DL' },
-  { id: '3', name: 'Sarah Kim',    email: 'sarah@crmemy.com',   role: 'Reviewer',     status: 'Active',  assigned: 24, lastActive: '1 hour ago',           initials: 'SK' },
-  { id: '4', name: 'Michael Pham', email: 'michael@crmemy.com', role: 'Staff',        status: 'Invited', assigned: 0,  lastActive: 'Invitation pending',   initials: 'MP' },
+  { id: '3', name: 'Sarah Kim',    email: 'sarah@crmemy.com',   role: 'Tax Preparer', status: 'Active',  assigned: 24, lastActive: '1 hour ago',           initials: 'SK' },
+  { id: '4', name: 'Michael Pham', email: 'michael@crmemy.com', role: 'Tax Preparer', status: 'Invited', assigned: 0,  lastActive: 'Invitation pending',   initials: 'MP' },
 ];
 
 export function useMemberStore() {
@@ -234,24 +234,26 @@ export function useMemberStore() {
               ? 'staff'
               : 'user';
 
-          await fetch('/api/admin/users', {
+          const res = await fetch('/api/admin/users', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              action: 'create_user',
+              action: 'invite_user',
               payload: {
                 email: data.email,
                 fullName: data.name,
                 phone: data.phone || null,
-                password: `P@ss_${Date.now()}`,
                 role: dbRole,
                 plan: 'monthly',
-                status: data.status === 'Inactive' ? 'blocked' : 'active',
               },
             }),
           });
+          const resData = (await res.json()) as { user?: { id: string } };
+          if (resData.user?.id) {
+            newMember.id = resData.user.id;
+          }
         } catch (e) {
-          console.error('Error creating user on server:', e);
+          console.error('Error inviting user on server:', e);
         }
       }
 

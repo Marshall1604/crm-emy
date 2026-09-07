@@ -45,6 +45,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/lib/auth/auth-context';
 import {
   type PermanentClient,
   type TaxReturnEngagement,
@@ -53,6 +54,9 @@ import {
   type ClientActivity,
   initialClientsList,
   initialTaxReturnsList,
+  findClientById,
+  findTaxReturnById,
+  saveClientRecord,
 } from './client-store';
 
 const tabs = ['Overview', 'Tax Returns', 'Documents', 'Notes', 'Activity'] as const;
@@ -94,9 +98,15 @@ const selectClass =
   'h-9 w-full rounded-md border border-[#d9e0e7] bg-white px-3 text-xs text-[#263142] outline-none focus:border-[#4b7ead] focus:ring-2 focus:ring-[#2b69a5]/10';
 
 export function ClientDetail({ id }: { id: string }) {
+  const { user, role } = useAuth();
+  const isAdmin = role === 'super_admin' || role === 'admin';
+
   // 1. Permanent Client Profile State
-  const clientInitial =
-    initialClientsList.find((c) => c.id === id) || {
+  const [client, setClient] = useState<PermanentClient>(() => {
+    const found = findClientById(id, user?.id);
+    if (found) return found;
+
+    return {
       id,
       firstName: id.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ') || 'Client',
       lastName: '',
@@ -110,11 +120,11 @@ export function ClientDetail({ id }: { id: string }) {
       state: 'CA',
       zipCode: '90001',
       filingStatusDefault: 'Single',
-      createdAt: 'Jan 10, 2024',
-      updatedAt: 'Aug 29, 2026',
+      createdAt: 'Today',
+      updatedAt: 'Today',
     };
+  });
 
-  const [client, setClient] = useState<PermanentClient>(clientInitial);
   const [showFullSsn, setShowFullSsn] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
 
@@ -122,13 +132,16 @@ export function ClientDetail({ id }: { id: string }) {
   const [returnsList, setReturnsList] = useState<TaxReturnEngagement[]>(() => {
     const list = initialTaxReturnsList.filter((r) => r.clientId === id);
     if (!list.length) {
+      const foundTr = findTaxReturnById(`tr-${id}`, user?.id);
+      if (foundTr) return [foundTr];
+
       return [
         {
           id: `tr-${id}-2026`,
           clientId: id,
           taxYear: '2026',
           returnType: 'Form 1040',
-          filingStatus: clientInitial.filingStatusDefault || 'Single',
+          filingStatus: client.filingStatusDefault || 'Single',
           status: 'Waiting Documents',
           assignedStaff: 'Amy Tran',
           federalTaxAmount: 0,
@@ -136,9 +149,9 @@ export function ClientDetail({ id }: { id: string }) {
           amountPaid: 0,
           balance: 650,
           internalNotes: 'Annual engagement opened.',
-          taxpayerNameSnapshot: clientInitial.name,
-          addressSnapshot: `${clientInitial.address}, ${clientInitial.city}, ${clientInitial.state} ${clientInitial.zipCode}`,
-          filingStatusSnapshot: clientInitial.filingStatusDefault || 'Single',
+          taxpayerNameSnapshot: client.name,
+          addressSnapshot: `${client.address}, ${client.city}, ${client.state} ${client.zipCode}`,
+          filingStatusSnapshot: client.filingStatusDefault || 'Single',
           createdAt: 'Aug 01, 2026',
           updatedAt: 'Aug 29, 2026',
         },
@@ -722,20 +735,39 @@ export function ClientDetail({ id }: { id: string }) {
               icon={<ClipboardList size={16} color="#0284c7" />}
               sub="Multi-year engagements"
             />
-            <KpiCard
-              label="Lifetime Preparation Fees"
-              value={`$${totalFees.toLocaleString()}`}
-              icon={<ReceiptText size={16} color="#0284c7" />}
-              sub="All historical returns"
-            />
-            <KpiCard
-              label="Current Balance Due"
-              value={`$${totalBalance.toLocaleString()}`}
-              isBalance
-              isZero={totalBalance === 0}
-              icon={<CircleDollarSign size={16} color={totalBalance ? '#dc2626' : '#16a34a'} />}
-              sub={totalBalance === 0 ? 'All returns fully paid' : 'Total unpaid balance'}
-            />
+            {isAdmin ? (
+              <>
+                <KpiCard
+                  label="Lifetime Preparation Fees"
+                  value={`$${totalFees.toLocaleString()}`}
+                  icon={<ReceiptText size={16} color="#0284c7" />}
+                  sub="All historical returns"
+                />
+                <KpiCard
+                  label="Current Balance Due"
+                  value={`$${totalBalance.toLocaleString()}`}
+                  isBalance
+                  isZero={totalBalance === 0}
+                  icon={<CircleDollarSign size={16} color={totalBalance ? '#dc2626' : '#16a34a'} />}
+                  sub={totalBalance === 0 ? 'All returns fully paid' : 'Total unpaid balance'}
+                />
+              </>
+            ) : (
+              <>
+                <KpiCard
+                  label="Assigned Preparer"
+                  value={latestReturn?.assignedStaff || 'Unassigned'}
+                  icon={<UserRound size={16} color="#0284c7" />}
+                  sub="Current return preparer"
+                />
+                <KpiCard
+                  label="Filing Status"
+                  value={latestReturn?.filingStatus || client.filingStatusDefault || 'Single'}
+                  icon={<FileCheck2 size={16} color="#16a34a" />}
+                  sub="Active filing classification"
+                />
+              </>
+            )}
           </section>
 
           {/* 2-Column Overview Cards */}
@@ -928,9 +960,13 @@ export function ClientDetail({ id }: { id: string }) {
                   <th style={{ textAlign: 'left', fontSize: '10px', color: '#64748b' }}>FILING STATUS</th>
                   <th style={{ textAlign: 'left', fontSize: '10px', color: '#64748b' }}>STATUS</th>
                   <th style={{ textAlign: 'left', fontSize: '10px', color: '#64748b' }}>ASSIGNED STAFF</th>
-                  <th style={{ textAlign: 'right', fontSize: '10px', color: '#64748b' }}>FEE</th>
-                  <th style={{ textAlign: 'right', fontSize: '10px', color: '#64748b' }}>PAID</th>
-                  <th style={{ textAlign: 'right', fontSize: '10px', color: '#64748b' }}>BALANCE</th>
+                  {isAdmin && (
+                    <>
+                      <th style={{ textAlign: 'right', fontSize: '10px', color: '#64748b' }}>FEE</th>
+                      <th style={{ textAlign: 'right', fontSize: '10px', color: '#64748b' }}>PAID</th>
+                      <th style={{ textAlign: 'right', fontSize: '10px', color: '#64748b' }}>BALANCE</th>
+                    </>
+                  )}
                   <th style={{ textAlign: 'left', paddingLeft: '16px', fontSize: '10px', color: '#64748b' }}>LAST UPDATED</th>
                   <th style={{ width: '80px', textAlign: 'center', fontSize: '10px', color: '#64748b' }}>ACTION</th>
                 </tr>
@@ -989,21 +1025,25 @@ export function ClientDetail({ id }: { id: string }) {
                       </span>
                       <span style={{ fontSize: '11px' }}>{r.assignedStaff}</span>
                     </td>
-                    <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                      ${r.preparationFee.toLocaleString()}
-                    </td>
-                    <td style={{ textAlign: 'right', color: '#16a34a' }}>
-                      ${r.amountPaid.toLocaleString()}
-                    </td>
-                    <td
-                      style={{
-                        textAlign: 'right',
-                        fontWeight: 700,
-                        color: r.balance > 0 ? '#dc2626' : '#16a34a',
-                      }}
-                    >
-                      ${r.balance.toLocaleString()}
-                    </td>
+                    {isAdmin && (
+                      <>
+                        <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                          ${r.preparationFee.toLocaleString()}
+                        </td>
+                        <td style={{ textAlign: 'right', color: '#16a34a' }}>
+                          ${r.amountPaid.toLocaleString()}
+                        </td>
+                        <td
+                          style={{
+                            textAlign: 'right',
+                            fontWeight: 700,
+                            color: r.balance > 0 ? '#dc2626' : '#16a34a',
+                          }}
+                        >
+                          ${r.balance.toLocaleString()}
+                        </td>
+                      </>
+                    )}
                     <td style={{ paddingLeft: '16px', fontSize: '11px', color: '#64748b' }}>
                       {r.updatedAt}
                     </td>
@@ -1682,9 +1722,9 @@ export function ClientDetail({ id }: { id: string }) {
 
               <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px' }}>
                 <b style={{ fontSize: '12px', color: '#092c5c', display: 'block', marginBottom: '10px' }}>
-                  Fees & Internal Notes
+                  {isAdmin ? 'Fees & Internal Notes' : 'Tax & Engagement Notes'}
                 </b>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? 'repeat(3, 1fr)' : '1fr', gap: '10px' }}>
                   <div>
                     <Label style={{ fontSize: '11px' }}>Federal Tax Due ($)</Label>
                     <Input
@@ -1694,25 +1734,29 @@ export function ClientDetail({ id }: { id: string }) {
                       onChange={(e) => setNewReturnForm({ ...newReturnForm, federalTaxAmount: Number(e.target.value) })}
                     />
                   </div>
-                  <div>
-                    <Label style={{ fontSize: '11px' }}>Preparation Fee ($)</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={newReturnForm.preparationFee}
-                      onChange={(e) => setNewReturnForm({ ...newReturnForm, preparationFee: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div>
-                    <Label style={{ fontSize: '11px' }}>Amount Paid ($)</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={newReturnForm.amountPaid}
-                      onChange={(e) => setNewReturnForm({ ...newReturnForm, amountPaid: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div style={{ gridColumn: 'span 3' }}>
+                  {isAdmin && (
+                    <>
+                      <div>
+                        <Label style={{ fontSize: '11px' }}>Preparation Fee ($)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={newReturnForm.preparationFee}
+                          onChange={(e) => setNewReturnForm({ ...newReturnForm, preparationFee: Number(e.target.value) })}
+                        />
+                      </div>
+                      <div>
+                        <Label style={{ fontSize: '11px' }}>Amount Paid ($)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={newReturnForm.amountPaid}
+                          onChange={(e) => setNewReturnForm({ ...newReturnForm, amountPaid: Number(e.target.value) })}
+                        />
+                      </div>
+                    </>
+                  )}
+                  <div style={{ gridColumn: isAdmin ? 'span 3' : 'span 1' }}>
                     <Label style={{ fontSize: '11px' }}>Engagement Notes</Label>
                     <Textarea
                       value={newReturnForm.internalNotes}

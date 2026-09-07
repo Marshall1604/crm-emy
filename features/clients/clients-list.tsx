@@ -135,24 +135,33 @@ const statuses = [
   'Completed',
 ];
 
-const LOCAL_STORAGE_KEY = 'crm_emy_clients_list';
+import { useAuth } from '@/lib/auth/auth-context';
+import {
+  saveClientRecord,
+  saveTaxReturnRecord,
+  getClientStorageKey,
+  type PermanentClient,
+  type TaxReturnEngagement,
+} from './client-store';
 
 export function ClientsList() {
+  const { user, role } = useAuth();
+  const isAdmin = role === 'super_admin' || role === 'admin';
+  const storageKey = getClientStorageKey(user?.id);
+
   const [clientList, setClientList] = useState<ClientRecord[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        const key = getClientStorageKey(user?.id);
+        const saved = localStorage.getItem(key);
         if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
+          return JSON.parse(saved);
         }
       } catch (err) {
         console.error('Failed to load clients from localStorage:', err);
       }
     }
-    return defaultSampleClients;
+    return user ? [] : defaultSampleClients;
   });
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -182,13 +191,20 @@ export function ClientsList() {
     async function loadFromSupabase() {
       if (isSupabaseConfigured) {
         try {
-          const remoteClients = await fetchClientsFromSupabase();
-          if (isMounted && remoteClients && remoteClients.length > 0) {
+          const remoteClients = await fetchClientsFromSupabase(user?.id);
+          if (isMounted && remoteClients !== null) {
             setClientList(remoteClients);
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(remoteClients));
+            localStorage.setItem(storageKey, JSON.stringify(remoteClients));
           }
         } catch (err) {
           console.warn('Could not sync with Supabase, using local data:', err);
+        }
+      } else if (user) {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          setClientList(JSON.parse(saved));
+        } else {
+          setClientList([]);
         }
       }
     }
@@ -196,12 +212,13 @@ export function ClientsList() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user, storageKey]);
 
   const saveClients = (newList: ClientRecord[]) => {
     setClientList(newList);
     if (typeof window !== 'undefined') {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newList));
+      localStorage.setItem(storageKey, JSON.stringify(newList));
+      localStorage.setItem('crm_emy_clients_list', JSON.stringify(newList));
     }
   };
 
@@ -233,9 +250,52 @@ export function ClientsList() {
   const handleClientCreated = async (newClient: ClientRecord) => {
     const updated = [newClient, ...clientList];
     saveClients(updated);
+
+    // Save as PermanentClient & TaxReturnEngagement so client-detail and tax-return-detail can load it
+    const permClient: PermanentClient = {
+      id: newClient.id,
+      firstName: newClient.firstName,
+      middleName: newClient.middleName,
+      lastName: newClient.lastName,
+      name: newClient.name,
+      ssnOrItin: newClient.ssn || '***-**-0000',
+      dateOfBirth: newClient.dob || '1990-01-01',
+      phone: newClient.phone || '',
+      email: newClient.email || '',
+      address: newClient.address || '',
+      city: newClient.city || '',
+      state: newClient.state || 'CA',
+      zipCode: newClient.zip || '',
+      filingStatusDefault: newClient.filingStatus || 'Single',
+      createdAt: newClient.updated,
+      updatedAt: newClient.updated,
+    };
+    saveClientRecord(permClient, user?.id);
+
+    const taxReturn: TaxReturnEngagement = {
+      id: `tr-${newClient.id}`,
+      clientId: newClient.id,
+      taxYear: newClient.year || '2025',
+      returnType: newClient.returnType || 'Form 1040',
+      filingStatus: newClient.filingStatus || 'Single',
+      status: newClient.status || 'Waiting Documents',
+      assignedStaff: newClient.staff || 'Unassigned',
+      federalTaxAmount: newClient.federalTax || 0,
+      preparationFee: newClient.fee || 0,
+      amountPaid: newClient.amountPaid || 0,
+      balance: newClient.balance || 0,
+      internalNotes: newClient.notes || '',
+      taxpayerNameSnapshot: newClient.name,
+      addressSnapshot: `${newClient.address}, ${newClient.city}, ${newClient.state} ${newClient.zip}`,
+      filingStatusSnapshot: newClient.filingStatus,
+      createdAt: newClient.updated,
+      updatedAt: newClient.updated,
+    };
+    saveTaxReturnRecord(taxReturn, user?.id);
+
     if (isSupabaseConfigured) {
       try {
-        await saveClientToSupabase(newClient);
+        await saveClientToSupabase(newClient, user?.id);
       } catch (err) {
         console.error('Failed to sync new client to Supabase:', err);
       }
@@ -457,16 +517,29 @@ export function ClientsList() {
           <p className="text-xs text-amber-700 font-semibold mt-1">{language === 'vi' ? 'Đang chờ W-2 / 1099' : 'Pending W-2s / 1099s'}</p>
         </div>
 
-        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{language === 'vi' ? 'TỔNG PHÍ ĐÃ LẬP HÓA ĐƠN' : 'Total Billed Fees'}</span>
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <DollarSign className="w-5 h-5" />
+        {isAdmin ? (
+          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{language === 'vi' ? 'TỔNG PHÍ ĐÃ LẬP HÓA ĐƠN' : 'Total Billed Fees'}</span>
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <DollarSign className="w-5 h-5" />
+              </div>
             </div>
+            <div className="text-3xl font-extrabold text-slate-900 mt-3">${totalBilled.toLocaleString()}</div>
+            <p className="text-xs text-emerald-700 font-semibold mt-1">{language === 'vi' ? 'Hồ sơ thuế cá nhân' : 'Individual tax returns'}</p>
           </div>
-          <div className="text-3xl font-extrabold text-slate-900 mt-3">${totalBilled.toLocaleString()}</div>
-          <p className="text-xs text-emerald-700 font-semibold mt-1">{language === 'vi' ? 'Hồ sơ thuế cá nhân' : 'Individual tax returns'}</p>
-        </div>
+        ) : (
+          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{language === 'vi' ? 'ĐÃ HOÀN TẤT / NỘP IRS' : 'Completed / E-Filed'}</span>
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="text-3xl font-extrabold text-slate-900 mt-3">{clientList.filter((c) => c.status === 'Completed' || c.status === 'Accepted' || c.status === 'E-Filed').length}</div>
+            <p className="text-xs text-emerald-700 font-semibold mt-1">{language === 'vi' ? 'Hồ sơ đã nộp thành công' : 'Successfully filed returns'}</p>
+          </div>
+        )}
       </div>
 
       {/* 3. FILTER BAR */}
@@ -538,7 +611,7 @@ export function ClientsList() {
 
       {/* 4. CLIENTS TABLE CARD */}
       <section className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        {selectedIds.size > 0 ? (
+        {selectedIds.size > 0 && isAdmin ? (
           <div className="h-12 px-5 bg-rose-50/80 border-b border-rose-200 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold text-rose-900">
@@ -593,30 +666,32 @@ export function ClientsList() {
           <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="py-3.5 px-3 w-10 text-center">
-                  <button
-                    type="button"
-                    onClick={toggleSelectAll}
-                    className="p-1 rounded hover:bg-slate-200/50 cursor-pointer inline-flex items-center justify-center text-slate-500"
-                    title={allFilteredSelected ? 'Deselect all' : 'Select all'}
-                    aria-label="Select all rows"
-                  >
-                    {allFilteredSelected ? (
-                      <CheckSquare className="w-4 h-4 text-[#092c5c]" />
-                    ) : someFilteredSelected ? (
-                      <Square className="w-4 h-4 text-blue-600" />
-                    ) : (
-                      <Square className="w-4 h-4 text-slate-400" />
-                    )}
-                  </button>
-                </th>
+                {isAdmin && (
+                  <th className="py-3.5 px-3 w-10 text-center">
+                    <button
+                      type="button"
+                      onClick={toggleSelectAll}
+                      className="p-1 rounded hover:bg-slate-200/50 cursor-pointer inline-flex items-center justify-center text-slate-500"
+                      title={allFilteredSelected ? 'Deselect all' : 'Select all'}
+                      aria-label="Select all rows"
+                    >
+                      {allFilteredSelected ? (
+                        <CheckSquare className="w-4 h-4 text-[#092c5c]" />
+                      ) : someFilteredSelected ? (
+                        <Square className="w-4 h-4 text-blue-600" />
+                      ) : (
+                        <Square className="w-4 h-4 text-slate-400" />
+                      )}
+                    </button>
+                  </th>
+                )}
                 <th className="py-3.5 px-3">{language === 'vi' ? 'TÊN KHÁCH HÀNG' : 'CLIENT NAME'}</th>
                 <th className="py-3.5 px-3">{language === 'vi' ? 'LIÊN HỆ' : 'CONTACT'}</th>
                 <th className="py-3.5 px-3">{language === 'vi' ? 'NĂM THUẾ' : 'TAX YEAR'}</th>
                 <th className="py-3.5 px-3">{language === 'vi' ? 'MẪU TỜ KHAI' : 'RETURN TYPE'}</th>
                 <th className="py-3.5 px-3">{language === 'vi' ? 'TRẠNG THÁI' : 'STATUS'}</th>
                 <th className="py-3.5 px-3">{language === 'vi' ? 'NHÂN VIÊN PHỤ TRÁCH' : 'ASSIGNED STAFF'}</th>
-                <th className="py-3.5 px-4 text-right">{language === 'vi' ? 'PHÍ / CÒN NỢ' : 'FEE / BALANCE'}</th>
+                {isAdmin && <th className="py-3.5 px-4 text-right">{language === 'vi' ? 'PHÍ / CÒN NỢ' : 'FEE / BALANCE'}</th>}
                 <th className="py-3.5 px-3 text-center w-12">{language === 'vi' ? 'THAO TÁC' : 'ACTIONS'}</th>
               </tr>
             </thead>
@@ -630,20 +705,22 @@ export function ClientsList() {
                     key={c.id}
                     className={`transition-colors ${isSelected ? 'bg-slate-50/90' : 'hover:bg-slate-50/70'}`}
                   >
-                    <td className="py-3.5 px-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() => toggleSelectOne(c.id)}
-                        className="p-1 rounded hover:bg-slate-200/50 cursor-pointer inline-flex items-center justify-center"
-                        aria-label={`Select ${c.name}`}
-                      >
-                        {isSelected ? (
-                          <CheckSquare className="w-4 h-4 text-[#092c5c]" />
-                        ) : (
-                          <Square className="w-4 h-4 text-slate-300" />
-                        )}
-                      </button>
-                    </td>
+                    {isAdmin && (
+                      <td className="py-3.5 px-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => toggleSelectOne(c.id)}
+                          className="p-1 rounded hover:bg-slate-200/50 cursor-pointer inline-flex items-center justify-center"
+                          aria-label={`Select ${c.name}`}
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-[#092c5c]" />
+                          ) : (
+                            <Square className="w-4 h-4 text-slate-300" />
+                          )}
+                        </button>
+                      </td>
+                    )}
 
                     <td className="py-3.5 px-3">
                       <Link href={`/clients/${c.id}`} className="flex items-center gap-3 group">
@@ -705,16 +782,18 @@ export function ClientsList() {
 
                     <td className="py-3.5 px-3 font-medium text-slate-700">{c.staff}</td>
 
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="font-bold text-slate-900 text-xs">${c.fee.toLocaleString()}</div>
-                      {c.balance > 0 ? (
-                        <div className="text-[11px] font-semibold text-rose-600">
-                          {language === 'vi' ? 'Còn nợ:' : 'Due:'} ${c.balance.toLocaleString()}
-                        </div>
-                      ) : (
-                        <div className="text-[11px] font-semibold text-emerald-600">{language === 'vi' ? 'Đã thu đủ' : 'Paid in full'}</div>
-                      )}
-                    </td>
+                    {isAdmin && (
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="font-bold text-slate-900 text-xs">${c.fee.toLocaleString()}</div>
+                        {c.balance > 0 ? (
+                          <div className="text-[11px] font-semibold text-rose-600">
+                            {language === 'vi' ? 'Còn nợ:' : 'Due:'} ${c.balance.toLocaleString()}
+                          </div>
+                        ) : (
+                          <div className="text-[11px] font-semibold text-emerald-600">{language === 'vi' ? 'Đã thu đủ' : 'Paid in full'}</div>
+                        )}
+                      </td>
+                    )}
 
                     <td className="py-3.5 px-3 text-center">
                       <div className="relative inline-block">
@@ -737,14 +816,16 @@ export function ClientsList() {
                               <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
                               {language === 'vi' ? 'Mở hồ sơ' : 'Open Record'}
                             </Link>
-                            <button
-                              type="button"
-                              onClick={() => openDeleteSingle(c)}
-                              className="w-full px-3 py-1.5 text-left text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer font-semibold"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              {language === 'vi' ? 'Xóa khách này' : 'Delete'}
-                            </button>
+                            {isAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => openDeleteSingle(c)}
+                                className="w-full px-3 py-1.5 text-left text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer font-semibold"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                {language === 'vi' ? 'Xóa khách này' : 'Delete'}
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>

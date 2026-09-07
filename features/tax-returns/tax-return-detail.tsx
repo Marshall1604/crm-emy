@@ -1,3 +1,6 @@
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -8,10 +11,20 @@ import {
   UserRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { initialTaxReturnsList, initialClientsList } from '@/features/clients/client-store';
+import { useAuth } from '@/lib/auth/auth-context';
+import {
+  initialTaxReturnsList,
+  initialClientsList,
+  findTaxReturnById,
+  findClientById,
+  type TaxReturnEngagement,
+} from '@/features/clients/client-store';
 
 export function TaxReturnDetail({ id }: { id: string }) {
-  const returnItem =
+  const { user, role } = useAuth();
+  const isAdmin = role === 'super_admin' || role === 'admin';
+  const returnItem: TaxReturnEngagement =
+    findTaxReturnById(id, user?.id) ||
     initialTaxReturnsList.find((r) => r.id === id) || {
       id,
       clientId: 'minh-nguyen',
@@ -32,7 +45,7 @@ export function TaxReturnDetail({ id }: { id: string }) {
       updatedAt: 'Aug 29, 2026',
     };
 
-  const client = initialClientsList.find((c) => c.id === returnItem.clientId);
+  const client = findClientById(returnItem.clientId, user?.id) || initialClientsList.find((c) => c.id === returnItem.clientId);
 
   return (
     <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 28px 48px' }}>
@@ -176,44 +189,80 @@ export function TaxReturnDetail({ id }: { id: string }) {
           <small style={{ fontSize: '10px', color: '#94a3b8' }}>Office preparer</small>
         </article>
 
-        <article
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '10px',
-            padding: '16px 18px',
-          }}
-        >
-          <span style={{ fontSize: '11px', color: '#64748b' }}>Preparation Fee</span>
-          <b style={{ display: 'block', fontSize: '20px', color: '#092c5c', margin: '4px 0 2px' }}>
-            ${returnItem.preparationFee.toLocaleString()}
-          </b>
-          <small style={{ fontSize: '10px', color: '#94a3b8' }}>Engagement total</small>
-        </article>
+        {isAdmin ? (
+          <>
+            <article
+              style={{
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                padding: '16px 18px',
+              }}
+            >
+              <span style={{ fontSize: '11px', color: '#64748b' }}>Preparation Fee</span>
+              <b style={{ display: 'block', fontSize: '20px', color: '#092c5c', margin: '4px 0 2px' }}>
+                ${returnItem.preparationFee.toLocaleString()}
+              </b>
+              <small style={{ fontSize: '10px', color: '#94a3b8' }}>Engagement total</small>
+            </article>
 
-        <article
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '10px',
-            padding: '16px 18px',
-          }}
-        >
-          <span style={{ fontSize: '11px', color: '#64748b' }}>Balance Remaining</span>
-          <b
-            style={{
-              display: 'block',
-              fontSize: '20px',
-              color: returnItem.balance > 0 ? '#dc2626' : '#16a34a',
-              margin: '4px 0 2px',
-            }}
-          >
-            ${returnItem.balance.toLocaleString()}
-          </b>
-          <small style={{ fontSize: '10px', color: '#94a3b8' }}>
-            {returnItem.balance === 0 ? 'Paid in full' : 'Due upon filing'}
-          </small>
-        </article>
+            <article
+              style={{
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                padding: '16px 18px',
+              }}
+            >
+              <span style={{ fontSize: '11px', color: '#64748b' }}>Balance Remaining</span>
+              <b
+                style={{
+                  display: 'block',
+                  fontSize: '20px',
+                  color: returnItem.balance > 0 ? '#dc2626' : '#16a34a',
+                  margin: '4px 0 2px',
+                }}
+              >
+                ${returnItem.balance.toLocaleString()}
+              </b>
+              <small style={{ fontSize: '10px', color: '#94a3b8' }}>
+                {returnItem.balance === 0 ? 'Paid in full' : 'Due upon filing'}
+              </small>
+            </article>
+          </>
+        ) : (
+          <>
+            <article
+              style={{
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                padding: '16px 18px',
+              }}
+            >
+              <span style={{ fontSize: '11px', color: '#64748b' }}>Return Form</span>
+              <b style={{ display: 'block', fontSize: '18px', color: '#092c5c', margin: '4px 0 2px' }}>
+                {returnItem.returnType}
+              </b>
+              <small style={{ fontSize: '10px', color: '#94a3b8' }}>Filing form</small>
+            </article>
+
+            <article
+              style={{
+                backgroundColor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                padding: '16px 18px',
+              }}
+            >
+              <span style={{ fontSize: '11px', color: '#64748b' }}>Workflow Status</span>
+              <b style={{ display: 'block', fontSize: '16px', color: '#0284c7', margin: '6px 0 2px' }}>
+                {returnItem.status}
+              </b>
+              <small style={{ fontSize: '10px', color: '#94a3b8' }}>Current stage</small>
+            </article>
+          </>
+        )}
       </section>
 
       {/* Details Grid */}

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { EditBusinessModal, type BusinessData } from './edit-business-modal';
@@ -64,9 +65,53 @@ const partners = [
   { name: 'Sofia Ramirez', initials: 'SR', role: 'Partner', roleVi: 'Thành viên góp vốn (Partner)', ownership: '40%', email: 'sofia@abclogistics.com', phone: '(415) 555-0146', ssn: '***-**-7395' },
 ];
 
-export function BusinessDetail() {
+export function BusinessDetail({ id }: { id?: string }) {
   const { t, language } = useLanguage();
-  const [business, setBusiness] = useState<BusinessData>(defaultBusiness);
+
+  const [business, setBusiness] = useState<BusinessData>(() => {
+    if (typeof window !== 'undefined' && id) {
+      try {
+        const savedStr = localStorage.getItem('crm_emy_businesses_list');
+        if (savedStr) {
+          const parsed = JSON.parse(savedStr);
+          const found = parsed.find((b: any) => b.id === id);
+          if (found) {
+            return {
+              name: found.name,
+              dba: found.dba || '',
+              ein: found.ein,
+              entityType: found.entityType,
+              status: found.status,
+              assignedStaff: found.preparer,
+              email: found.email || '',
+              phone: found.phone || '',
+              address: found.address || '100 Main St, Suite 200',
+              primaryContact: found.partners?.[0]?.firstName ? `${found.partners[0].firstName} ${found.partners[0].lastName}` : 'Primary Contact',
+              federalTax: 3200,
+              stateTax: 1200,
+              fee: found.fee || 1500,
+              amountPaid: (found.fee || 1500) - (found.balance || 0),
+            };
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (id && id !== 'abc-logistics') {
+      const formattedName = id.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+      return {
+        ...defaultBusiness,
+        name: formattedName,
+        dba: `${formattedName} Services`,
+      };
+    }
+
+    return defaultBusiness;
+  });
+
+  const { role } = useAuth();
+  const isAdmin = role === 'super_admin' || role === 'admin';
+
   const [tab, setTab] = useState<string>('Overview');
   const [showEin, setShowEin] = useState(false);
   const [year, setYear] = useState('2026');
@@ -80,7 +125,7 @@ export function BusinessDetail() {
     { id: 'Documents', label: t('tab_documents'), count: 6 },
     { id: 'Tasks', label: t('tab_tasks'), count: 3 },
     { id: 'Notes', label: t('tab_notes') },
-    { id: 'Invoices', label: t('tab_invoices') },
+    ...(isAdmin ? [{ id: 'Invoices', label: t('tab_invoices') }] : []),
     { id: 'Activity', label: t('tab_activity') },
   ];
 
@@ -293,6 +338,7 @@ export function BusinessDetail() {
             language={language}
             t={t}
             getStatusText={getStatusText}
+            isAdmin={isAdmin}
           />
         </div>
       </section>
@@ -320,6 +366,7 @@ function TabContent({
   language,
   t,
   getStatusText,
+  isAdmin,
 }: {
   tab: string;
   year: string;
@@ -332,23 +379,24 @@ function TabContent({
   language: string;
   t: any;
   getStatusText: (status: string) => string;
+  isAdmin: boolean;
 }) {
-  if (tab === 'Tax Returns') return <TaxReturns returns={returns} onOpenEdit={onOpenEdit} t={t} getStatusText={getStatusText} />;
+  if (tab === 'Tax Returns') return <TaxReturns returns={returns} onOpenEdit={onOpenEdit} t={t} getStatusText={getStatusText} isAdmin={isAdmin} />;
   if (tab === 'Partners') return <Partners onOpenEdit={onOpenEdit} language={language} t={t} />;
   if (tab === 'Activity') return <ActivityTab events={events} language={language} t={t} />;
   if (tab === 'Documents')
     return (
       <SimplePanel icon={<FolderOpen />} title={t('tab_documents')} action={language === 'vi' ? 'Tải lên tài liệu' : 'Upload document'}>
         <div className="doc-list">
-          {['2026 Partner Statements.pdf', '2025 Federal Return.pdf', 'California Form 565.pdf', 'Operating Agreement.pdf'].map(
-            (name, i) => (
-              <div key={name}>
-                <span className="file-icon"><FileText size={16} /></span>
+          {['2026_California_Partnership_Return.pdf', '2025_Federal_Form_1065_Final.pdf', '2026_Partner_K1_Statements.pdf'].map(
+            (doc) => (
+              <div className="doc-item" key={doc}>
+                <FileText size={18} />
                 <div>
-                  <b>{name}</b>
-                  <small>{i ? 'PDF · 1.8 MB' : 'PDF · 842 KB'} · {language === 'vi' ? `Cập nhật ngày ${23 - i} Tháng 8, 2026` : `Updated Aug ${23 - i}, 2026`}</small>
+                  <b>{doc}</b>
+                  <small>1.4 MB · {language === 'vi' ? 'Đã tải lên 23/08/2026 bởi' : 'Uploaded Aug 23, 2026 by'} {business.assignedStaff}</small>
                 </div>
-                <Button variant="ghost" size="icon"><Download size={15} /></Button>
+                <Button variant="outline" size="sm" className="cursor-pointer"><Download size={13} /></Button>
               </div>
             )
           )}
@@ -386,7 +434,7 @@ function TabContent({
         </div>
       </SimplePanel>
     );
-  if (tab === 'Invoices')
+  if (tab === 'Invoices' && isAdmin)
     return (
       <SimplePanel icon={<ReceiptText />} title={t('tab_invoices')} action={language === 'vi' ? 'Tạo hóa đơn mới' : 'Create invoice'}>
         <div className="invoice-row">
@@ -412,6 +460,7 @@ function TabContent({
       language={language}
       t={t}
       getStatusText={getStatusText}
+      isAdmin={isAdmin}
     />
   );
 }
@@ -427,6 +476,7 @@ function Overview({
   language,
   t,
   getStatusText,
+  isAdmin,
 }: {
   year: string;
   business: BusinessData;
@@ -438,21 +488,26 @@ function Overview({
   language: string;
   t: any;
   getStatusText: (status: string) => string;
+  isAdmin: boolean;
 }) {
   return (
     <>
       <section className="metric-row">
         <Metric title={t('metric_federal_tax')} value={`$${business.federalTax.toLocaleString()}.00`} note={`${year} Form 1065`} icon={<ShieldCheck />} tone="blue" />
         <Metric title={t('metric_state_tax')} value={`$${business.stateTax.toLocaleString()}.00`} note="CA · AZ · NY" icon={<MapPin />} tone="violet" />
-        <Metric title={t('metric_prep_fee')} value={`$${business.fee.toLocaleString()}.00`} note={t('metric_current_eng')} icon={<ReceiptText />} tone="amber" />
-        <Metric title={t('metric_amount_paid')} value={`$${business.amountPaid.toLocaleString()}.00`} note={`${percentCollected}% ${t('metric_collected')}`} icon={<Check />} tone="green" />
-        <Metric title={t('metric_balance')} value={`$${balance.toLocaleString()}.00`} note={t('metric_due_date')} icon={<CircleDollarSign />} tone="red" />
+        {isAdmin && (
+          <>
+            <Metric title={t('metric_prep_fee')} value={`$${business.fee.toLocaleString()}.00`} note={t('metric_current_eng')} icon={<ReceiptText />} tone="amber" />
+            <Metric title={t('metric_amount_paid')} value={`$${business.amountPaid.toLocaleString()}.00`} note={`${percentCollected}% ${t('metric_collected')}`} icon={<Check />} tone="green" />
+            <Metric title={t('metric_balance')} value={`$${balance.toLocaleString()}.00`} note={t('metric_due_date')} icon={<CircleDollarSign />} tone="red" />
+          </>
+        )}
       </section>
 
       <div className="overview-grid">
         <section className="detail-panel">
           <PanelHeading title={t('history_title')} sub={t('history_sub')} action={t('view_all')} onAction={onOpenEdit} />
-          <ReturnTable returns={returns} compact t={t} getStatusText={getStatusText} />
+          <ReturnTable returns={returns} compact t={t} getStatusText={getStatusText} isAdmin={isAdmin} />
         </section>
 
         <section className="detail-panel contact-panel">
@@ -475,16 +530,16 @@ function Overview({
   );
 }
 
-function TaxReturns({ returns, onOpenEdit, t, getStatusText }: { returns: any[]; onOpenEdit: () => void; t: any; getStatusText: (status: string) => string }) {
+function TaxReturns({ returns, onOpenEdit, t, getStatusText, isAdmin }: { returns: any[]; onOpenEdit: () => void; t: any; getStatusText: (status: string) => string; isAdmin: boolean }) {
   return (
     <section className="detail-panel">
       <PanelHeading title={t('history_title')} sub={t('history_sub')} action={t('btn_add_return')} onAction={onOpenEdit} />
-      <ReturnTable returns={returns} t={t} getStatusText={getStatusText} />
+      <ReturnTable returns={returns} t={t} getStatusText={getStatusText} isAdmin={isAdmin} />
     </section>
   );
 }
 
-function ReturnTable({ returns, compact = false, t, getStatusText }: { returns: any[]; compact?: boolean; t: any; getStatusText: (status: string) => string }) {
+function ReturnTable({ returns, compact = false, t, getStatusText, isAdmin }: { returns: any[]; compact?: boolean; t: any; getStatusText: (status: string) => string; isAdmin: boolean }) {
   return (
     <div className="returns-table">
       <div className="return-head">
@@ -493,7 +548,7 @@ function ReturnTable({ returns, compact = false, t, getStatusText }: { returns: 
         <span>{t('th_status')}</span>
         <span>{t('th_federal')}</span>
         <span>{t('th_state')}</span>
-        <span>{t('th_fee')}</span>
+        {isAdmin && <span>{t('th_fee')}</span>}
         <span />
       </div>
       {returns.slice(0, compact ? 3 : returns.length).map((row) => (
@@ -506,7 +561,7 @@ function ReturnTable({ returns, compact = false, t, getStatusText }: { returns: 
           </span>
           <span>{row.federal}</span>
           <span>{row.state}</span>
-          <b>{row.fee}</b>
+          {isAdmin && <b>{row.fee}</b>}
           <Button variant="ghost" size="icon"><MoreHorizontal size={15} /></Button>
         </div>
       ))}

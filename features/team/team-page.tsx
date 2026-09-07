@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/lib/i18n/language-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { useMemberStore, type TeamMember, type MemberRole, type MemberStatus } from './member-store';
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
@@ -26,7 +27,7 @@ type MemberFormValues = z.infer<typeof memberSchema>;
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const ROLES: MemberRole[]   = ['Super Admin', 'Tax Preparer', 'Reviewer', 'Staff'];
+const ROLES: MemberRole[]   = ['Super Admin', 'Tax Preparer'];
 const STATUSES: MemberStatus[] = ['Active', 'Invited', 'Inactive'];
 
 const roleClass: Record<MemberRole, string> = {
@@ -55,7 +56,7 @@ function MemberModal({ open, onClose, onSubmit, initial }: MemberModalProps) {
       name:   initial?.name   ?? '',
       email:  initial?.email  ?? '',
       phone:  initial?.phone  ?? '',
-      role:   initial?.role   ?? 'Staff',
+      role:   initial?.role   ?? 'Tax Preparer',
       status: initial?.status ?? 'Invited',
     },
   });
@@ -69,10 +70,10 @@ function MemberModal({ open, onClose, onSubmit, initial }: MemberModalProps) {
   };
 
   const roleLabelVi: Record<string, string> = {
-    'Super Admin': 'Quản Trị Viên Cấp Cao (Super Admin)',
-    'Tax Preparer': 'Nhân Viên Khai Thuế (Preparer)',
-    'Reviewer': 'Nhân Viên Kiểm Tra (Reviewer)',
-    'Staff': 'Nhân Viên Văn Phòng (Staff)',
+    'Super Admin': 'Quản Trị Viên (Admin)',
+    'Tax Preparer': 'Nhân Viên Khai Thuế (Tax Preparer)',
+    'Reviewer': 'Quản Trị Viên (Admin)',
+    'Staff': 'Nhân Viên Khai Thuế (Tax Preparer)',
   };
 
   const statusLabelVi: Record<string, string> = {
@@ -249,6 +250,8 @@ function RowMenu({ member, onEdit, onDelete }: RowMenuProps) {
 
 export function TeamPage() {
   const { language } = useLanguage();
+  const { role } = useAuth();
+  const isAdmin = role === 'super_admin' || role === 'admin';
   const { members, addMember, updateMember, deleteMember } = useMemberStore();
 
   const [addOpen,    setAddOpen]    = useState(false);
@@ -269,7 +272,7 @@ export function TeamPage() {
   };
 
   const roleLabelVi: Record<string, string> = {
-    'Super Admin': 'Quản Trị Viên Cấp Cao',
+    'Super Admin': 'Quản Trị Viên (Admin)',
     'Tax Preparer': 'Nhân Viên Khai Thuế',
     'Reviewer': 'Nhân Viên Kiểm Tra',
     'Staff': 'Nhân Viên Văn Phòng',
@@ -290,9 +293,11 @@ export function TeamPage() {
           <h1>{language === 'vi' ? 'Đội Ngũ Nhân Viên' : 'Team'}</h1>
           <span>{language === 'vi' ? 'Quản lý quyền truy cập nhân sự, phân quyền vai trò và phân công hồ sơ khai thuế.' : 'Manage staff access, roles, and tax return assignments.'}</span>
         </div>
-        <Button onClick={() => setAddOpen(true)} className="cursor-pointer">
-          <UserPlus size={14} /> {language === 'vi' ? 'Mời Thành Viên Mới' : 'Invite Team Member'}
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setAddOpen(true)} className="cursor-pointer">
+            <UserPlus size={14} /> {language === 'vi' ? 'Mời Thành Viên Mới' : 'Invite Team Member'}
+          </Button>
+        )}
       </header>
 
       {/* ── Summary cards ── */}
@@ -318,9 +323,11 @@ export function TeamPage() {
             <b>{language === 'vi' ? 'Danh Sách Nhân Sự Văn Phòng' : 'CRM Staff'}</b>
             <span>{language === 'vi' ? 'Vai trò và quyền hạn được bảo mật qua phân quyền Supabase' : 'Roles and permissions are sourced from profiles'}</span>
           </div>
-          <Button variant="outline" size="sm" className="cursor-pointer">
-            {language === 'vi' ? 'Quản Lý Quyền' : 'Manage Roles'}
-          </Button>
+          {isAdmin && (
+            <Button variant="outline" size="sm" className="cursor-pointer">
+              {language === 'vi' ? 'Quản Lý Quyền' : 'Manage Roles'}
+            </Button>
+          )}
         </header>
 
         <div className="team-table-wrap">
@@ -328,9 +335,11 @@ export function TeamPage() {
             <div className="team-empty">
               <UsersRound size={32} />
               <p>{language === 'vi' ? 'Chưa có thành viên nào.' : 'No team members yet.'}</p>
-              <Button size="sm" onClick={() => setAddOpen(true)} className="cursor-pointer">
-                <UserPlus size={13} /> {language === 'vi' ? 'Mời thành viên đầu tiên' : 'Invite first member'}
-              </Button>
+              {isAdmin && (
+                <Button size="sm" onClick={() => setAddOpen(true)} className="cursor-pointer">
+                  <UserPlus size={13} /> {language === 'vi' ? 'Mời thành viên đầu tiên' : 'Invite first member'}
+                </Button>
+              )}
             </div>
           ) : (
             <table className="crm-team-table">
@@ -342,7 +351,7 @@ export function TeamPage() {
                   <th>{language === 'vi' ? 'TRẠNG THÁI' : 'STATUS'}</th>
                   <th>{language === 'vi' ? 'HỒ SƠ PHỤ TRÁCH' : 'ASSIGNED RETURNS'}</th>
                   <th>{language === 'vi' ? 'HOẠT ĐỘNG GẦN NHẤT' : 'LAST ACTIVE'}</th>
-                  <th></th>
+                  {isAdmin && <th></th>}
                 </tr>
               </thead>
               <tbody>
@@ -365,13 +374,15 @@ export function TeamPage() {
                     </td>
                     <td><b>{member.assigned}</b></td>
                     <td>{member.lastActive}</td>
-                    <td>
-                      <RowMenu
-                        member={member}
-                        onEdit={() => setEditTarget(member)}
-                        onDelete={() => setDelTarget(member)}
-                      />
-                    </td>
+                    {isAdmin && (
+                      <td>
+                        <RowMenu
+                          member={member}
+                          onEdit={() => setEditTarget(member)}
+                          onDelete={() => setDelTarget(member)}
+                        />
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

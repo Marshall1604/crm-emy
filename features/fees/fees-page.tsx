@@ -1,8 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
 import {
   Banknote,
   ChevronDown,
@@ -11,9 +10,12 @@ import {
   ReceiptText,
   RotateCcw,
   WalletCards,
+  UsersRound,
+  Building2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
+import { useAuth } from '@/lib/auth/auth-context';
 
 type PaymentStatus = 'Unpaid' | 'Partial' | 'Paid';
 type FeeRecord = {
@@ -28,13 +30,13 @@ type FeeRecord = {
   invoiceStatus: 'Not Sent' | 'Sent' | 'Overdue' | 'Paid';
 };
 
-const feeRecords: FeeRecord[] = [
+const defaultSampleFeeRecords: FeeRecord[] = [
   { taxReturnId: 'tr-minh-2025', clientRecord: '/clients/minh-nguyen', name: 'Minh Nguyen', clientType: 'Individual', year: '2025', returnType: '1040', totalFee: 650, amountPaid: 325, invoiceStatus: 'Sent' },
   { taxReturnId: 'tr-abc-2025', clientRecord: '/businesses/abc-logistics', name: 'ABC Logistics LLC', clientType: 'Business', year: '2025', returnType: '1065', totalFee: 2400, amountPaid: 1200, invoiceStatus: 'Sent' },
   { taxReturnId: 'tr-olivia-2025', clientRecord: '/clients/olivia-johnson', name: 'Olivia Johnson', clientType: 'Individual', year: '2025', returnType: '1040', totalFee: 875, amountPaid: 875, invoiceStatus: 'Paid' },
-  { taxReturnId: 'tr-xyz-2025', clientRecord: '/businesses', name: 'XYZ Technology Inc', clientType: 'Business', year: '2025', returnType: '1120-S', totalFee: 3100, amountPaid: 1550, invoiceStatus: 'Overdue' },
-  { taxReturnId: 'tr-nails-2025', clientRecord: '/businesses', name: 'Luxury Nails Studio LLC', clientType: 'Business', year: '2025', returnType: 'Schedule C', totalFee: 1450, amountPaid: 1450, invoiceStatus: 'Paid' },
-  { taxReturnId: 'tr-acme-2024', clientRecord: '/businesses', name: 'ACME Holdings Corp', clientType: 'Business', year: '2024', returnType: '1120', totalFee: 4200, amountPaid: 0, invoiceStatus: 'Not Sent' },
+  { taxReturnId: 'tr-xyz-2025', clientRecord: '/businesses/xyz-tech', name: 'XYZ Technology Inc', clientType: 'Business', year: '2025', returnType: '1120-S', totalFee: 3100, amountPaid: 1550, invoiceStatus: 'Overdue' },
+  { taxReturnId: 'tr-nails-2025', clientRecord: '/businesses/luxury-nails', name: 'Luxury Nails Studio LLC', clientType: 'Business', year: '2025', returnType: 'Schedule C', totalFee: 1450, amountPaid: 1450, invoiceStatus: 'Paid' },
+  { taxReturnId: 'tr-acme-2024', clientRecord: '/businesses/acme-holdings', name: 'ACME Holdings Corp', clientType: 'Business', year: '2024', returnType: '1120', totalFee: 4200, amountPaid: 0, invoiceStatus: 'Not Sent' },
 ];
 
 const balanceOf = (record: FeeRecord) => Math.max(0, record.totalFee - record.amountPaid);
@@ -44,10 +46,56 @@ const money = (value: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
 
 export function FeesPage() {
+  const { user, role } = useAuth();
   const { language } = useLanguage();
   const [year, setYear] = useState('');
   const [status, setStatus] = useState('');
   const [type, setType] = useState('');
+
+  const isAdmin = role === 'super_admin' || role === 'admin';
+
+  const [feeRecords, setFeeRecords] = useState<FeeRecord[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const clientKey = user?.id ? `crm_emy_clients_${user.id}` : 'crm_emy_clients_list';
+        const bizKey = user?.id ? `crm_emy_businesses_${user.id}` : 'crm_emy_businesses_list';
+        const savedClients = localStorage.getItem(clientKey);
+        const savedBiz = localStorage.getItem(bizKey);
+
+        const clients = savedClients ? JSON.parse(savedClients) : [];
+        const businesses = savedBiz ? JSON.parse(savedBiz) : [];
+
+        const combined: FeeRecord[] = [
+          ...businesses.map((b: any) => ({
+            taxReturnId: `tr-${b.id}`,
+            clientRecord: `/businesses/${b.id}`,
+            name: b.name,
+            clientType: 'Business' as const,
+            year: b.year || '2025',
+            returnType: b.returnType || 'Form 1065',
+            totalFee: Number(b.fee || 0),
+            amountPaid: Number(b.fee || 0) - Number(b.balance || 0),
+            invoiceStatus: (Number(b.balance || 0) === 0 ? 'Paid' : 'Sent') as FeeRecord['invoiceStatus'],
+          })),
+          ...clients.map((c: any) => ({
+            taxReturnId: `tr-${c.id}`,
+            clientRecord: `/clients/${c.id}`,
+            name: c.name,
+            clientType: 'Individual' as const,
+            year: c.year || '2025',
+            returnType: c.returnType || 'Form 1040',
+            totalFee: Number(c.fee || 0),
+            amountPaid: Number(c.amountPaid || 0),
+            invoiceStatus: (Number(c.balance || 0) === 0 ? 'Paid' : 'Sent') as FeeRecord['invoiceStatus'],
+          })),
+        ];
+
+        if (combined.length > 0) return combined;
+        if (user) return [];
+      } catch (e) {}
+    }
+    return user ? [] : defaultSampleFeeRecords;
+  });
 
   const filtered = useMemo(
     () =>
@@ -57,7 +105,7 @@ export function FeesPage() {
           (!status || paymentStatusOf(record) === status) &&
           (!type || record.clientType === type)
       ),
-    [year, status, type]
+    [feeRecords, year, status, type]
   );
 
   const totals = useMemo(
@@ -80,217 +128,190 @@ export function FeesPage() {
     setType('');
   };
 
-  const paymentMapVi: Record<string, string> = {
-    'Unpaid': 'Chưa thanh toán',
-    'Partial': 'Thanh toán một phần',
-    'Paid': 'Đã thanh toán đủ',
-  };
-
-  const invoiceMapVi: Record<string, string> = {
-    'Not Sent': 'Chưa gửi hóa đơn',
-    'Sent': 'Đã gửi hóa đơn',
-    'Overdue': 'Quá hạn thanh toán',
-    'Paid': 'Đã thanh toán',
-  };
+  if (!isAdmin) {
+    return (
+      <main className="route-page p-6 max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center shadow-xs mt-8">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
+            <span className="text-2xl font-black">🔒</span>
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">
+            {language === 'vi' ? 'Giới Hạn Quyền Truy Cập Biểu Phí' : 'Access Restricted'}
+          </h2>
+          <p className="text-sm text-slate-600 max-w-md mx-auto mb-6">
+            {language === 'vi'
+              ? 'Trang quản lý doanh thu, biểu phí và công nợ chỉ dành riêng cho Quản Trị Viên / Chủ Văn Phòng (Admin). Tài khoản nhân viên khai thuế không có quyền truy cập.'
+              : 'Billing, revenue, and fee analytics are restricted to Practice Admins. Staff and preparer accounts cannot access this section.'}
+          </p>
+          <Link href="/dashboard">
+            <Button className="bg-[#092c5c] text-white hover:bg-[#072247] px-6">
+              {language === 'vi' ? 'Quay Lại Bàn Làm Việc (Dashboard)' : 'Back to Dashboard'}
+            </Button>
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="fees-page">
-      <header className="fees-head">
+    <main className="route-page">
+      <div className="route-page-head">
         <div>
-          <p>{language === 'vi' ? 'QUẢN LÝ TÀI CHÍNH' : 'TAX CRM'}</p>
-          <h1>{language === 'vi' ? 'Phí Dịch Vụ & Thanh Toán' : 'Fees & Payments'}</h1>
+          <span>$</span>
+          <div>
+            <p>{language === 'vi' ? 'QUẢN LÝ TÀI CHÍNH' : 'FINANCE & BILLING'}</p>
+            <h1>{language === 'vi' ? 'Phí Dịch Vụ & Thanh Toán' : 'Fees & Payments'}</h1>
+            <small>
+              {language === 'vi'
+                ? 'Theo dõi biểu phí khai thuế, công nợ và tiến độ thu phí theo hồ sơ.'
+                : 'Monitor filing fees, outstanding balances, and invoice collection status.'}
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <section className="route-kpis">
+        <article>
+          <span>{language === 'vi' ? 'TỔNG DOANH THU' : 'TOTAL BILLED'}</span>
+          <b className="text-slate-900">{money(totals.fees)}</b>
+        </article>
+        <article>
+          <span>{language === 'vi' ? 'ĐÃ THU TIỀN' : 'TOTAL COLLECTED'}</span>
+          <b className="text-emerald-600">{money(totals.paid)}</b>
+        </article>
+        <article>
+          <span>{language === 'vi' ? 'CÔNG NỢ CÒN LẠI' : 'OUTSTANDING BALANCE'}</span>
+          <b className="text-rose-600">{money(totals.balance)}</b>
+        </article>
+        <article>
+          <span>{language === 'vi' ? 'HỒ SƠ ĐÃ XONG TIỀN' : 'FULLY PAID RETURNS'}</span>
+          <b>
+            {totals.paidCount}/{filtered.length}
+          </b>
+        </article>
+      </section>
+
+      <section className="route-card">
+        <header>
+          <b>{language === 'vi' ? 'Bộ Lọc Hồ Sơ & Biểu Phí' : 'Fee Filter & Search'}</b>
           <span>
             {language === 'vi'
-              ? 'Theo dõi doanh thu phí chuẩn bị hồ sơ thuế, các khoản đã thu và số dư còn nợ.'
-              : 'Track preparation fees and collections by tax return engagement.'}
+              ? `${filtered.length} bản ghi phù hợp`
+              : `${filtered.length} matching engagement records`}
           </span>
-        </div>
-        <Button className="cursor-pointer">
-          <ReceiptText size={14} />
-          {language === 'vi' ? 'Tạo Hóa Đơn' : 'Create Invoice'}
-        </Button>
-      </header>
-
-      <section className="fees-kpis">
-        <FeeCard
-          label={language === 'vi' ? 'Tổng Phí Khai Thuế' : 'Total Fees'}
-          value={money(totals.fees)}
-          note={`${filtered.length} ${language === 'vi' ? 'hồ sơ hợp đồng' : 'engagements'}`}
-          icon={<CircleDollarSign />}
-          tone="navy"
-        />
-        <FeeCard
-          label={language === 'vi' ? 'Số Tiền Đã Thu' : 'Amount Collected'}
-          value={money(totals.paid)}
-          note={language === 'vi' ? 'Đã ghi nhận thanh toán' : 'Recorded payments'}
-          icon={<Banknote />}
-          tone="green"
-        />
-        <FeeCard
-          label={language === 'vi' ? 'Số Tiền Còn Nợ' : 'Outstanding Balance'}
-          value={money(totals.balance)}
-          note={language === 'vi' ? 'Cần thu hồi' : 'Remaining to collect'}
-          icon={<WalletCards />}
-          tone="amber"
-        />
-        <FeeCard
-          label={language === 'vi' ? 'Hồ Sơ Đã Thu Đủ' : 'Paid In Full Count'}
-          value={String(totals.paidCount)}
-          note={language === 'vi' ? 'Đã tất toán 100%' : 'Engagements fully paid'}
-          icon={<CircleCheckBig />}
-          tone="violet"
-        />
-      </section>
-
-      <section className="fee-filters">
-        <div>
-          <b>{language === 'vi' ? 'Bộ Lọc' : 'Filters'}</b>
-          <span>{filtered.length} {language === 'vi' ? 'kết quả' : 'records'}</span>
-        </div>
-        <Filter label={language === 'vi' ? 'Năm thuế' : 'Tax Year'} value={year} setValue={setYear} options={['2026', '2025', '2024']} />
-        <Filter label={language === 'vi' ? 'Trạng thái thu tiền' : 'Payment Status'} value={status} setValue={setStatus} options={['Unpaid', 'Partial', 'Paid']} optionsVi={['Chưa trả', 'Trả một phần', 'Đã trả đủ']} />
-        <Filter label={language === 'vi' ? 'Loại khách hàng' : 'Client Type'} value={type} setValue={setType} options={['Individual', 'Business']} optionsVi={['Cá nhân', 'Doanh nghiệp']} />
-        <Button variant="ghost" size="sm" onClick={reset} className="cursor-pointer">
-          <RotateCcw size={13} />
-          {language === 'vi' ? 'Đặt lại' : 'Reset'}
-        </Button>
-      </section>
-
-      <section className="fees-table-card">
-        <header>
-          <div>
-            <b>{language === 'vi' ? 'Sổ Theo Dõi Thu Phí' : 'Fee Ledger'}</b>
-            <span>{language === 'vi' ? 'Biểu phí được đồng bộ tự động từ các hồ sơ khai thuế' : 'Fees are linked to existing tax return records'}</span>
-          </div>
-          <Button variant="outline" size="sm" className="cursor-pointer">
-            {language === 'vi' ? 'Xuất File' : 'Export'}
-          </Button>
         </header>
-        <div className="fees-table-wrap">
-          <table className="fees-table">
-            <thead>
-              <tr>
-                <th>{language === 'vi' ? 'KHÁCH HÀNG / CÔNG TY' : 'CLIENT / BUSINESS'}</th>
-                <th>{language === 'vi' ? 'NĂM THUẾ' : 'TAX YEAR'}</th>
-                <th>{language === 'vi' ? 'MẪU TỜ KHAI' : 'RETURN TYPE'}</th>
-                <th>{language === 'vi' ? 'TỔNG PHÍ' : 'TOTAL FEE'}</th>
-                <th>{language === 'vi' ? 'ĐÃ THU' : 'AMOUNT PAID'}</th>
-                <th>{language === 'vi' ? 'CÒN NỢ' : 'BALANCE'}</th>
-                <th>{language === 'vi' ? 'TRẠNG THÁI THU' : 'PAYMENT STATUS'}</th>
-                <th>{language === 'vi' ? 'HÓA ĐƠN' : 'INVOICE STATUS'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((record, i) => {
-                const balance = balanceOf(record);
-                const payment = paymentStatusOf(record);
-                return (
-                  <tr key={record.taxReturnId}>
-                    <td>
-                      <Link href={`/tax-returns/${record.taxReturnId}`}>
-                        <span className={`fee-avatar client-tone-${i % 5}`}>
-                          {record.name
-                            .split(' ')
-                            .map((part) => part[0])
-                            .slice(0, 2)
-                            .join('')}
-                        </span>
-                        <div>
-                          <b>{record.name}</b>
-                          <small>
-                            {record.clientType === 'Individual' ? (language === 'vi' ? 'Cá nhân' : 'Individual') : (language === 'vi' ? 'Doanh nghiệp' : 'Business')} · {record.taxReturnId}
-                          </small>
-                        </div>
-                      </Link>
-                    </td>
-                    <td>
-                      <b>{record.year}</b>
-                    </td>
-                    <td>
-                      <span className="client-return">{record.returnType}</span>
-                    </td>
-                    <td>
-                      <b>{money(record.totalFee)}</b>
-                    </td>
-                    <td className="fee-collected">{money(record.amountPaid)}</td>
-                    <td className={balance ? 'fee-due' : 'fee-zero'}>{money(balance)}</td>
-                    <td>
-                      <span className={`payment-pill ${payment.toLowerCase()}`}>
-                        <i />
-                        {language === 'vi' ? paymentMapVi[payment] || payment : payment}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`invoice-pill ${record.invoiceStatus.toLowerCase().replace(' ', '-')}`}>
-                        {language === 'vi' ? invoiceMapVi[record.invoiceStatus] || record.invoiceStatus : record.invoiceStatus}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {!filtered.length && (
-            <div className="fees-empty">
-              <ReceiptText size={22} />
-              <b>{language === 'vi' ? 'Không tìm thấy dữ liệu thu phí' : 'No fee records found'}</b>
-              <p>{language === 'vi' ? 'Thử thay đổi bộ lọc tìm kiếm.' : 'Try changing or resetting your filters.'}</p>
+        <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+          <label className="text-xs font-bold text-slate-600 flex flex-col gap-1">
+            {language === 'vi' ? 'Năm thuế:' : 'Tax year:'}
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className="h-9 px-2 rounded border border-slate-300 text-xs bg-white"
+            >
+              <option value="">{language === 'vi' ? 'Tất cả các năm' : 'All years'}</option>
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+            </select>
+          </label>
+
+          <label className="text-xs font-bold text-slate-600 flex flex-col gap-1">
+            {language === 'vi' ? 'Trạng thái thu phí:' : 'Payment status:'}
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="h-9 px-2 rounded border border-slate-300 text-xs bg-white"
+            >
+              <option value="">{language === 'vi' ? 'Tất cả trạng thái' : 'All payment statuses'}</option>
+              <option value="Paid">{language === 'vi' ? 'Đã thanh toán đủ' : 'Paid in full'}</option>
+              <option value="Partial">{language === 'vi' ? 'Đã thu một phần' : 'Partial'}</option>
+              <option value="Unpaid">{language === 'vi' ? 'Chưa thanh toán' : 'Unpaid'}</option>
+            </select>
+          </label>
+
+          <label className="text-xs font-bold text-slate-600 flex flex-col gap-1">
+            {language === 'vi' ? 'Đối tượng khách hàng:' : 'Client category:'}
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="h-9 px-2 rounded border border-slate-300 text-xs bg-white"
+            >
+              <option value="">{language === 'vi' ? 'Tất cả khách hàng' : 'All clients'}</option>
+              <option value="Individual">{language === 'vi' ? 'Cá nhân (1040)' : 'Individual'}</option>
+              <option value="Business">{language === 'vi' ? 'Doanh nghiệp (1065, 1120)' : 'Business'}</option>
+            </select>
+          </label>
+
+          <div className="flex items-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={reset}
+              className="w-full h-9 text-xs font-bold gap-1 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>{language === 'vi' ? 'Đặt lại' : 'Reset'}</span>
+            </Button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          {filtered.length === 0 ? (
+            <div className="py-16 px-4 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                <CircleDollarSign className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">
+                {language === 'vi' ? 'Chưa có bản ghi phí dịch vụ nào' : 'No fee records found'}
+              </h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">
+                {language === 'vi'
+                  ? 'Bắt đầu thêm khách hàng hoặc doanh nghiệp để theo dõi tiến độ thu phí tự động.'
+                  : 'Add individual or business clients to start tracking invoices and fee collections.'}
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <Link href="/clients">
+                  <Button size="sm" className="h-8 text-xs font-bold bg-[#092c5c] text-white rounded-lg">
+                    {language === 'vi' ? '+ Thêm Khách Hàng' : '+ Add Client'}
+                  </Button>
+                </Link>
+                <Link href="/businesses">
+                  <Button size="sm" variant="outline" className="h-8 text-xs font-bold rounded-lg">
+                    {language === 'vi' ? '+ Thêm Doanh Nghiệp' : '+ Add Business'}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="route-table">
+              <div>
+                <span>{language === 'vi' ? 'Khách Hàng / Hồ Sơ' : 'Client & Engagement'}</span>
+                <span>{language === 'vi' ? 'Tờ Khai' : 'Return Form'}</span>
+                <span>{language === 'vi' ? 'Tổng Phí' : 'Fee'}</span>
+                <span>{language === 'vi' ? 'Trạng Thái Thu Phí' : 'Status & Balance'}</span>
+              </div>
+              {filtered.map((item) => (
+                <Link key={item.taxReturnId} href={item.clientRecord}>
+                  <b>
+                    {item.name} · {item.year}
+                  </b>
+                  <span>{item.returnType}</span>
+                  <span>{money(item.totalFee)}</span>
+                  <em>
+                    {paymentStatusOf(item) === 'Paid'
+                      ? language === 'vi'
+                        ? 'Đã thu đủ'
+                        : 'Paid in full'
+                      : language === 'vi'
+                      ? `Còn nợ ${money(balanceOf(item))}`
+                      : `Due ${money(balanceOf(item))}`}
+                  </em>
+                </Link>
+              ))}
             </div>
           )}
         </div>
       </section>
     </main>
-  );
-}
-
-function FeeCard({
-  label,
-  value,
-  note,
-  icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  note: string;
-  icon: React.ReactNode;
-  tone: string;
-}) {
-  return (
-    <article className="fee-kpi">
-      <span className={`fee-kpi-icon ${tone}`}>{icon}</span>
-      <p>{label}</p>
-      <b>{value}</b>
-      <small>{note}</small>
-    </article>
-  );
-}
-
-function Filter({
-  label,
-  value,
-  setValue,
-  options,
-  optionsVi,
-}: {
-  label: string;
-  value: string;
-  setValue: (value: string) => void;
-  options: string[];
-  optionsVi?: string[];
-}) {
-  return (
-    <label className="fee-filter">
-      <span>{label}</span>
-      <select value={value} onChange={(event) => setValue(event.target.value)}>
-        <option value="">-- Tất cả / All --</option>
-        {options.map((option, idx) => (
-          <option key={option} value={option}>
-            {optionsVi ? optionsVi[idx] : option}
-          </option>
-        ))}
-      </select>
-      <ChevronDown size={12} />
-    </label>
   );
 }
