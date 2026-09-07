@@ -2,23 +2,26 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import type { Database, UserRole, UserStatus } from '@/lib/supabase/types';
 
-// Cache cookie name & TTL (5 minutes)
+// ─── Auth Cache (cookie-based, 5 min TTL) ────────────────────────────────────
+// Caches role + subscription status to avoid DB calls on every navigation.
+// Uses btoa/atob (Edge Runtime safe — NO Buffer).
+
 const CACHE_COOKIE = 'crm_auth_cache';
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 interface AuthCache {
   uid: string;
   exp: number;
-  status: string | null;   // profile status
-  role: string;            // 'super_admin' | 'admin' | 'user'
-  sub: 'active' | 'expired' | 'none'; // subscription status
+  status: string | null;
+  role: 'super_admin' | 'admin' | 'user';
+  sub: 'active' | 'expired' | 'none';
 }
 
 function readCache(request: NextRequest, userId: string): AuthCache | null {
   try {
     const raw = request.cookies.get(CACHE_COOKIE)?.value;
     if (!raw) return null;
-    const cache: AuthCache = JSON.parse(Buffer.from(raw, 'base64').toString('utf-8'));
+    const cache: AuthCache = JSON.parse(atob(raw));
     if (cache.uid !== userId || cache.exp < Date.now()) return null;
     return cache;
   } catch {
@@ -28,15 +31,14 @@ function readCache(request: NextRequest, userId: string): AuthCache | null {
 
 function writeCache(response: NextResponse, data: AuthCache): void {
   try {
-    const encoded = Buffer.from(JSON.stringify(data)).toString('base64');
-    response.cookies.set(CACHE_COOKIE, encoded, {
+    response.cookies.set(CACHE_COOKIE, btoa(JSON.stringify(data)), {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
       maxAge: CACHE_TTL_MS / 1000,
     });
   } catch {
-    // ignore
+    // ignore — cache is best-effort
   }
 }
 
@@ -44,16 +46,17 @@ function clearCache(response: NextResponse): void {
   response.cookies.delete(CACHE_COOKIE);
 }
 
-// Wrap a promise with a timeout — resolves null on timeout
+// ─── Timeout helper ────────────────────────────────────────────────────────────
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
-  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), ms));
-  return Promise.race([promise, timeout]);
+  const t = new Promise<null>((res) => setTimeout(() => res(null), ms));
+  return Promise.race([promise, t]);
 }
 
+// ─── Middleware ────────────────────────────────────────────────────────────────
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Skip static assets & known public file extensions
+  // Skip static assets
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/static') ||
@@ -63,7 +66,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Route classification
+  // Route flags
   const isPublicRoute =
     pathname === '/' ||
     pathname === '/home' ||
@@ -111,69 +114,73 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // 3. Auth check — 4s timeout
+  // ── Step 1: Verify auth token (4s timeout) ───────────────────────────────────
   let user: Awaited<ReturnType<typeof supabase.auth.getUser>>['data']['user'] = null;
   try {
-    const authResult = await withTimeout(supabase.auth.getUser(), 4000);
-    user = authResult?.data?.user ?? null;
+    const result = await withTimeout(supabase.auth.getUser(), 4000);
+    user = result?.data?.user ?? null;
   } catch {
     user = null;
   }
 
-  // A. Unauthenticated
+  // Not logged in
   if (!user) {
     clearCache(response);
     if (!isPublicRoute) {
-      const redirectUrl = new URL('/login', request.url);
-      redirectUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(redirectUrl);
+      const url = new URL('/login', request.url);
+      url.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(url);
     }
     return response;
   }
 
-  // B. Logged-in user hitting auth-only pages → dashboard
+  // Logged in + hitting auth pages → go to dashboard
   if (isAuthOnlyRoute) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // C. Skip heavy DB checks for public routes
+  // Public routes don't need role/subscription checks
   if (isPublicRoute) {
     return response;
   }
 
-  // D. Try to read from cache first (avoids DB on every navigation)
+  // ── Step 2: Role + subscription (read from cookie cache, or fetch from DB) ──
   let cache = readCache(request, user.id);
 
   if (!cache) {
-    // Cache miss — fetch from DB (with timeouts), then cache result
+    // Cache miss — fetch from Supabase (parallel queries, 3s timeout each)
     try {
-      // Profile status
-      const profileResult = await withTimeout(
-        Promise.resolve(
-          supabase.from('profiles').select('status').eq('id', user.id).maybeSingle()
+      const [profileResult, rolesResult] = await Promise.all([
+        withTimeout(
+          Promise.resolve(
+            supabase.from('profiles').select('status').eq('id', user.id).maybeSingle()
+          ),
+          3000
         ),
-        3000
-      );
+        withTimeout(
+          Promise.resolve(
+            supabase.from('user_roles').select('role_id').eq('user_id', user.id)
+          ),
+          3000
+        ),
+      ]);
+
       const profileStatus =
         (profileResult?.data as { status?: UserStatus } | null)?.status ?? null;
 
-      // User roles
-      const rolesResult = await withTimeout(
-        Promise.resolve(
-          supabase.from('user_roles').select('role_id').eq('user_id', user.id)
-        ),
-        3000
-      );
-      const userRoles = rolesResult?.data ?? [];
-      const roles: UserRole[] = (userRoles || []).map(
-        (r: { role_id: UserRole }) => r.role_id
+      const roles: UserRole[] = ((rolesResult?.data ?? []) as { role_id: UserRole }[]).map(
+        (r) => r.role_id
       );
       const isSuperAdmin = roles.includes('super_admin');
       const isAdmin = isSuperAdmin || roles.includes('admin');
-      const roleLabel = isSuperAdmin ? 'super_admin' : isAdmin ? 'admin' : 'user';
+      const roleLabel: AuthCache['role'] = isSuperAdmin
+        ? 'super_admin'
+        : isAdmin
+          ? 'admin'
+          : 'user';
 
-      // Subscription (only for non-admin users)
-      let subStatus: 'active' | 'expired' | 'none' = 'none';
+      // Subscription — only needed for non-admins
+      let subStatus: AuthCache['sub'] = 'none';
       if (!isAdmin) {
         const subResult = await withTimeout(
           Promise.resolve(
@@ -189,15 +196,15 @@ export async function middleware(request: NextRequest) {
         );
         const sub = subResult?.data ?? null;
         if (sub) {
-          const isExpired =
+          const expired =
             !sub.lifetime &&
             (sub.status === 'expired' ||
               sub.status === 'cancelled' ||
               (sub.expire_date && new Date(sub.expire_date) <= new Date()));
-          subStatus = isExpired ? 'expired' : 'active';
+          subStatus = expired ? 'expired' : 'active';
         }
       } else {
-        subStatus = 'active'; // admins are always active
+        subStatus = 'active';
       }
 
       cache = {
@@ -208,18 +215,17 @@ export async function middleware(request: NextRequest) {
         sub: subStatus,
       };
 
-      // Write cache to response cookie
       writeCache(response, cache);
     } catch (err) {
-      console.error('Middleware DB fetch error:', err);
-      // On DB error, allow navigation (don't block the user)
+      console.error('[middleware] DB fetch error:', err);
+      // Allow navigation rather than blocking the user on DB errors
       return response;
     }
   }
 
-  // E. Apply cached checks
+  // ── Step 3: Enforce guards using cached data ─────────────────────────────────
 
-  // Account blocked / suspended
+  // Blocked / suspended account
   if (
     (cache.status === 'blocked' || cache.status === 'suspended') &&
     !isAccountBlockedRoute
@@ -228,25 +234,27 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/account-blocked', request.url));
   }
 
-  // Email verification
-  const isSuperAdmin = cache.role === 'super_admin';
+  // Email not verified
   if (
     !user.email_confirmed_at &&
     user.app_metadata?.provider === 'email' &&
-    !isSuperAdmin
+    cache.role !== 'super_admin'
   ) {
     return NextResponse.redirect(
-      new URL(`/verify-email?email=${encodeURIComponent(user.email || '')}`, request.url)
+      new URL(
+        `/verify-email?email=${encodeURIComponent(user.email || '')}`,
+        request.url
+      )
     );
   }
 
-  // Admin route guard
+  // Admin routes
   const isAdmin = cache.role === 'super_admin' || cache.role === 'admin';
   if (pathname.startsWith('/admin') && !isAdmin) {
     return NextResponse.redirect(new URL('/unauthorized', request.url));
   }
 
-  // Subscription expiry guard
+  // Subscription expired
   if (
     !isSubscriptionExpiredRoute &&
     !isUnauthorizedRoute &&
