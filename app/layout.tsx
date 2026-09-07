@@ -5,6 +5,7 @@ import { CrmShell } from '@/components/crm-shell';
 import { AuthProvider } from '@/lib/auth/auth-context';
 import { LanguageProvider } from '@/lib/i18n/language-context';
 import { ThemeProvider } from '@/lib/theme/theme-context';
+import { WhatsAppButton } from '@/components/whatsapp-button';
 
 const beVietnamPro = Be_Vietnam_Pro({
   weight: ['300', '400', '500', '600', '700', '800', '900'],
@@ -12,9 +13,6 @@ const beVietnamPro = Be_Vietnam_Pro({
   variable: '--font-be-vietnam-pro',
   display: 'swap',
 });
-
-import { WhatsAppButton } from '@/components/whatsapp-button';
-import { FloatingCalculator } from '@/components/floating-calculator';
 
 export const metadata: Metadata = {
   title: 'EMLY CUSTOMER LIST — Tax Office Client Management',
@@ -54,7 +52,6 @@ export default function RootLayout({
           <LanguageProvider>
             <AuthProvider>
               <CrmShell>{children}</CrmShell>
-              <FloatingCalculator />
               <WhatsAppButton />
             </AuthProvider>
           </LanguageProvider>
