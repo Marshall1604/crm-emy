@@ -70,9 +70,9 @@ export default function RegisterPage() {
 
       // Check if email confirmation is required
       if (data?.user && !data.user.email_confirmed_at) {
-        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        window.location.replace(`/verify-email?email=${encodeURIComponent(email)}`);
       } else {
-        router.push('/dashboard');
+        window.location.replace('/dashboard');
       }
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');

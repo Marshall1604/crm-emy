@@ -76,7 +76,7 @@ function LoginFormContent() {
           const hasAdminRole = userRoles?.some((r: { role_id: string }) => r.role_id === 'super_admin' || r.role_id === 'admin');
 
           if (!hasAdminRole) {
-            window.location.href = `/verify-email?email=${encodeURIComponent(data.user.email || '')}`;
+            window.location.replace(`/verify-email?email=${encodeURIComponent(data.user.email || '')}`);
             return;
           }
         }
@@ -120,14 +120,14 @@ function LoginFormContent() {
                 (sub.expire_date && new Date(sub.expire_date) <= new Date());
 
               if (isExpired) {
-                window.location.href = '/subscription-expired';
+                window.location.replace('/subscription-expired');
                 return;
               }
             }
           }
         } catch {}
 
-        window.location.href = redirectPath;
+        window.location.replace(redirectPath);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'An unexpected error occurred during login.';

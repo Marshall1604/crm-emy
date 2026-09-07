@@ -1,5 +1,7 @@
 import { DashboardView } from '@/features/dashboard/dashboard-view';
 
+export const dynamic = 'force-dynamic';
+
 export default function Page() {
   return <DashboardView />;
 }
