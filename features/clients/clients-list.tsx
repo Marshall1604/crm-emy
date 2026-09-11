@@ -445,7 +445,7 @@ export function ClientsList() {
   };
 
   return (
-    <main className="p-6 md:p-8 max-w-[1480px] mx-auto space-y-6">
+    <main className="p-6 md:p-8 max-w-[1850px] w-full mx-auto space-y-6">
       {/* 1. HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>

@@ -99,6 +99,7 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
     ...(canViewFees ? [{ label: t('nav_fees'), href: '/fees', icon: '$' }] : []),
     { label: t('nav_insurance_services'), href: '/insurance', icon: '🛡', badge: 'Beta' },
     { label: t('nav_marketing_mail'), href: '/marketing', icon: '✉', badge: 'Beta' },
+    { label: t('nav_emly_ai'), href: '/ai', icon: '✨', badge: 'Beta' },
   ];
 
   return (

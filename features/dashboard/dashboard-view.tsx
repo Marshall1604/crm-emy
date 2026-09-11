@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, Component, ErrorInfo, ReactNode } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Users,
@@ -21,8 +21,13 @@ import {
   Briefcase,
   Layers,
   Sparkles,
-  RefreshCw,
-  Download,
+  Phone,
+  Mail,
+  FolderOpen,
+  LayoutGrid,
+  Table as TableIcon,
+  Shield,
+  Send,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n/language-context';
@@ -42,6 +47,8 @@ interface DashboardReturn {
   balance: number;
   link: string;
   updated: string;
+  email?: string;
+  phone?: string;
 }
 
 const initialReturns: DashboardReturn[] = [
@@ -58,6 +65,8 @@ const initialReturns: DashboardReturn[] = [
     balance: 1200,
     link: '/businesses/abc-logistics',
     updated: 'Today, 10:15 AM',
+    email: 'contact@abclogistics.com',
+    phone: '(408) 555-0192',
   },
   {
     id: 'tr-2',
@@ -72,6 +81,8 @@ const initialReturns: DashboardReturn[] = [
     balance: 325,
     link: '/clients/minh-nguyen',
     updated: 'Today, 9:30 AM',
+    email: 'minh.nguyen@gmail.com',
+    phone: '(714) 889-2311',
   },
   {
     id: 'tr-3',
@@ -86,6 +97,8 @@ const initialReturns: DashboardReturn[] = [
     balance: 1550,
     link: '/businesses/xyz-tech',
     updated: 'Yesterday',
+    email: 'ops@xyztech.io',
+    phone: '(650) 412-8876',
   },
   {
     id: 'tr-4',
@@ -100,6 +113,8 @@ const initialReturns: DashboardReturn[] = [
     balance: 0,
     link: '/clients/olivia-johnson',
     updated: 'Aug 28, 2026',
+    email: 'olivia.j@outlook.com',
+    phone: '(415) 782-9012',
   },
   {
     id: 'tr-5',
@@ -114,6 +129,8 @@ const initialReturns: DashboardReturn[] = [
     balance: 0,
     link: '/businesses/luxury-nails',
     updated: 'Aug 27, 2026',
+    email: 'info@luxurynails.com',
+    phone: '(714) 223-9901',
   },
   {
     id: 'tr-6',
@@ -128,6 +145,8 @@ const initialReturns: DashboardReturn[] = [
     balance: 0,
     link: '/clients/kevin-mai-tran',
     updated: 'Aug 25, 2026',
+    email: 'kevin.tran@gmail.com',
+    phone: '(714) 634-1190',
   },
   {
     id: 'tr-7',
@@ -142,6 +161,8 @@ const initialReturns: DashboardReturn[] = [
     balance: 0,
     link: '/businesses',
     updated: 'Aug 20, 2026',
+    email: 'tax@acmeholdings.com',
+    phone: '(408) 723-5511',
   },
 ];
 
@@ -165,9 +186,12 @@ function formatCurrency(val: any): string {
 export function DashboardView() {
   const { user, role } = useAuth();
   const { t, language } = useLanguage();
+  const isVi = language === 'vi';
+
   const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedType, setSelectedType] = useState<string>('ALL');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   const isAdmin = role === 'super_admin' || role === 'admin';
 
@@ -196,6 +220,8 @@ export function DashboardView() {
             balance: safeNumber(b?.balance),
             link: `/businesses/${b?.id || ''}`,
             updated: String(b?.updated || 'Recently'),
+            email: b?.email || 'biz@taxpractice.com',
+            phone: b?.phone || '(408) 555-0100',
           })),
           ...(Array.isArray(clients) ? clients : []).map((c: any) => ({
             id: `cl-${c?.id || Math.random().toString()}`,
@@ -210,6 +236,8 @@ export function DashboardView() {
             balance: safeNumber(c?.balance),
             link: `/clients/${c?.id || ''}`,
             updated: String(c?.updated || 'Recently'),
+            email: c?.email || 'client@taxpractice.com',
+            phone: c?.phone || '(714) 555-0199',
           })),
         ];
 
@@ -279,6 +307,8 @@ export function DashboardView() {
             balance: safeNumber(b?.balance),
             link: `/businesses/${b?.id || ''}`,
             updated: String(b?.updated || 'Recently'),
+            email: b?.email || 'biz@taxpractice.com',
+            phone: b?.phone || '(408) 555-0100',
           })),
           ...(Array.isArray(clients) ? clients : []).map((c: any) => ({
             id: `cl-${c?.id || Math.random().toString()}`,
@@ -293,6 +323,8 @@ export function DashboardView() {
             balance: safeNumber(c?.balance),
             link: `/clients/${c?.id || ''}`,
             updated: String(c?.updated || 'Recently'),
+            email: c?.email || 'client@taxpractice.com',
+            phone: c?.phone || '(714) 555-0199',
           })),
         ];
 
@@ -310,14 +342,14 @@ export function DashboardView() {
   const statusLabels: Record<string, { en: string; vi: string }> = {
     'Waiting Documents': { en: 'Waiting Docs', vi: 'Chờ Giấy Tờ' },
     'In Preparation': { en: 'In Preparation', vi: 'Đang Soạn Hồ Sơ' },
-    Review: { en: 'Review', vi: 'Đang Kiểm Tra' },
+    Review: { en: 'Review & QA', vi: 'Đang Kiểm Tra' },
     'Ready to File': { en: 'Ready to File', vi: 'Sẵn Sàng Nộp' },
     Completed: { en: 'Completed', vi: 'Đã Hoàn Tất' },
-    'E-Filed': { en: 'E-Filed', vi: 'Đã Nộp IRS' },
+    'E-Filed': { en: 'E-Filed IRS', vi: 'Đã Nộp IRS' },
   };
 
   const getStatusText = (status: string) => {
-    return language === 'vi' ? (statusLabels[status]?.vi || status) : (statusLabels[status]?.en || status);
+    return isVi ? (statusLabels[status]?.vi || status) : (statusLabels[status]?.en || status);
   };
 
   const filteredReturns = useMemo(() => {
@@ -377,53 +409,120 @@ export function DashboardView() {
 
         const percentage = totalActive > 0 ? Math.round((count / totalActive) * 100) : 0;
 
-        const colors = [
-          { bg: 'bg-blue-100', text: 'text-blue-800', bar: 'bg-[#092c5c]' },
-          { bg: 'bg-purple-100', text: 'text-purple-800', bar: 'bg-purple-600' },
-          { bg: 'bg-emerald-100', text: 'text-emerald-800', bar: 'bg-emerald-600' },
-          { bg: 'bg-amber-100', text: 'text-amber-800', bar: 'bg-amber-600' },
-        ];
-        const color = colors[idx % colors.length];
-
         return {
           id: m.id || String(idx),
           name: m.name || 'Member',
-          role: m.role || 'Staff',
+          role: m.role || 'Preparer',
           initials: safeInitials(m.name || m.initials || 'M'),
           count,
           percentage,
-          color,
         };
       });
   }, [members, activeReturns]);
 
+  // Clean Quick Action Buttons
+  const quickActions = [
+    {
+      id: 'qa-1040',
+      title: isVi ? 'Hồ Sơ 1040' : '1040 Individual',
+      subtitle: isVi ? 'Cá nhân' : 'Personal',
+      href: '/clients',
+      icon: Users,
+      highlight: true,
+    },
+    {
+      id: 'qa-1065',
+      title: isVi ? 'Doanh Nghiệp' : 'Business Returns',
+      subtitle: isVi ? '1065 & 1120-S' : '1065 / 1120-S',
+      href: '/businesses',
+      icon: Building2,
+      highlight: false,
+    },
+    {
+      id: 'qa-returns',
+      title: isVi ? 'Tờ Khai Thuế' : 'Tax Returns',
+      subtitle: isVi ? 'Soạn & Nộp' : 'Prep & File',
+      href: '/tax-returns',
+      icon: FileSpreadsheet,
+      highlight: false,
+    },
+    {
+      id: 'qa-invoices',
+      title: isVi ? 'Hóa Đơn' : 'Invoices',
+      subtitle: isVi ? 'Thu phí dịch vụ' : 'Billing & Fees',
+      href: '/invoices',
+      icon: DollarSign,
+      highlight: false,
+    },
+    {
+      id: 'qa-marketing',
+      title: isVi ? 'Gửi Email' : 'Email Campaigns',
+      subtitle: isVi ? 'Tiếp thị' : 'Marketing',
+      href: '/marketing',
+      icon: Send,
+      highlight: false,
+    },
+    {
+      id: 'qa-insurance',
+      title: isVi ? 'Bảo Hiểm' : 'Insurance',
+      subtitle: isVi ? 'Chính sách' : 'Coverage',
+      href: '/insurance',
+      icon: Shield,
+      highlight: false,
+    },
+    {
+      id: 'qa-docs',
+      title: isVi ? 'Tài Liệu' : 'Documents',
+      subtitle: isVi ? 'W-2, 1099, K-1' : 'Uploads',
+      href: '/clients',
+      icon: FolderOpen,
+      highlight: false,
+    },
+    {
+      id: 'qa-team',
+      title: isVi ? 'Đội Ngũ' : 'Team Hub',
+      subtitle: isVi ? 'Phân bổ' : 'Assignments',
+      href: '/team',
+      icon: Briefcase,
+      highlight: false,
+    },
+  ];
+
   return (
-    <main className="p-6 md:p-8 max-w-[1480px] mx-auto space-y-7">
-      {/* 1. TOP HEADER & GREETING */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+    <main className="p-4 sm:p-6 md:p-8 max-w-[1850px] w-full mx-auto space-y-6 animate-in fade-in duration-300 text-slate-800 dark:text-slate-100">
+      
+      {/* ─── 1. TOP HEADER & QUICK STAT BAR ─── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">{t('tax_crm_workspace')}</span>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-[11px] font-black tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+              {t('tax_crm_workspace')}
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               {t('live_sync_active')}
             </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              ⚡ {isVi ? 'Mùa Thuế 2025/2026' : 'Tax Season 2025/2026'}
+            </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             {t('dashboard_title')}
           </h1>
-          <p className="text-sm text-slate-600 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
             {t('dashboard_subtitle')}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Action Button Group */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <Link href="/clients">
             <Button
               variant="outline"
-              className="h-10 px-4 text-sm font-bold gap-2 border-slate-300 bg-white hover:bg-slate-50 hover:border-blue-400 text-slate-800 shadow-xs cursor-pointer"
+              className="h-10 px-4 text-xs font-bold gap-2 rounded-[20px] border border-slate-200 dark:border-slate-750 bg-white dark:bg-[#181F2B] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-2xs transition-all cursor-pointer"
             >
-              <Users className="w-4 h-4 text-blue-700" />
+              <Users className="w-4 h-4 text-slate-600 dark:text-slate-400" />
               {t('btn_clients_list')}
             </Button>
           </Link>
@@ -431,489 +530,557 @@ export function DashboardView() {
           <Link href="/businesses">
             <Button
               variant="outline"
-              className="h-10 px-4 text-sm font-bold gap-2 border-slate-300 bg-white hover:bg-slate-50 hover:border-blue-400 text-slate-800 shadow-xs cursor-pointer"
+              className="h-10 px-4 text-xs font-bold gap-2 rounded-[20px] border border-slate-200 dark:border-slate-750 bg-white dark:bg-[#181F2B] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-2xs transition-all cursor-pointer"
             >
-              <Building2 className="w-4 h-4 text-[#092c5c]" />
+              <Building2 className="w-4 h-4 text-slate-600 dark:text-slate-400" />
               {t('btn_business_list')}
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* 2. EXECUTIVE METRIC KPI CARDS */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-        {/* Total Clients */}
-        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+      {/* ─── 2. TOP EXECUTIVE 4 SQUIRCLE KPI METRIC CARDS ─── */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        {/* KPI 1: Active Clients */}
+        <div className="bg-white dark:bg-[#141923] rounded-[26px] p-5 border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('kpi_active_clients')}</span>
-            <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
-              <Users className="w-5 h-5" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {t('kpi_active_clients')}
+            </span>
+            <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
+              <Users className="w-4.5 h-4.5" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-3xl font-extrabold text-slate-900">{totalClients}</div>
-            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-700">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>{t('kpi_active_clients_sub')}</span>
+            <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{totalClients}</div>
+            <div className="flex items-center justify-between gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <TrendingUp className="w-3.5 h-3.5" /> +18.4%
+              </span>
+              <span>1040: {totalClientsCount} • Biz: {totalBizCount}</span>
             </div>
           </div>
         </div>
 
-        {/* In Progress */}
-        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+        {/* KPI 2: In Preparation */}
+        <div className="bg-white dark:bg-[#141923] rounded-[26px] p-5 border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('kpi_in_progress_returns')}</span>
-            <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
-              <Clock className="w-5 h-5" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {t('kpi_in_progress_returns')}
+            </span>
+            <div className="w-9 h-9 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <Clock className="w-4.5 h-4.5" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-3xl font-extrabold text-slate-900">{inProgressReturns}</div>
-            <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-500 font-medium">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-              <span>{statusCounts['Waiting Documents']} {t('kpi_in_progress_sub')}</span>
+            <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{inProgressReturns}</div>
+            <div className="flex items-center justify-between gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                {statusCounts['Waiting Documents']} {t('kpi_in_progress_sub')}
+              </span>
+              <span>QA: {statusCounts.Review}</span>
             </div>
           </div>
         </div>
 
-        {/* Completed */}
-        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+        {/* KPI 3: Completed & E-Filed */}
+        <div className="bg-white dark:bg-[#141923] rounded-[26px] p-5 border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('kpi_completed_filed')}</span>
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {t('kpi_completed_filed')}
+            </span>
+            <div className="w-9 h-9 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <CheckCircle2 className="w-4.5 h-4.5" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-3xl font-extrabold text-slate-900">{completedReturns}</div>
-            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-emerald-700">
-              <Check className="w-3.5 h-3.5" />
-              <span>{t('kpi_completed_filed_sub')}</span>
+            <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{completedReturns}</div>
+            <div className="flex items-center justify-between gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                {t('kpi_completed_filed_sub')}
+              </span>
+              <span className="font-bold text-slate-500 dark:text-slate-400">99.4% IRS</span>
             </div>
           </div>
         </div>
 
-        {/* 4th KPI Card: Revenue for Admin, Workload for Staff */}
+        {/* KPI 4: Financial Fees & Receivables */}
         {isAdmin ? (
-          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="bg-white dark:bg-[#141923] rounded-[26px] p-5 border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('kpi_total_fees')}</span>
-              <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
-                <DollarSign className="w-5 h-5" />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {t('kpi_total_fees')}
+              </span>
+              <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
+                <DollarSign className="w-4.5 h-4.5" />
               </div>
             </div>
             <div className="mt-3">
-              <div className="text-3xl font-extrabold text-slate-900">${formatCurrency(totalRevenue)}</div>
-              <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-rose-600">
-                <span>{t('kpi_unpaid_balance')} ${formatCurrency(totalBalance)}</span>
+              <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                ${formatCurrency(totalRevenue)}
+              </div>
+              <div className="flex items-center justify-between gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[11px]">
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                  ${formatCurrency(Math.max(0, totalRevenue - totalBalance))} {isVi ? 'Đã thu' : 'Paid'}
+                </span>
+                <span className="text-rose-600 dark:text-rose-400 font-semibold">
+                  {t('due_label')} ${formatCurrency(totalBalance)}
+                </span>
               </div>
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="bg-white dark:bg-[#141923] rounded-[26px] p-5 border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                {language === 'vi' ? 'HỒ SƠ CẦN XỬ LÝ' : 'PENDING ACTIONS'}
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {isVi ? 'HỒ SƠ CẦN XỬ LÝ' : 'PENDING ACTIONS'}
               </span>
-              <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
-                <Briefcase className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
+                <Briefcase className="w-4.5 h-4.5" />
               </div>
             </div>
             <div className="mt-3">
-              <div className="text-3xl font-extrabold text-slate-900">
+              <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                 {statusCounts['Waiting Documents'] + statusCounts['Review']}
               </div>
-              <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-purple-700">
-                <span>{language === 'vi' ? 'Đang đợi tài liệu & kiểm tra' : 'Waiting docs & in review'}</span>
+              <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400">
+                <span>{isVi ? 'Đang đợi tài liệu & kiểm tra QA' : 'Waiting docs & in QA review'}</span>
               </div>
             </div>
           </div>
         )}
       </section>
 
-      {/* 3. WORKFLOW PIPELINE INTERACTIVE STATUS BAR */}
-      <section className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">{t('pipeline_title')}</h2>
-            <p className="text-xs text-slate-500">{t('pipeline_subtitle')}</p>
-          </div>
-          {selectedStatus !== 'ALL' && (
-            <button
-              onClick={() => setSelectedStatus('ALL')}
-              className="text-xs font-semibold text-blue-700 hover:text-blue-900 cursor-pointer self-start sm:self-auto"
-            >
-              {language === 'vi' ? 'Bỏ lọc (Hiện tất cả)' : 'Clear filter (Show All)'}
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-          {/* Waiting Documents */}
-          <button
-            onClick={() => setSelectedStatus(selectedStatus === 'Waiting Documents' ? 'ALL' : 'Waiting Documents')}
-            className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
-              selectedStatus === 'Waiting Documents'
-                ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-400/30'
-                : 'bg-amber-50/70 border-amber-200 hover:bg-amber-100/70'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-900">{t('stage_waiting_docs')}</span>
-              <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-amber-200/80 text-amber-900">
-                {statusCounts['Waiting Documents']}
-              </span>
+      {/* ─── 3. MAIN WORKSPACE: SQUIRCLE 2-COLUMN STRUCTURE ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* ── LEFT PANE: QUICK ACTIONS & TEAM HUB (4 COLS) ── */}
+        <section className="lg:col-span-4 space-y-5">
+          
+          {/* Quick Action Tiles */}
+          <div className="bg-white dark:bg-[#141923] rounded-[28px] p-5.5 border border-slate-200/80 dark:border-white/10 shadow-[0_6px_24px_rgba(0,0,0,0.02)]">
+            <div className="mb-4">
+              <h2 className="text-base font-black text-slate-900 dark:text-white tracking-tight">
+                {isVi ? 'Tác Vụ Nhanh' : 'Quick Actions'}
+              </h2>
+              <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                {isVi ? 'Truy cập nhanh các nghiệp vụ khai thuế' : 'Fast shortcuts for tax workflow'}
+              </p>
             </div>
-            <p className="text-[11px] text-amber-700/90 mt-1 font-medium">{t('stage_waiting_docs_desc')}</p>
-          </button>
 
-          {/* In Preparation */}
-          <button
-            onClick={() => setSelectedStatus(selectedStatus === 'In Preparation' ? 'ALL' : 'In Preparation')}
-            className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
-              selectedStatus === 'In Preparation'
-                ? 'bg-blue-100 border-blue-400 ring-2 ring-blue-400/30'
-                : 'bg-blue-50/70 border-blue-200 hover:bg-blue-100/70'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-blue-900">{t('stage_in_prep')}</span>
-              <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-blue-200/80 text-blue-900">
-                {statusCounts['In Preparation']}
-              </span>
+            <div className="grid grid-cols-2 gap-3">
+              {quickActions.map((action) => {
+                const IconComponent = action.icon;
+                return (
+                  <Link
+                    key={action.id}
+                    href={action.href}
+                    className={`group flex flex-col items-center justify-center text-center p-3.5 rounded-[22px] border transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:shadow-md cursor-pointer ${
+                      action.highlight
+                        ? 'bg-slate-50 dark:bg-[#181F2B] border-slate-300 dark:border-slate-700'
+                        : 'bg-white dark:bg-[#141923] border-slate-200/70 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-2 group-hover:bg-[#092C5C] group-hover:text-white transition-colors shadow-2xs">
+                      <IconComponent className="w-4.5 h-4.5" />
+                    </div>
+                    <span className="text-xs font-black text-slate-900 dark:text-white leading-tight">
+                      {action.title}
+                    </span>
+                    <span className="text-[10.5px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium">
+                      {action.subtitle}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
-            <p className="text-[11px] text-blue-700/90 mt-1 font-medium">{t('stage_in_prep_desc')}</p>
-          </button>
 
-          {/* Review */}
-          <button
-            onClick={() => setSelectedStatus(selectedStatus === 'Review' ? 'ALL' : 'Review')}
-            className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
-              selectedStatus === 'Review'
-                ? 'bg-purple-100 border-purple-400 ring-2 ring-purple-400/30'
-                : 'bg-purple-50/70 border-purple-200 hover:bg-purple-100/70'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-purple-900">{t('stage_review')}</span>
-              <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-purple-200/80 text-purple-900">
-                {statusCounts.Review}
-              </span>
-            </div>
-            <p className="text-[11px] text-purple-700/90 mt-1 font-medium">{t('stage_review_desc')}</p>
-          </button>
-
-          {/* Ready to File */}
-          <button
-            onClick={() => setSelectedStatus(selectedStatus === 'Ready to File' ? 'ALL' : 'Ready to File')}
-            className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
-              selectedStatus === 'Ready to File'
-                ? 'bg-indigo-100 border-indigo-400 ring-2 ring-indigo-400/30'
-                : 'bg-indigo-50/70 border-indigo-200 hover:bg-indigo-100/70'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-indigo-900">{t('stage_ready_to_file')}</span>
-              <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-indigo-200/80 text-indigo-900">
-                {statusCounts['Ready to File']}
-              </span>
-            </div>
-            <p className="text-[11px] text-indigo-700/90 mt-1 font-medium">{t('stage_ready_to_file_desc')}</p>
-          </button>
-
-          {/* Completed */}
-          <button
-            onClick={() => setSelectedStatus(selectedStatus === 'Completed' ? 'ALL' : 'Completed')}
-            className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
-              selectedStatus === 'Completed'
-                ? 'bg-emerald-100 border-emerald-400 ring-2 ring-emerald-400/30'
-                : 'bg-emerald-50/70 border-emerald-200 hover:bg-emerald-100/70'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-900">{t('stage_completed')}</span>
-              <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-emerald-200/80 text-emerald-900">
-                {statusCounts.Completed}
-              </span>
-            </div>
-            <p className="text-[11px] text-emerald-700/90 mt-1 font-medium">{t('stage_completed_desc')}</p>
-          </button>
-        </div>
-      </section>
-
-      {/* 4. MAIN CONTENT: 2-COLUMN LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* LEFT COLUMN: ACTIVE ENGAGEMENTS TABLE (2 Cols) */}
-        <section className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
-          <header className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900">{t('table_active_returns')}</h2>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
-                  {filteredReturns.length}
-                </span>
+            {/* IRS Status Pill Banner */}
+            <div className="mt-4 p-3.5 rounded-[20px] bg-slate-50 dark:bg-[#181F2B] border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 font-black shadow-2xs">
+                <Sparkles className="w-4 h-4" />
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">{t('table_subtitle')}</p>
-            </div>
-
-            {/* Filter pills */}
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder={t('search_placeholder')}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="h-9 pl-9 pr-3 rounded-lg border border-slate-300 text-xs w-44 sm:w-52 focus:outline-none focus:border-blue-500"
-                />
+              <div className="min-w-0">
+                <div className="text-xs font-black text-slate-900 dark:text-white">
+                  {isVi ? 'IRS E-File Đang Mở' : 'IRS E-File Active'}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
+                  {isVi ? 'Hệ thống tự động đồng bộ trạng thái trực tiếp.' : 'Direct XML transmission online.'}
+                </p>
               </div>
-
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="h-9 px-2.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 bg-white cursor-pointer outline-none"
-              >
-                <option value="ALL">{t('filter_all_types')}</option>
-                <option value="Individual">{t('filter_individuals')}</option>
-                <option value="Business">{t('filter_businesses')}</option>
-              </select>
             </div>
-          </header>
-
-          <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left border-collapse min-w-[700px]">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3 px-4">{t('th_client_business')}</th>
-                  <th className="py-3 px-3">{t('th_return')}</th>
-                  <th className="py-3 px-3">{t('th_tax_year')}</th>
-                  <th className="py-3 px-3">{t('th_status')}</th>
-                  <th className="py-3 px-3">{t('th_preparer')}</th>
-                  {isAdmin && <th className="py-3 px-4 text-right">{t('th_fee_balance')}</th>}
-                  <th className="py-3 px-3 text-center">{t('th_action')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-                {filteredReturns.map((r, i) => (
-                  <tr key={r.id || `ret-${i}`} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <Link href={r.link || '#'} className="flex items-center gap-3 group">
-                        <div
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
-                            r.type === 'Business'
-                              ? 'bg-gradient-to-br from-navy to-blue-800 text-white'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}
-                        >
-                          {safeInitials(r.name)}
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-900 group-hover:text-blue-700 text-[13.5px]">
-                            {r.name || 'Unnamed'}
-                          </div>
-                          <div className="text-xs text-slate-500 font-medium">
-                            {r.type === 'Business' ? (language === 'vi' ? 'Doanh nghiệp' : 'Business') : (language === 'vi' ? 'Cá nhân' : 'Individual')}
-                          </div>
-                        </div>
-                      </Link>
-                    </td>
-
-                    <td className="py-3.5 px-3">
-                      <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                        {r.form || '1040'}
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 px-3 font-semibold text-slate-800">{r.year || '2025'}</td>
-
-                    <td className="py-3.5 px-3">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                          r.status === 'Waiting Documents'
-                            ? 'bg-amber-100 text-amber-800'
-                            : r.status === 'In Preparation'
-                            ? 'bg-blue-100 text-blue-800'
-                            : r.status === 'Review'
-                            ? 'bg-purple-100 text-purple-800'
-                            : r.status === 'Ready to File'
-                            ? 'bg-indigo-100 text-indigo-800'
-                            : 'bg-emerald-100 text-emerald-800'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            r.status === 'Waiting Documents'
-                              ? 'bg-amber-600'
-                              : r.status === 'In Preparation'
-                              ? 'bg-blue-600'
-                              : r.status === 'Review'
-                              ? 'bg-purple-600'
-                              : r.status === 'Ready to File'
-                              ? 'bg-indigo-600'
-                              : 'bg-emerald-600'
-                          }`}
-                        ></span>
-                        {getStatusText(r.status || 'Waiting Documents')}
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 px-3">
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center justify-center border border-slate-200">
-                          {r.preparerInitials || 'AT'}
-                        </span>
-                        <span className="text-xs font-medium text-slate-700">{r.preparer || 'Amy Tran'}</span>
-                      </div>
-                    </td>
-
-                    {isAdmin && (
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="font-bold text-slate-900 text-xs">${formatCurrency(r.fee)}</div>
-                        {safeNumber(r.balance) > 0 ? (
-                          <div className="text-[11px] font-semibold text-rose-600">
-                            {t('due_label')} ${formatCurrency(r.balance)}
-                          </div>
-                        ) : (
-                          <div className="text-[11px] font-semibold text-emerald-600">{t('paid_in_full')}</div>
-                        )}
-                      </td>
-                    )}
-
-                    <td className="py-3.5 px-3 text-center">
-                      <Link href={r.link || '#'}>
-                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-blue-700 hover:text-blue-900">
-                          {t('btn_view')} <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-                        </Button>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {filteredReturns.length === 0 && (
-              <div className="p-8 text-center text-slate-500">
-                <Search className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                <p className="text-sm font-semibold">{language === 'vi' ? 'Không tìm thấy hồ sơ phù hợp' : 'No returns match your filter'}</p>
-                <p className="text-xs mt-1">{language === 'vi' ? 'Hãy thử thay đổi từ khóa hoặc bộ lọc.' : 'Try changing your search term or filter options.'}</p>
-              </div>
-            )}
           </div>
 
-          <footer className="p-4 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
-            <span>{language === 'vi' ? `Hiển thị ${filteredReturns.length} trên ${(activeReturns || []).length} hồ sơ` : `Showing ${filteredReturns.length} of ${(activeReturns || []).length} engagements`}</span>
-            <Link href="/tax-returns" className="font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1">
-              {language === 'vi' ? 'Xem chi tiết tất cả tờ khai' : 'View all returns in detail'} <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </footer>
-        </section>
-
-        {/* RIGHT COLUMN: TAX DEADLINES & TEAM SUMMARY (1 Col) */}
-        <div className="space-y-6">
-          {/* DEADLINES CARD */}
-          <section className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">{t('deadlines_title')}</h3>
-                  <p className="text-[11px] text-slate-500">{t('deadlines_subtitle')}</p>
-                </div>
-              </div>
-              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-800">
-                {t('deadline_critical')}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {/* Deadline 1 */}
-              <div className="flex items-start gap-3 p-3 rounded-lg border border-rose-100 bg-rose-50/40">
-                <div className="w-11 h-11 rounded-md bg-white border border-rose-200 flex flex-col items-center justify-center shrink-0 text-rose-700">
-                  <span className="text-[10px] font-extrabold uppercase leading-none">Sep</span>
-                  <span className="text-base font-extrabold leading-none mt-0.5">15</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-slate-900">{t('deadline_1_title')}</div>
-                  <p className="text-[11px] text-slate-600 mt-0.5">{t('deadline_1_desc')}</p>
-                  <span className="inline-block mt-1 text-[10px] font-bold text-rose-700">
-                    ⏳ 17 {t('days_remaining')}
-                  </span>
-                </div>
-              </div>
-
-              {/* Deadline 2 */}
-              <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50/60">
-                <div className="w-11 h-11 rounded-md bg-white border border-slate-300 flex flex-col items-center justify-center shrink-0 text-slate-700">
-                  <span className="text-[10px] font-extrabold uppercase leading-none">Oct</span>
-                  <span className="text-base font-extrabold leading-none mt-0.5">15</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold text-slate-900">{t('deadline_2_title')}</div>
-                  <p className="text-[11px] text-slate-600 mt-0.5">{t('deadline_2_desc')}</p>
-                  <span className="inline-block mt-1 text-[10px] font-semibold text-slate-500">
-                    47 {t('days_remaining')}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* PREPARER WORKLOAD */}
-          <section className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
+          {/* Preparer Workload */}
+          <div className="bg-white dark:bg-[#141923] rounded-[28px] p-5.5 border border-slate-200/80 dark:border-white/10 shadow-[0_6px_24px_rgba(0,0,0,0.02)]">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">{t('workload_title')}</h3>
-                <p className="text-[11px] text-slate-500">{t('workload_subtitle')}</p>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white">{t('workload_title')}</h3>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">{t('workload_subtitle')}</p>
               </div>
-              <Link href="/team" className="text-xs font-semibold text-blue-700 hover:text-blue-900">
+              <Link href="/team" className="text-xs font-bold text-[#092C5C] dark:text-blue-400 hover:underline">
                 {t('manage_team')}
               </Link>
             </div>
 
             {preparerWorkload.length === 0 || (activeReturns || []).length === 0 ? (
-              <div className="text-center py-6 text-slate-400 text-xs">
-                <Users className="w-7 h-7 text-slate-300 mx-auto mb-2" />
-                <p className="font-semibold text-slate-500">
-                  {language === 'vi' ? 'Chưa có phân công hồ sơ' : 'No active staff return assignments'}
+              <div className="text-center py-4 text-slate-400 text-xs">
+                <Users className="w-6 h-6 text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
+                <p className="font-bold text-slate-600 dark:text-slate-400 text-xs">
+                  {isVi ? 'Chưa có phân công hồ sơ' : 'No staff return assignments'}
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  {language === 'vi' ? 'Dữ liệu phân công sẽ hiển thị khi bạn tạo khách hàng hoặc thêm nhân sự.' : 'Assignments will appear here once you create clients or add staff.'}
-                </p>
-                <Link href="/team" className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline mt-2.5">
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>{language === 'vi' ? 'Quản lý nhóm' : 'Manage Team'}</span>
-                </Link>
               </div>
             ) : (
-              <div className="space-y-3.5">
+              <div className="space-y-3">
                 {preparerWorkload.map((item) => (
-                  <div key={item.id}>
-                    <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                  <div key={item.id} className="p-3 rounded-[18px] bg-slate-50/70 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center justify-between text-xs mb-2">
                       <div className="flex items-center gap-2">
-                        <span className={`w-6 h-6 rounded-full ${item.color.bg} ${item.color.text} text-[10px] font-bold flex items-center justify-center`}>
+                        <span className="w-6.5 h-6.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-black flex items-center justify-center">
                           {item.initials}
                         </span>
-                        <span className="text-slate-800 font-bold">{item.name}</span>
-                        <span className="text-[10px] text-slate-400">({item.role})</span>
+                        <div>
+                          <span className="text-slate-900 dark:text-white font-bold leading-tight block">{item.name}</span>
+                          <span className="text-[10px] text-slate-400">{item.role}</span>
+                        </div>
                       </div>
-                      <span className="text-slate-600 font-medium">
-                        {item.count} {item.count === 1 ? 'return' : 'returns'}
+                      <span className="text-slate-700 dark:text-slate-300 font-bold text-xs">
+                        {item.count} {isVi ? 'hồ sơ' : 'returns'}
                       </span>
                     </div>
-                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                       <div
-                        className={`${item.color.bar} h-full rounded-full transition-all duration-500`}
-                        style={{ width: `${Math.max(item.percentage, item.count > 0 ? 8 : 0)}%` }}
+                        className="bg-[#092C5C] dark:bg-blue-500 h-full rounded-full transition-all duration-300"
+                        style={{ width: `${Math.max(item.percentage, item.count > 0 ? 15 : 0)}%` }}
                       />
                     </div>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+
+        </section>
+
+        {/* ── RIGHT PANE: WORKFLOW PIPELINE & ACTIVE ENGAGEMENTS (8 COLS) ── */}
+        <div className="lg:col-span-8 space-y-5">
+          
+          {/* ── 3A. UNIFIED WORKFLOW PIPELINE & DEADLINE BAR ── */}
+          <section className="bg-white dark:bg-[#141923] rounded-[28px] p-5.5 border border-slate-200/80 dark:border-white/10 shadow-[0_6px_24px_rgba(0,0,0,0.02)]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <div>
+                <h2 className="text-base font-black text-slate-900 dark:text-white">{t('pipeline_title')}</h2>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{t('pipeline_subtitle')}</p>
+              </div>
+              
+              {/* Deadlines compact pill */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[14px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                  <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                  <span>Sep 15: 1065 / 1120-S (17d)</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[14px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span>Oct 15: 1040 Ext (47d)</span>
+                </div>
+                {selectedStatus !== 'ALL' && (
+                  <button
+                    onClick={() => setSelectedStatus('ALL')}
+                    className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                  >
+                    ✕ {isVi ? 'Hiện tất cả' : 'Show all'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Clean Segmented Pipeline Tabs */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 pt-1">
+              {[
+                { key: 'Waiting Documents', label: t('stage_waiting_docs'), count: statusCounts['Waiting Documents'] },
+                { key: 'In Preparation', label: t('stage_in_prep'), count: statusCounts['In Preparation'] },
+                { key: 'Review', label: t('stage_review'), count: statusCounts.Review },
+                { key: 'Ready to File', label: t('stage_ready_to_file'), count: statusCounts['Ready to File'] },
+                { key: 'Completed', label: t('stage_completed'), count: statusCounts.Completed },
+              ].map((stage) => {
+                const isActive = selectedStatus === stage.key;
+                return (
+                  <button
+                    key={stage.key}
+                    onClick={() => setSelectedStatus(isActive ? 'ALL' : stage.key)}
+                    className={`p-3 rounded-[18px] border text-left transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? 'bg-[#092C5C] text-white border-[#092C5C] shadow-xs scale-102'
+                        : 'bg-slate-50 dark:bg-[#181F2B] border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-800 dark:text-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`text-xs font-bold truncate ${isActive ? 'text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+                        {stage.label}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-black ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
+                      }`}>
+                        {stage.count}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </section>
+
+          {/* ── 3B. ACTIVE ENGAGEMENTS LIST / CARDS (STREAMLINED & UNIFIED) ── */}
+          <section className="bg-white dark:bg-[#141923] rounded-[28px] border border-slate-200/80 dark:border-white/10 shadow-[0_6px_24px_rgba(0,0,0,0.02)] overflow-hidden flex flex-col">
+            
+            {/* Header with Search, Filter & View Switcher */}
+            <header className="p-5 border-b border-slate-200/70 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-black text-slate-900 dark:text-white">
+                  {isVi ? 'Hồ Sơ Đang Thực Hiện' : 'Your Engagements'}
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  {filteredReturns.length}
+                </span>
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder={t('search_placeholder')}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="h-9 pl-9 pr-3 rounded-[14px] border border-slate-200 dark:border-slate-750 text-xs w-36 sm:w-44 bg-slate-50 dark:bg-[#181E29] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  />
+                </div>
+
+                {/* Filter Type */}
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  className="h-9 px-3 rounded-[14px] border border-slate-200 dark:border-slate-750 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#181E29] cursor-pointer outline-none"
+                >
+                  <option value="ALL">{t('filter_all_types')}</option>
+                  <option value="Individual">{t('filter_individuals')}</option>
+                  <option value="Business">{t('filter_businesses')}</option>
+                </select>
+
+                {/* View Switcher */}
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-[14px]">
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    title="Card View"
+                    className={`p-1.5 rounded-[10px] text-xs font-bold transition-all cursor-pointer ${
+                      viewMode === 'cards'
+                        ? 'bg-white dark:bg-[#141923] text-[#092C5C] dark:text-blue-400 shadow-2xs'
+                        : 'text-slate-400 hover:text-slate-700'
+                    }`}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('table')}
+                    title="Table View"
+                    className={`p-1.5 rounded-[10px] text-xs font-bold transition-all cursor-pointer ${
+                      viewMode === 'table'
+                        ? 'bg-white dark:bg-[#141923] text-[#092C5C] dark:text-blue-400 shadow-2xs'
+                        : 'text-slate-400 hover:text-slate-700'
+                    }`}
+                  >
+                    <TableIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            {/* ── CLEAN SQUIRCLE CARDS VIEW ── */}
+            {viewMode === 'cards' && (
+              <div className="p-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {filteredReturns.map((r, i) => (
+                    <div
+                      key={r.id || `ret-card-${i}`}
+                      className="bg-white dark:bg-[#181F2B] rounded-[24px] p-4.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col justify-between"
+                    >
+                      {/* Top: Preparer & Form */}
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-7.5 h-7.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-black flex items-center justify-center shadow-2xs">
+                            {r.preparerInitials || 'AT'}
+                          </span>
+                          <div>
+                            <span className="text-xs font-black text-slate-800 dark:text-slate-200 leading-tight block">
+                              {r.preparer || 'Amy Tran'}
+                            </span>
+                            <span className="text-[10px] text-slate-400">{r.updated || 'Today'}</span>
+                          </div>
+                        </div>
+
+                        <span className="inline-flex px-2.5 py-0.5 rounded-[10px] text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          {r.form || 'Form 1040'}
+                        </span>
+                      </div>
+
+                      {/* Middle: Name & Status */}
+                      <div className="my-2">
+                        <Link href={r.link || '#'} className="block hover:text-[#092C5C] dark:hover:text-blue-400 transition-colors">
+                          <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white leading-snug">
+                            {r.name}
+                          </h3>
+                        </Link>
+                        <span className="text-xs text-slate-400 font-medium">
+                          {r.type === 'Business' ? (isVi ? 'Doanh nghiệp' : 'Business') : (isVi ? 'Cá nhân' : 'Individual')} • {r.year}
+                        </span>
+                      </div>
+
+                      {/* Status Tag */}
+                      <div className="my-2">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            r.status === 'Waiting Documents' ? 'bg-amber-500' :
+                            r.status === 'In Preparation' ? 'bg-blue-500' :
+                            r.status === 'Review' ? 'bg-purple-500' :
+                            r.status === 'Ready to File' ? 'bg-teal-500' : 'bg-emerald-500'
+                          }`}></span>
+                          {getStatusText(r.status || 'Waiting Documents')}
+                        </span>
+                      </div>
+
+                      {/* Bottom Fee & Quick Action */}
+                      <div className="mt-2.5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                        {isAdmin ? (
+                          <div>
+                            <span className="font-bold text-slate-900 dark:text-white">${formatCurrency(r.fee)}</span>
+                            {safeNumber(r.balance) > 0 ? (
+                              <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 ml-1">
+                                (Nợ: ${formatCurrency(r.balance)})
+                              </span>
+                            ) : (
+                              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 ml-1">
+                                (Đã thu)
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-xs">Đang hoạt động</span>
+                        )}
+
+                        <div className="flex items-center gap-1.5">
+                          <a
+                            href={`mailto:${r.email || 'client@taxpractice.com'}`}
+                            title="Email"
+                            className="w-7.5 h-7.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:bg-slate-200 transition-colors shadow-2xs"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                          </a>
+                          <Link
+                            href={r.link || '#'}
+                            title="Chi tiết"
+                            className="w-7.5 h-7.5 rounded-xl bg-[#092C5C] text-white flex items-center justify-center hover:bg-[#10427D] transition-colors shadow-2xs"
+                          >
+                            <ArrowUpRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
+                      </div>
+
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── TABLE VIEW ── */}
+            {viewMode === 'table' && (
+              <div className="overflow-x-auto flex-1">
+                <table className="w-full text-left border-collapse min-w-[650px]">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200/70 dark:border-slate-800 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      <th className="py-3 px-4">{t('th_client_business')}</th>
+                      <th className="py-3 px-3">{t('th_return')}</th>
+                      <th className="py-3 px-3">{t('th_tax_year')}</th>
+                      <th className="py-3 px-3">{t('th_status')}</th>
+                      <th className="py-3 px-3">{t('th_preparer')}</th>
+                      {isAdmin && <th className="py-3 px-4 text-right">{t('th_fee_balance')}</th>}
+                      <th className="py-3 px-3 text-center">{t('th_action')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs text-slate-700 dark:text-slate-300">
+                    {filteredReturns.map((r, i) => (
+                      <tr key={r.id || `ret-${i}`} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <Link href={r.link || '#'} className="font-bold text-slate-900 dark:text-white hover:text-blue-600 block">
+                            {r.name || 'Unnamed'}
+                          </Link>
+                        </td>
+
+                        <td className="py-3.5 px-3">
+                          <span className="inline-flex px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                            {r.form || '1040'}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-3 font-semibold text-slate-700 dark:text-slate-300">{r.year || '2025'}</td>
+
+                        <td className="py-3.5 px-3">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              r.status === 'Waiting Documents' ? 'bg-amber-500' :
+                              r.status === 'In Preparation' ? 'bg-blue-500' :
+                              r.status === 'Review' ? 'bg-purple-500' :
+                              r.status === 'Ready to File' ? 'bg-teal-500' : 'bg-emerald-500'
+                            }`}></span>
+                            {getStatusText(r.status || 'Waiting Documents')}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 px-3">
+                          <span className="text-xs text-slate-600 dark:text-slate-400">{r.preparer || 'Amy Tran'}</span>
+                        </td>
+
+                        {isAdmin && (
+                          <td className="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-white">
+                            ${formatCurrency(r.fee)}
+                          </td>
+                        )}
+
+                        <td className="py-3.5 px-3 text-center">
+                          <Link href={r.link || '#'}>
+                            <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs font-bold text-[#092C5C] dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                              {t('btn_view')} <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                            </Button>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {filteredReturns.length === 0 && (
+              <div className="p-8 text-center text-slate-400 text-xs">
+                <Search className="w-6 h-6 mx-auto mb-1.5 text-slate-300" />
+                <p className="font-bold text-slate-700 dark:text-slate-300">
+                  {isVi ? 'Không tìm thấy hồ sơ phù hợp' : 'No returns match your filter'}
+                </p>
+              </div>
+            )}
+
+            <footer className="p-4 border-t border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <span>
+                {isVi ? `Hiển thị ${filteredReturns.length} trên ${(activeReturns || []).length} hồ sơ` : `Showing ${filteredReturns.length} of ${(activeReturns || []).length} engagements`}
+              </span>
+              <Link href="/tax-returns" className="font-bold text-[#092C5C] dark:text-blue-400 hover:underline flex items-center gap-1">
+                {isVi ? 'Xem tất cả tờ khai' : 'View all returns'} <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            </footer>
+          </section>
+
         </div>
       </div>
     </main>

@@ -190,6 +190,7 @@ export function BusinessDetail({ id }: { id?: string }) {
           <Link href="/tax-returns">▤ <span>{t('nav_tax_returns')}</span></Link>
           <Link href="/fees">$ <span>{t('nav_fees')}</span></Link>
           <Link href="/marketing">✉ <span>{t('nav_marketing_mail')}</span></Link>
+          <Link href="/ai">✨ <span>{t('nav_emly_ai')}</span></Link>
         </nav>
         <div className="detail-user">
           <span>AT</span>

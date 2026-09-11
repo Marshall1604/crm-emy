@@ -464,7 +464,7 @@ export function ClientDetail({ id }: { id: string }) {
   };
 
   return (
-    <main style={{ maxWidth: '1240px', margin: '0 auto', padding: '24px 28px 48px' }}>
+    <main style={{ maxWidth: '1850px', width: '100%', margin: '0 auto', padding: '24px 28px 48px' }}>
       {/* Breadcrumb */}
       <div
         style={{

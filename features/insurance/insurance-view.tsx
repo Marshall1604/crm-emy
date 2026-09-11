@@ -200,7 +200,7 @@ export function InsuranceServicesView() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-[1850px] w-full mx-auto p-4 sm:p-6 md:p-8 pb-12">
       {/* 1. HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>

@@ -48,7 +48,7 @@ export function TaxReturnDetail({ id }: { id: string }) {
   const client = findClientById(returnItem.clientId, user?.id) || initialClientsList.find((c) => c.id === returnItem.clientId);
 
   return (
-    <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 28px 48px' }}>
+    <main style={{ maxWidth: '1850px', width: '100%', margin: '0 auto', padding: '24px 28px 48px' }}>
       {/* Breadcrumbs */}
       <div
         style={{
