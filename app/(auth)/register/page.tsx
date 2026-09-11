@@ -90,7 +90,7 @@ export default function RegisterPage() {
           </div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
             <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-            7-Day Free Trial Included
+            Free Starter Plan Included
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
             Create Tax CRM Account

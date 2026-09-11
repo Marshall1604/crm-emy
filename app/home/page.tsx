@@ -4,7 +4,7 @@ import { HomeLanding } from '@/features/home/home-landing';
 export const metadata: Metadata = {
   title: 'CRM EMLY — Phần Mềm Quản Lý Khách Hàng Văn Phòng Thuế Tại Mỹ | Tax Practice CRM',
   description:
-    'Phần mềm CRM chuyên biệt cho văn phòng khai thuế tại Hoa Kỳ: Quản lý người nộp thuế cá nhân Form 1040, công ty 1120/1065, theo dõi tiến độ nộp hồ sơ IRS, quản lý biểu phí & công nợ, gửi email marketing hàng loạt. Dùng thử 7 ngày miễn phí!',
+    'Phần mềm CRM chuyên biệt cho văn phòng khai thuế tại Hoa Kỳ: Quản lý người nộp thuế cá nhân Form 1040, công ty 1120/1065, theo dõi tiến độ nộp hồ sơ IRS, quản lý biểu phí & công nợ, gửi email marketing hàng loạt. Đăng ký sử dụng miễn phí ngay!',
   keywords: [
     'CRM thuế',
     'phần mềm quản lý văn phòng thuế',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     siteName: 'CRM EMLY',
     title: 'CRM EMLY — Giải Pháp CRM Quản Lý Thuế Hàng Đầu Cho Văn Phòng Kế Toán & Khai Thuế Mỹ',
     description:
-      'Nền tảng CRM toàn diện: Quản lý khách hàng cá nhân & doanh nghiệp, quy trình IRS Pipeline, quản lý phí & hóa đơn, email marketing tự động. Đăng ký dùng thử 7 ngày miễn phí ngay!',
+      'Nền tảng CRM toàn diện: Quản lý khách hàng cá nhân & doanh nghiệp, quy trình IRS Pipeline, quản lý phí & hóa đơn, email marketing tự động. Đăng ký sử dụng miễn phí ngay!',
     images: [
       {
         url: 'https://app.crmemy.com/og-image.png',
