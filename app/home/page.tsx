@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { HomeLanding } from '@/features/home/home-landing';
 
 export const metadata: Metadata = {
-  title: 'EMLY CUSTOMER LIST — Phần Mềm Quản Lý Khách Hàng Văn Phòng Thuế Tại Mỹ | Tax Practice CRM',
+  title: 'CRM EMLY — Phần Mềm Quản Lý Khách Hàng Văn Phòng Thuế Tại Mỹ | Tax Practice CRM',
   description:
     'Phần mềm CRM chuyên biệt cho văn phòng khai thuế tại Hoa Kỳ: Quản lý người nộp thuế cá nhân Form 1040, công ty 1120/1065, theo dõi tiến độ nộp hồ sơ IRS, quản lý biểu phí & công nợ, gửi email marketing hàng loạt. Dùng thử 7 ngày miễn phí!',
   keywords: [
@@ -15,11 +15,11 @@ export const metadata: Metadata = {
     'Form 1065',
     'IRS tax workflow pipeline',
     'marketing mail văn phòng thuế',
-    'EMLY CUSTOMER LIST',
+    'CRM EMLY',
   ],
-  authors: [{ name: 'EMLY CUSTOMER LIST Team' }],
-  creator: 'EMLY CUSTOMER LIST',
-  publisher: 'EMLY CUSTOMER LIST',
+  authors: [{ name: 'CRM EMLY Team' }],
+  creator: 'CRM EMLY',
+  publisher: 'CRM EMLY',
   robots: {
     index: true,
     follow: true,
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
     locale: 'vi_VN',
     alternateLocale: 'en_US',
     url: 'https://app.crmemy.com/home',
-    siteName: 'EMLY CUSTOMER LIST',
-    title: 'EMLY CUSTOMER LIST — Giải Pháp CRM Quản Lý Thuế Hàng Đầu Cho Văn Phòng Kế Toán & Khai Thuế Mỹ',
+    siteName: 'CRM EMLY',
+    title: 'CRM EMLY — Giải Pháp CRM Quản Lý Thuế Hàng Đầu Cho Văn Phòng Kế Toán & Khai Thuế Mỹ',
     description:
       'Nền tảng CRM toàn diện: Quản lý khách hàng cá nhân & doanh nghiệp, quy trình IRS Pipeline, quản lý phí & hóa đơn, email marketing tự động. Đăng ký dùng thử 7 ngày miễn phí ngay!',
     images: [
@@ -45,13 +45,13 @@ export const metadata: Metadata = {
         url: 'https://app.crmemy.com/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'EMLY CUSTOMER LIST - Tax Practice Management CRM',
+        alt: 'CRM EMLY - Tax Practice Management CRM',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'EMLY CUSTOMER LIST — Tax Practice Management CRM',
+    title: 'CRM EMLY — Tax Practice Management CRM',
     description:
       'Chuyên biệt cho văn phòng khai thuế tại Mỹ. Quản lý khách hàng, quy trình IRS, hóa đơn và email tự động.',
     images: ['https://app.crmemy.com/og-image.png'],
@@ -67,7 +67,7 @@ const jsonLd = {
   '@graph': [
     {
       '@type': 'SoftwareApplication',
-      name: 'EMLY CUSTOMER LIST',
+      name: 'CRM EMLY',
       operatingSystem: 'Web Browser, Cloud SaaS',
       applicationCategory: 'BusinessApplication, FinancialApplication, CRM',
       offers: [
@@ -81,23 +81,23 @@ const jsonLd = {
         {
           '@type': 'Offer',
           name: 'Monthly Pro',
-          price: '19',
+          price: '14',
           priceCurrency: 'USD',
           description: 'Month-to-month tax CRM subscription',
         },
         {
           '@type': 'Offer',
           name: 'Annual Enterprise',
-          price: '199',
+          price: '142',
           priceCurrency: 'USD',
-          description: 'Annual tax CRM subscription saving $29/year',
+          description: 'Annual tax CRM subscription saving 20%/year',
         },
         {
           '@type': 'Offer',
           name: 'Lifetime License',
-          price: '390',
+          price: '0',
           priceCurrency: 'USD',
-          description: 'One-time payment lifetime permanent access',
+          description: 'Lifetime permanent access, contact via WhatsApp',
         },
       ],
       aggregateRating: {
@@ -110,7 +110,7 @@ const jsonLd = {
     },
     {
       '@type': 'Organization',
-      name: 'EMLY CUSTOMER LIST',
+      name: 'CRM EMLY',
       url: 'https://app.crmemy.com/home',
       logo: 'https://app.crmemy.com/logo.png',
       sameAs: [],
@@ -120,18 +120,18 @@ const jsonLd = {
       mainEntity: [
         {
           '@type': 'Question',
-          name: 'Gói dùng thử 7 ngày có bị giới hạn tính năng nào không?',
+          name: 'Bản Miễn Phí có bị giới hạn thời gian sử dụng không?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Hoàn toàn không. Bạn được trải nghiệm 100% tất cả tính năng cao cấp nhất: Quản lý khách hàng cá nhân & công ty không giới hạn, quy trình Pipeline, gửi email marketing và quản lý phân quyền nhân sự.',
+            text: 'Hoàn toàn không. Bạn có thể sử dụng bản Miễn Phí vĩnh viễn trọn đời mà không bị tính bất kỳ chi phí nào.',
           },
         },
         {
           '@type': 'Question',
-          name: 'Gói Lifetime License $390 có phải trả thêm chi phí nào sau này không?',
+          name: 'Làm thế nào để đăng ký Gói Bản Quyền Vĩnh Viễn (Lifetime License)?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Không. Bạn chỉ thanh toán $390 một lần duy nhất để sở hữu bản quyền vĩnh viễn trọn đời, được miễn phí toàn bộ các tính năng mới và bản cập nhật trong tương lai.',
+            text: 'Quý khách vui lòng liên hệ trực tiếp qua WhatsApp (+84931233639) để nhận báo giá ưu đãi độc quyền và kích hoạt bản quyền vĩnh viễn trọn đời.',
           },
         },
         {
@@ -139,7 +139,7 @@ const jsonLd = {
           name: 'Dữ liệu thông tin khách hàng và số SSN của tôi có được bảo mật không?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'EMLY CUSTOMER LIST được xây dựng trên nền tảng Supabase với cơ chế Row-Level Security (RLS) cấp ngân hàng. Mọi số SSN và thông tin nhạy cảm đều được mã hóa và phân quyền nghiêm ngặt.',
+            text: 'CRM EMLY được xây dựng trên nền tảng Supabase với cơ chế Row-Level Security (RLS) cấp ngân hàng. Mọi số SSN và thông tin nhạy cảm đều được mã hóa và phân quyền nghiêm ngặt.',
           },
         },
       ],

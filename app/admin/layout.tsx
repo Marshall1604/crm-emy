@@ -10,6 +10,7 @@ import {
   Crown,
   DollarSign,
   History,
+  Laptop,
   LayoutDashboard,
   Layers,
   LogOut,
@@ -26,6 +27,7 @@ import { Button } from '@/components/ui/button';
 const adminNav = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Users', href: '/admin/users', icon: Users },
+  { label: 'Devices & Telemetry', href: '/admin/devices', icon: Laptop },
   { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
   { label: 'Plans', href: '/admin/plans', icon: Layers },
   { label: 'Payments', href: '/admin/payments', icon: DollarSign },
@@ -63,7 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div>
                 <b className="text-white text-sm font-extrabold tracking-tight block">
-                  EMLY CUSTOMER LIST <span className="text-amber-400 font-black">ADMIN</span>
+                  CRM EMLY <span className="text-amber-400 font-black">ADMIN</span>
                 </b>
                 <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase block">
                   Root Control Center
@@ -157,7 +159,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6 md:p-8 max-w-[1850px] w-full mx-auto space-y-6">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 w-full max-w-none space-y-6">
           {children}
         </main>
       </div>

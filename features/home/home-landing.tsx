@@ -6,9 +6,11 @@ import {
   ArrowRight,
   Building2,
   Calendar,
+  Check,
   CheckCircle2,
   ChevronDown,
   Clock,
+  Crown,
   DollarSign,
   Download,
   FileCheck,
@@ -53,8 +55,8 @@ export function HomeLanding() {
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
-  // Pricing toggle state (Tạm ẩn - Đổi thành true để hiển thị lại sau khi hoàn thiện)
-  const showPricingSection = false;
+  // Pricing toggle state
+  const showPricingSection = true;
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
 
   const toggleFaq = (index: number) => {
@@ -85,7 +87,7 @@ export function HomeLanding() {
             </div>
             <div className="flex flex-col">
               <span className="font-black text-base sm:text-lg leading-none tracking-tight text-[#092C5C] dark:text-white flex items-center gap-1.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                EMLY <span className="px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-2xs">CRM</span>
+                CRM <span className="px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-2xs">EMLY</span>
               </span>
               <span className="hidden sm:block text-[9px] font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase mt-0.5">
                 {isVi ? 'Phần Mềm Quản Lý Thuế Hoa Kỳ' : 'US Tax Practice CRM'}
@@ -644,7 +646,7 @@ export function HomeLanding() {
                           {isVi ? 'Soạn 1 lần, gửi tự động tới 1,000+ khách hàng kèm số tiền còn nợ riêng biệt' : 'Send 1-click personalized tax deadline notices to 1,000+ clients'}
                         </p>
                       </div>
-                      <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-900">Beta</span>
+                      <span className="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Pro</span>
                     </div>
 
                     <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#141820] border border-slate-200 dark:border-slate-800 space-y-2">
@@ -964,7 +966,253 @@ export function HomeLanding() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════
-            5. FREQUENTLY ASKED QUESTIONS (FROSTED GLASS ACCORDION)
+            5. TRANSPARENT PRICING PLANS (3 MODERN TIERS)
+        ══════════════════════════════════════════════════════════ */}
+        <section id="pricing" className="py-20 sm:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 px-3.5 py-1.5 rounded-full bg-blue-500/10 dark:bg-blue-400/10 border border-blue-500/20">
+              {isVi ? 'BẢNG GIÁ MINH BẠCH' : 'TRANSPARENT PRICING'}
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight mt-3">
+              {isVi ? 'Dùng Miễn Phí Vĩnh Viễn. Nâng Cấp Pro Khi Cần Tăng Tốc' : 'Start Free Forever. Upgrade Pro to Supercharge'}
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300">
+              {isVi
+                ? 'Không phụ phí ẩn. Bản miễn phí dùng mãi mãi. Nâng cấp Pro để mở khóa sức mạnh Siêu Trợ Lý Emly AI và lưu trữ không giới hạn.'
+                : 'No hidden fees. Free forever starter plan. Upgrade to Pro to unleash Emly AI superpowers and unlimited client records.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+            {/* 1. FREE FOREVER TIER */}
+            <div className="rounded-3xl p-7 sm:p-8 bg-white/80 dark:bg-[#121620]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-slate-800 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:shadow-lg transition-all">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider">
+                  {isVi ? 'Gói Cơ Bản' : 'Free Starter'}
+                </div>
+
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-4">
+                  {isVi ? 'Bản Miễn Phí' : 'Free Forever'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 min-h-[36px]">
+                  {isVi
+                    ? 'Phù hợp cho cá nhân làm thuế độc lập, văn phòng mới khởi sự quản lý danh sách khách hàng.'
+                    : 'Perfect for solo tax preparers and new practices organizing their client base.'}
+                </p>
+
+                <div className="mt-6 flex items-baseline gap-1">
+                  <span className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white">$0</span>
+                  <span className="text-sm font-bold text-slate-500">/ {isVi ? 'mãi mãi' : 'forever'}</span>
+                </div>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                  {isVi ? '✓ Không cần thẻ tín dụng' : '✓ No credit card required'}
+                </p>
+
+                <div className="mt-8 pt-6 border-t border-slate-200/70 dark:border-slate-800/70 space-y-3">
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">
+                    {isVi ? 'Tính năng bao gồm:' : 'What is included:'}
+                  </p>
+                  <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>{isVi ? 'Quản lý khách hàng cá nhân (Form 1040)' : 'Individual client records (Form 1040)'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>{isVi ? 'Quản lý doanh nghiệp (Form 1120, 1065)' : 'Corporate entities (Form 1120, 1065)'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>{isVi ? 'Theo dõi tiến độ nộp hồ sơ IRS Pipeline' : 'IRS Return Workflow & Filing Tracker'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>{isVi ? 'Quản lý biểu phí & thu nợ cơ bản' : 'Basic fee billing and payment tracking'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>{isVi ? 'Xuất danh sách Excel / CSV 1-click' : '1-click Excel & CSV data export'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 text-slate-400">
+                      <X className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
+                      <span className="line-through">{isVi ? 'Emly AI - Trí tuệ thuế 50 bang' : 'Emly AI 50-State Tax Knowledge'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 text-slate-400">
+                      <X className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
+                      <span className="line-through">{isVi ? 'Module Bảo Hiểm & Marketing Mail' : 'Insurance Services & Marketing'}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <Link href="/register" className="w-full block">
+                  <Button variant="outline" className="w-full h-12 rounded-xl text-sm font-bold border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                    {isVi ? 'Bắt Đầu Miễn Phí' : 'Start Free'}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* 2. PRO ANNUAL TIER (HERO / BEST VALUE) */}
+            <div className="rounded-3xl p-7 sm:p-8 bg-gradient-to-b from-[#092C5C] via-[#0E386E] to-[#081F3D] text-white shadow-[0_20px_60px_rgba(9,44,92,0.35)] relative flex flex-col justify-between border-2 border-amber-400/80 transform lg:-translate-y-2">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+                {isVi ? 'KHUYÊN DÙNG • TIẾT KIỆM 20%' : 'BEST VALUE • SAVE 20%'}
+              </div>
+
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-amber-300 text-xs font-extrabold uppercase tracking-wider border border-amber-400/30">
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  {isVi ? 'Gói Pro Toàn Diện' : 'Pro Full Practice'}
+                </div>
+
+                <h3 className="text-2xl font-black text-white mt-4">
+                  {isVi ? 'Gói PRO Năm' : 'Pro Annual'}
+                </h3>
+                <p className="text-xs text-blue-200 mt-1 min-h-[36px]">
+                  {isVi
+                    ? 'Lựa chọn tốt nhất cho văn phòng thuế bứt phá năng suất với AI và lưu trữ không giới hạn.'
+                    : 'The ultimate practice solution with unlimited capacity and AI copilot superpowers.'}
+                </p>
+
+                <div className="mt-6 flex items-baseline gap-1.5">
+                  <span className="text-4xl sm:text-5xl font-black text-white">$142</span>
+                  <span className="text-sm font-bold text-blue-200">/ {isVi ? 'năm' : 'year'}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs font-bold text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded">
+                    ~ $11.8 / {isVi ? 'tháng' : 'month'}
+                  </span>
+                  <span className="text-xs text-blue-200 line-through">$168</span>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-white/15 space-y-3">
+                  <p className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                    {isVi ? 'Toàn bộ quyền lợi cao cấp nhất:' : 'Everything in Pro Included:'}
+                  </p>
+                  <ul className="space-y-2.5 text-xs text-blue-100">
+                    <li className="flex items-center gap-2.5 font-bold text-white">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{isVi ? 'LƯU TRỮ KHÔNG GIỚI HẠN khách hàng & công ty' : 'UNLIMITED client & business records'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 font-bold text-white">
+                      <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+                      <span>{isVi ? 'Siêu Trợ Lý Emly AI (Trí tuệ thuế & luật 50 bang)' : 'Emly AI (50-State US Tax & Insurance Knowledge)'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 font-bold text-white">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{isVi ? 'AI Báo cáo phân tích khách hàng & công nợ' : 'AI-Powered Client & Revenue Analytics'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{isVi ? 'Module Bảo Hiểm (Insurance Services Pro)' : 'Insurance Services Module (Medicare/ACA/Life)'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{isVi ? 'Marketing Mail gửi email hàng loạt' : 'Bulk Marketing Mail Campaigns'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{isVi ? 'Ưu tiên hỗ trợ 24/7 trực tiếp qua WhatsApp' : 'Priority 24/7 1-on-1 WhatsApp Support'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>{isVi ? 'Tự động cập nhật tính năng mới liên tục' : 'Continuous automatic software updates'}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <a
+                  href="https://wa.me/84931233639?text=Xin%20chao%2C%20toi%20muon%20kich%20hoat%20goi%20PRO%20NAM%20CRM%20EMLY%20%24142%2Fnam."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full block"
+                >
+                  <Button className="w-full h-13 rounded-xl text-sm sm:text-base font-black bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-slate-950 shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer">
+                    {isVi ? 'Nâng Cấp Gói Năm Ngay' : 'Upgrade Annual Pro Now'}
+                  </Button>
+                </a>
+              </div>
+            </div>
+
+            {/* 3. PRO MONTHLY TIER */}
+            <div className="rounded-3xl p-7 sm:p-8 bg-white/80 dark:bg-[#121620]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-slate-800 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between hover:shadow-lg transition-all">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-bold uppercase tracking-wider">
+                  {isVi ? 'Gói Linh Hoạt' : 'Flexible Monthly'}
+                </div>
+
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-4">
+                  {isVi ? 'Gói PRO Tháng' : 'Pro Monthly'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 min-h-[36px]">
+                  {isVi
+                    ? 'Linh hoạt thanh toán từng tháng, toàn quyền sử dụng trọn bộ tính năng Pro trong mùa thuế.'
+                    : 'Month-to-month flexibility with full access to all Pro and AI capabilities.'}
+                </p>
+
+                <div className="mt-6 flex items-baseline gap-1">
+                  <span className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white">$14</span>
+                  <span className="text-sm font-bold text-slate-500">/ {isVi ? 'tháng' : 'month'}</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  {isVi ? 'Gia hạn hoặc tạm dừng bất kỳ lúc nào' : 'Cancel or renew anytime'}
+                </p>
+
+                <div className="mt-8 pt-6 border-t border-slate-200/70 dark:border-slate-800/70 space-y-3">
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">
+                    {isVi ? 'Tính năng Pro bao gồm:' : 'Pro features included:'}
+                  </p>
+                  <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+                    <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>{isVi ? 'Lưu trữ KHÔNG GIỚI HẠN khách hàng' : 'Unlimited client & business records'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
+                      <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span>{isVi ? 'Mở khóa Siêu Trợ Lý Emly AI 50 bang' : 'Full access to Emly AI 50-State Engine'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>{isVi ? 'AI Báo cáo phân tích khách hàng' : 'AI-Powered Client Analytics'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>{isVi ? 'Phân hệ Bảo Hiểm & Marketing Mail' : 'Insurance Services & Marketing Mail'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>{isVi ? 'Hỗ trợ kỹ thuật tiêu chuẩn' : 'Standard customer support'}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>{isVi ? 'Cập nhật tính năng mới liên tục' : 'Continuous feature updates'}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <a
+                  href="https://wa.me/84931233639?text=Xin%20chao%2C%20toi%20muon%20kich%20hoat%20goi%20PRO%20THANG%20CRM%20EMLY%20%2414%2Fthang."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full block"
+                >
+                  <Button className="w-full h-12 rounded-xl text-sm font-bold bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-950 text-white transition-all cursor-pointer">
+                    {isVi ? 'Đăng Ký Gói Tháng' : 'Choose Monthly Pro'}
+                  </Button>
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════════════════════════════════
+            6. FREQUENTLY ASKED QUESTIONS (FROSTED GLASS ACCORDION)
         ══════════════════════════════════════════════════════════ */}
         <section id="faq" className="py-16 sm:py-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -1059,7 +1307,7 @@ export function HomeLanding() {
       <footer className="bg-white/60 dark:bg-[#0A0D12]/60 backdrop-blur-2xl border-t border-white/60 dark:border-white/10 py-10 text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-900 dark:text-white">EMLY CUSTOMER LIST</span>
+            <span className="font-bold text-slate-900 dark:text-white">CRM EMLY</span>
             <span>• © 2026 All Rights Reserved.</span>
           </div>
           <div className="flex items-center gap-6 font-semibold">

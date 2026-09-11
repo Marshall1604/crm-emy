@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { HomeLanding } from '@/features/home/home-landing';
 
 export const metadata: Metadata = {
-  title: 'EMLY CUSTOMER LIST — Phần Mềm Quản Lý Khách Hàng Văn Phòng Thuế Tại Mỹ | Tax Practice CRM',
+  title: 'CRM EMLY — Phần Mềm Quản Lý Khách Hàng Văn Phòng Thuế Tại Mỹ | Tax Practice CRM',
   description:
     'Phần mềm CRM chuyên biệt cho văn phòng khai thuế tại Hoa Kỳ: Quản lý người nộp thuế cá nhân Form 1040, công ty 1120/1065, theo dõi tiến độ nộp hồ sơ IRS, quản lý biểu phí & công nợ, gửi email marketing hàng loạt. Dùng thử 7 ngày miễn phí!',
   keywords: [
@@ -15,11 +15,11 @@ export const metadata: Metadata = {
     'Form 1065',
     'IRS tax workflow pipeline',
     'marketing mail văn phòng thuế',
-    'EMLY CUSTOMER LIST',
+    'CRM EMLY',
   ],
-  authors: [{ name: 'EMLY CUSTOMER LIST Team' }],
-  creator: 'EMLY CUSTOMER LIST',
-  publisher: 'EMLY CUSTOMER LIST',
+  authors: [{ name: 'CRM EMLY Team' }],
+  creator: 'CRM EMLY',
+  publisher: 'CRM EMLY',
   robots: {
     index: true,
     follow: true,
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
     locale: 'vi_VN',
     alternateLocale: 'en_US',
     url: 'https://businesssolutions.agency',
-    siteName: 'EMLY CUSTOMER LIST',
-    title: 'EMLY CUSTOMER LIST — Giải Pháp CRM Quản Lý Thuế Hàng Đầu Cho Văn Phòng Kế Toán & Khai Thuế Mỹ',
+    siteName: 'CRM EMLY',
+    title: 'CRM EMLY — Giải Pháp CRM Quản Lý Thuế Hàng Đầu Cho Văn Phòng Kế Toán & Khai Thuế Mỹ',
     description:
       'Nền tảng CRM toàn diện: Quản lý khách hàng cá nhân & doanh nghiệp, quy trình IRS Pipeline, quản lý phí & hóa đơn, email marketing tự động. Đăng ký dùng thử 7 ngày miễn phí ngay!',
   },
@@ -41,32 +41,32 @@ const jsonLd = {
   '@graph': [
     {
       '@type': 'SoftwareApplication',
-      name: 'EMLY CUSTOMER LIST',
+      name: 'CRM EMLY',
       operatingSystem: 'Web Browser, Cloud SaaS',
       applicationCategory: 'BusinessApplication, FinancialApplication, CRM',
       offers: [
         {
           '@type': 'Offer',
-          name: '7-Day Free Trial',
+          name: 'Free Starter',
           price: '0',
           priceCurrency: 'USD',
         },
         {
           '@type': 'Offer',
-          name: 'Monthly Pro',
-          price: '19',
+          name: 'Pro Monthly',
+          price: '14',
           priceCurrency: 'USD',
         },
         {
           '@type': 'Offer',
-          name: 'Annual Enterprise',
-          price: '199',
+          name: 'Pro Annual',
+          price: '142',
           priceCurrency: 'USD',
         },
         {
           '@type': 'Offer',
           name: 'Lifetime License',
-          price: '390',
+          price: '0',
           priceCurrency: 'USD',
         },
       ],

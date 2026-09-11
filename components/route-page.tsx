@@ -235,7 +235,7 @@ function SettingsBody({ language }: { language: string }) {
     <section className="route-card route-settings">
       <label>
         {language === 'vi' ? 'Tên Văn Phòng' : 'Office Name'}
-        <input defaultValue="EMLY CUSTOMER LIST" />
+        <input defaultValue="CRM EMLY" />
       </label>
       <label>
         {language === 'vi' ? 'Năm Thuế Mặc Định' : 'Default Tax Year'}

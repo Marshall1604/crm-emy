@@ -42,6 +42,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CreateClientModal, type ClientRecord } from './create-client-modal';
+import { UpgradeProModal } from '@/components/upgrade-pro-modal';
 
 const defaultSampleClients: ClientRecord[] = [
   {
@@ -146,7 +147,7 @@ import {
 } from './client-store';
 
 export function ClientsList() {
-  const { user, role } = useAuth();
+  const { user, role, subscription } = useAuth();
   const isAdmin = role === 'super_admin' || role === 'admin';
   const storageKey = getClientStorageKey(user?.id);
 
@@ -167,6 +168,22 @@ export function ClientsList() {
 
   const { staffNames } = useStaffList();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
+  const handleOpenAddModal = () => {
+    const isPro =
+      subscription?.plan === 'monthly' ||
+      subscription?.plan === 'yearly' ||
+      subscription?.plan === 'lifetime' ||
+      role === 'super_admin' ||
+      role === 'admin';
+
+    if (!isPro && clientList.length >= 20) {
+      setIsUpgradeModalOpen(true);
+      return;
+    }
+    setIsAddModalOpen(true);
+  };
   const [search, setSearch] = useState('');
   const [year, setYear] = useState('');
   const [returnTypeFilter, setReturnTypeFilter] = useState('');
@@ -445,7 +462,7 @@ export function ClientsList() {
   };
 
   return (
-    <main className="p-6 md:p-8 max-w-[1850px] w-full mx-auto space-y-6">
+    <main className="p-4 sm:p-6 md:p-8 w-full max-w-none space-y-6">
       {/* 1. HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
@@ -485,7 +502,7 @@ export function ClientsList() {
           </Link>
 
           <Button
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={handleOpenAddModal}
             className="h-10 px-4 text-xs font-bold gap-2 bg-[#092c5c] hover:bg-[#072247] text-white shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -677,11 +694,11 @@ export function ClientsList() {
         )}
 
         <div className="overflow-x-auto" ref={menuRef}>
-          <table className="w-full text-left border-collapse min-w-[900px]">
+          <table className="w-full text-left border-collapse min-w-[960px]">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 {isAdmin && (
-                  <th className="py-3.5 px-3 w-10 text-center">
+                  <th className="py-3.5 px-3 w-10 text-center whitespace-nowrap">
                     <button
                       type="button"
                       onClick={toggleSelectAll}
@@ -699,20 +716,19 @@ export function ClientsList() {
                     </button>
                   </th>
                 )}
-                <th className="py-3.5 px-3">{language === 'vi' ? 'TÊN KHÁCH HÀNG' : 'CLIENT NAME'}</th>
-                <th className="py-3.5 px-3">{language === 'vi' ? 'LIÊN HỆ' : 'CONTACT'}</th>
-                <th className="py-3.5 px-3">{language === 'vi' ? 'NĂM THUẾ' : 'TAX YEAR'}</th>
-                <th className="py-3.5 px-3">{language === 'vi' ? 'MẪU TỜ KHAI' : 'RETURN TYPE'}</th>
-                <th className="py-3.5 px-3">{language === 'vi' ? 'TRẠNG THÁI' : 'STATUS'}</th>
-                <th className="py-3.5 px-3">{language === 'vi' ? 'NHÂN VIÊN PHỤ TRÁCH' : 'ASSIGNED STAFF'}</th>
-                {isAdmin && <th className="py-3.5 px-4 text-right">{language === 'vi' ? 'PHÍ / CÒN NỢ' : 'FEE / BALANCE'}</th>}
-                <th className="py-3.5 px-3 text-center w-12">{language === 'vi' ? 'THAO TÁC' : 'ACTIONS'}</th>
+                <th className="py-3.5 px-3 whitespace-nowrap">{language === 'vi' ? 'TÊN KHÁCH HÀNG' : 'CLIENT NAME'}</th>
+                <th className="py-3.5 px-3 whitespace-nowrap">{language === 'vi' ? 'LIÊN HỆ' : 'CONTACT'}</th>
+                <th className="py-3.5 px-3 text-center whitespace-nowrap">{language === 'vi' ? 'NĂM THUẾ' : 'TAX YEAR'}</th>
+                <th className="py-3.5 px-3 text-center whitespace-nowrap">{language === 'vi' ? 'MẪU TỜ KHAI' : 'RETURN TYPE'}</th>
+                <th className="py-3.5 px-3 whitespace-nowrap">{language === 'vi' ? 'TRẠNG THÁI' : 'STATUS'}</th>
+                <th className="py-3.5 px-3 whitespace-nowrap">{language === 'vi' ? 'NHÂN VIÊN PHỤ TRÁCH' : 'ASSIGNED STAFF'}</th>
+                {isAdmin && <th className="py-3.5 px-4 text-right whitespace-nowrap">{language === 'vi' ? 'PHÍ / CÒN NỢ' : 'FEE / BALANCE'}</th>}
+                <th className="py-3.5 px-3 text-center w-14 whitespace-nowrap">{language === 'vi' ? 'THAO TÁC' : 'ACTIONS'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
               {filtered.map((c) => {
                 const isSelected = selectedIds.has(c.id);
-                const isMenuOpen = activeMenuId === c.id;
 
                 return (
                   <tr
@@ -720,7 +736,7 @@ export function ClientsList() {
                     className={`transition-colors ${isSelected ? 'bg-slate-50/90' : 'hover:bg-slate-50/70'}`}
                   >
                     {isAdmin && (
-                      <td className="py-3.5 px-3 text-center">
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => toggleSelectOne(c.id)}
@@ -736,7 +752,7 @@ export function ClientsList() {
                       </td>
                     )}
 
-                    <td className="py-3.5 px-3">
+                    <td className="py-3.5 px-3 whitespace-nowrap">
                       <Link href={`/clients/${c.id}`} className="flex items-center gap-3 group">
                         <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-800 font-extrabold text-xs flex items-center justify-center shrink-0 border border-blue-100">
                           {c.initials}
@@ -750,20 +766,20 @@ export function ClientsList() {
                       </Link>
                     </td>
 
-                    <td className="py-3.5 px-3">
+                    <td className="py-3.5 px-3 whitespace-nowrap">
                       <div className="text-xs font-semibold text-slate-800">{c.phone}</div>
                       <div className="text-[11px] text-slate-500">{c.email}</div>
                     </td>
 
-                    <td className="py-3.5 px-3 font-bold text-slate-900">{c.year}</td>
+                    <td className="py-3.5 px-3 font-bold text-slate-900 text-center whitespace-nowrap">{c.year}</td>
 
-                    <td className="py-3.5 px-3">
+                    <td className="py-3.5 px-3 text-center whitespace-nowrap">
                       <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                         {c.returnType}
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-3">
+                    <td className="py-3.5 px-3 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
                           c.status === 'Waiting Documents' || c.status === 'Missing Information'
@@ -794,10 +810,24 @@ export function ClientsList() {
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-3 font-medium text-slate-700">{c.staff}</td>
+                    <td className="py-3.5 px-3 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center justify-center border border-slate-200 shrink-0">
+                          {c.staff
+                            ? c.staff
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')
+                                .slice(0, 2)
+                                .toUpperCase()
+                            : 'AT'}
+                        </span>
+                        <span className="text-xs font-medium text-slate-700">{c.staff || 'Amy Tran'}</span>
+                      </div>
+                    </td>
 
                     {isAdmin && (
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="font-bold text-slate-900 text-xs">${c.fee.toLocaleString()}</div>
                         {c.balance > 0 ? (
                           <div className="text-[11px] font-semibold text-rose-600">
@@ -809,38 +839,29 @@ export function ClientsList() {
                       </td>
                     )}
 
-                    <td className="py-3.5 px-3 text-center">
-                      <div className="relative inline-block">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setActiveMenuId(isMenuOpen ? null : c.id)}
-                          className="h-8 w-8 text-slate-500 hover:text-slate-900 cursor-pointer"
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-
-                        {isMenuOpen && (
-                          <div className="absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-30 text-xs">
-                            <Link
-                              href={`/clients/${c.id}`}
-                              className="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                              onClick={() => setActiveMenuId(null)}
-                            >
-                              <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
-                              {language === 'vi' ? 'Mở hồ sơ' : 'Open Record'}
-                            </Link>
-                            {isAdmin && (
-                              <button
-                                type="button"
-                                onClick={() => openDeleteSingle(c)}
-                                className="w-full px-3 py-1.5 text-left text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer font-semibold"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                {language === 'vi' ? 'Xóa khách này' : 'Delete'}
-                              </button>
-                            )}
-                          </div>
+                    <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Link href={`/clients/${c.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2.5 text-xs font-bold text-[#092c5c] hover:text-blue-700 hover:bg-blue-50/80 rounded-lg gap-1 cursor-pointer"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>{language === 'vi' ? 'Xem' : 'View'}</span>
+                          </Button>
+                        </Link>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            onClick={() => openDeleteSingle(c)}
+                            className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                            title={language === 'vi' ? 'Xóa khách hàng này' : 'Delete client'}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         )}
                       </div>
                     </td>
@@ -929,6 +950,13 @@ export function ClientsList() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Upgrade Pro Limit Modal */}
+      <UpgradeProModal
+        open={isUpgradeModalOpen}
+        onOpenChange={setIsUpgradeModalOpen}
+        currentCount={clientList.length}
+      />
     </main>
   );
 }

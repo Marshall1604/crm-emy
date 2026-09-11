@@ -180,7 +180,7 @@ export function BusinessDetail({ id }: { id?: string }) {
       <aside className="detail-sidebar">
         <Link href="/dashboard" className="detail-brand">
           <span>E<i>✓</i></span>
-          <b>EMLY <em>CUSTOMER LIST</em></b>
+          <b>CRM <em>EMLY</em></b>
         </Link>
         <nav>
           <p>{t('nav_workspace')}</p>

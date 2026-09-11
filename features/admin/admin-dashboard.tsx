@@ -97,8 +97,8 @@ export function AdminDashboard() {
   const trialUsers = usersList.filter((u) => u.subscription?.plan === 'trial' || u.subscription?.status === 'trial').length;
   const expiredSubs = usersList.filter((u) => u.subscription?.status === 'expired').length;
 
-  // Monthly Recurring Revenue estimate ($49/mo and $490/yr)
-  const mrr = (monthlySubs * 49) + Math.round((yearlySubs * 490) / 12);
+  // Monthly Recurring Revenue estimate ($14/mo and $142/yr)
+  const mrr = (monthlySubs * 14) + Math.round((yearlySubs * 142) / 12);
 
   return (
     <div className="space-y-7">
@@ -212,24 +212,24 @@ export function AdminDashboard() {
       {/* 3. SUBSCRIPTION TIERS BREAKDOWN */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-bold uppercase text-slate-500">Monthly ($49/mo)</span>
+          <span className="text-[11px] font-bold uppercase text-slate-500">Pro Monthly ($14/mo)</span>
           <div className="text-2xl font-bold text-slate-900 mt-1">{monthlySubs} users</div>
-          <span className="text-[11px] text-blue-700 font-semibold">${monthlySubs * 49}/month</span>
+          <span className="text-[11px] text-blue-700 font-semibold">${monthlySubs * 14}/month</span>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-[11px] font-bold uppercase text-slate-500">Yearly ($490/yr)</span>
+          <span className="text-[11px] font-bold uppercase text-slate-500">Pro Annual ($142/yr)</span>
           <div className="text-2xl font-bold text-slate-900 mt-1">{yearlySubs} users</div>
-          <span className="text-[11px] text-blue-700 font-semibold">${yearlySubs * 490}/year</span>
+          <span className="text-[11px] text-blue-700 font-semibold">${yearlySubs * 142}/year</span>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-purple-200 bg-purple-50/20 shadow-xs">
           <span className="text-[11px] font-bold uppercase text-purple-900 flex items-center gap-1">
             <Crown className="w-3 h-3 text-amber-500" />
-            Lifetime License
+            Pro Lifetime (Liên hệ WhatsApp)
           </span>
           <div className="text-2xl font-bold text-purple-950 mt-1">{lifetimeSubs} licenses</div>
-          <span className="text-[11px] text-purple-700 font-semibold">Never expires</span>
+          <span className="text-[11px] text-purple-700 font-semibold">Bản quyền vĩnh viễn</span>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">

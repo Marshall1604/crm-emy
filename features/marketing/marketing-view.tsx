@@ -230,7 +230,7 @@ We hope you are having a wonderful week.
 This is a friendly reminder that you have an outstanding fee balance of \${{balance}} for the preparation of your {{tax_year}} tax return ({{return_type}}).
 
 We accept payment via:
-• Zelle / QuickPay: billing@crmemy.com
+• Zelle / QuickPay: billing@crmemly.com
 • Bank Wire / ACH Transfer
 • Credit / Debit Card (Online Portal)
 • Cash / Check at front desk
@@ -240,7 +240,7 @@ Once your payment is received, your completed tax return package will be finaliz
 Thank you for your prompt attention and business!
 
 Warm regards,
-Accounting & Billing Department | CRM EMY`,
+Accounting & Billing Department | CRM EMLY`,
     bodyTemplateVi: `Kính gửi {{client_name}},
 
 Chúng tôi kính chúc quý khách một tuần làm việc hiệu quả và nhiều thuận lợi.
@@ -248,7 +248,7 @@ Chúng tôi kính chúc quý khách một tuần làm việc hiệu quả và nh
 Đây là thông báo nhắc nhở thân thiện về khoản phí dịch vụ còn lại là \${{balance}} cho việc hoàn tất hồ sơ khai thuế năm {{tax_year}} ({{return_type}}).
 
 Quý khách có thể thanh toán qua các phương thức:
-• Zelle / QuickPay: billing@crmemy.com
+• Zelle / QuickPay: billing@crmemly.com
 • Chuyển khoản ngân hàng (Bank Wire / ACH)
 • Thẻ tín dụng / Thẻ ghi nợ trực tuyến
 • Tiền mặt / Chi phiếu (Check) tại quầy lễ tân
@@ -258,7 +258,7 @@ Sau khi nhận được thanh toán, hồ sơ hoàn chỉnh của quý khách s�
 Xin chân thành cảm ơn quý khách!
 
 Trân trọng,
-Phòng Kế Toán & Thanh Toán | CRM EMY`,
+Phòng Kế Toán & Thanh Toán | CRM EMLY`,
   },
   {
     id: 'deadline_warning',
@@ -386,10 +386,19 @@ const mockCampaignLogs: CampaignLog[] = [
   },
 ];
 
+import { ProFeaturePaywall } from '@/components/pro-feature-paywall';
+
 export function MarketingView() {
-  const { user } = useAuth();
+  const { user, role, subscription } = useAuth();
   const { language } = useLanguage();
   const isVi = language === 'vi';
+
+  const isPro =
+    subscription?.plan === 'monthly' ||
+    subscription?.plan === 'yearly' ||
+    subscription?.plan === 'lifetime' ||
+    role === 'super_admin' ||
+    role === 'admin';
 
   const [activeTab, setActiveTab] = useState<'compose' | 'history' | 'integration'>('compose');
 
@@ -1062,15 +1071,26 @@ export function MarketingView() {
   };
 
   return (
-    <div className="space-y-6 max-w-[1850px] w-full mx-auto p-4 sm:p-6 md:p-8 pb-12">
+    <div className="space-y-6 max-w-[1850px] w-full mx-auto p-4 sm:p-6 md:p-8 pb-12 relative min-h-[85vh]">
+      {/* Pro Soft Paywall Overlay */}
+      {!isPro && (
+        <ProFeaturePaywall
+          featureNameVi="Hệ Thống Marketing Mail & Chiến Dịch Email Hàng Loạt"
+          featureNameEn="Marketing Mail & Bulk Email System"
+          featureDescriptionVi="Lọc tệp khách hàng theo trạng thái hồ sơ thuế, gửi email hàng loạt nhắc hạn nộp, thông báo mùa thuế tự động qua Gmail hoặc Resend."
+          featureDescriptionEn="Segment taxpayers by filing status and send automated bulk tax season announcement emails via Gmail or Resend."
+          icon={<Megaphone className="w-7 h-7 text-slate-950 fill-amber-300" />}
+        />
+      )}
+
       {/* 1. HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-white/10">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
             <Megaphone className="w-7 h-7 text-[#092c5c] dark:text-blue-400" />
             <span>{isVi ? 'Gửi Mail Marketing & Chiến Dịch Tự Động' : 'Marketing Mail & Bulk Campaigns'}</span>
-            <span className="text-xs font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
-              Beta
+            <span className="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              Pro
             </span>
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">

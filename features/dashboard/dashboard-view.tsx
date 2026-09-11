@@ -489,7 +489,7 @@ export function DashboardView() {
   ];
 
   return (
-    <main className="p-4 sm:p-6 md:p-8 max-w-[1850px] w-full mx-auto space-y-6 animate-in fade-in duration-300 text-slate-800 dark:text-slate-100">
+    <main className="p-4 sm:p-6 md:p-8 w-full max-w-none space-y-6 animate-in fade-in duration-300 text-slate-800 dark:text-slate-100">
       
       {/* ─── 1. TOP HEADER & QUICK STAT BAR ─── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">

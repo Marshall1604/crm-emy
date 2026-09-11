@@ -91,7 +91,7 @@ function MemberModal({ open, onClose, onSubmit, initial }: MemberModalProps) {
             <DialogDescription>
               {isEdit
                 ? (language === 'vi' ? 'Cập nhật thông tin tài khoản và vai trò nhân sự.' : "Update the member's information and role.")
-                : (language === 'vi' ? 'Thêm nhân viên mới vào hệ thống quản lý thuế EMLY CUSTOMER LIST.' : 'Add a new staff member to EMLY CUSTOMER LIST.')}
+                : (language === 'vi' ? 'Thêm nhân viên mới vào hệ thống quản lý thuế CRM EMLY.' : 'Add a new staff member to CRM EMLY.')}
             </DialogDescription>
           </div>
         </div>

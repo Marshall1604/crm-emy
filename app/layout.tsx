@@ -6,6 +6,7 @@ import { AuthProvider } from '@/lib/auth/auth-context';
 import { LanguageProvider } from '@/lib/i18n/language-context';
 import { ThemeProvider } from '@/lib/theme/theme-context';
 import { WhatsAppButton } from '@/components/whatsapp-button';
+import { DeviceTelemetryTracker } from '@/components/device-telemetry-tracker';
 
 const beVietnamPro = Be_Vietnam_Pro({
   weight: ['300', '400', '500', '600', '700', '800', '900'],
@@ -15,7 +16,7 @@ const beVietnamPro = Be_Vietnam_Pro({
 });
 
 export const metadata: Metadata = {
-  title: 'EMLY CUSTOMER LIST — Tax Office Client Management',
+  title: 'CRM EMLY — Tax Office Client Management',
   description: 'Modern tax preparation office client management SaaS with RBAC & subscription system.',
 };
 
@@ -51,6 +52,7 @@ export default function RootLayout({
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
+              <DeviceTelemetryTracker />
               <CrmShell>{children}</CrmShell>
               <WhatsAppButton />
             </AuthProvider>

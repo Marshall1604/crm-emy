@@ -97,9 +97,9 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
     { label: t('nav_businesses'), href: '/businesses', icon: '▣' },
     { label: t('nav_tax_returns'), href: '/tax-returns', icon: '▤' },
     ...(canViewFees ? [{ label: t('nav_fees'), href: '/fees', icon: '$' }] : []),
-    { label: t('nav_insurance_services'), href: '/insurance', icon: '🛡', badge: 'Beta' },
-    { label: t('nav_marketing_mail'), href: '/marketing', icon: '✉', badge: 'Beta' },
-    { label: t('nav_emly_ai'), href: '/ai', icon: '✨', badge: 'Beta' },
+    { label: t('nav_insurance_services'), href: '/insurance', icon: '🛡', badge: 'Pro' },
+    { label: t('nav_marketing_mail'), href: '/marketing', icon: '✉', badge: 'Pro' },
+    { label: t('nav_emly_ai'), href: '/ai', icon: '✨', badge: 'Pro' },
   ];
 
   return (
@@ -107,7 +107,7 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
       <aside className="route-sidebar">
         <Link className="route-brand" href="/dashboard">
           <span>E<i>✓</i></span>
-          <b>EMLY <em>CUSTOMER LIST</em></b>
+          <b>CRM <em>EMLY</em></b>
         </Link>
 
         {/* WORKSPACE SECTION */}
@@ -123,9 +123,9 @@ export function CrmShell({ children }: { children: React.ReactNode }) {
               <span>{icon}</span>
               {label}
               {badge && (
-                <b className="!ml-auto !text-[10px] !font-black !px-1.5 !py-0.5 !rounded-md !bg-amber-100 !text-amber-800 !border !border-amber-200">
+                <span className="!ml-auto !text-[11px] !font-black !text-blue-600 dark:!text-blue-400 !tracking-wider !uppercase !bg-transparent !border-0 !p-0">
                   {badge}
-                </b>
+                </span>
               )}
             </Link>
           ))}

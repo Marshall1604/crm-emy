@@ -144,7 +144,7 @@ function LoginFormContent() {
           <span className="font-extrabold text-xl tracking-tighter">C✓</span>
         </div>
         <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-          Welcome to EMLY CUSTOMER LIST
+          Welcome to CRM EMLY
         </h1>
         <p className="text-xs text-slate-500">
           Professional Tax Practice & Client Management SaaS

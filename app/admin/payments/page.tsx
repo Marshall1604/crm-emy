@@ -40,10 +40,10 @@ export default function AdminPaymentsPage() {
         user: u.full_name || u.email.split('@')[0],
         plan:
           u.subscription.lifetime || u.subscription.plan === 'lifetime'
-            ? 'Lifetime License'
+            ? 'Pro Lifetime (Liên hệ WhatsApp)'
             : u.subscription.plan === 'yearly'
-            ? 'Annual Enterprise'
-            : 'Monthly Pro',
+            ? 'Pro Annual ($142/yr)'
+            : 'Pro Monthly ($14/mo)',
         method: u.subscription.payment_provider ? u.subscription.payment_provider.toUpperCase() : 'MANUAL',
         amount: `$${u.subscription.amount}.00`,
         date: u.subscription.start_date

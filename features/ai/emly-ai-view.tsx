@@ -24,11 +24,19 @@ import {
   ChatSession,
 } from './ai-types';
 import { buildClientSideCrmContext, type CrmDataSummary } from './crm-context-builder';
+import { ProFeaturePaywall } from '@/components/pro-feature-paywall';
 
 export function EmlyAiView() {
   const { language } = useLanguage();
-  const { user, profile } = useAuth();
+  const { user, profile, role, subscription } = useAuth();
   const isVi = language === 'vi';
+
+  const isPro =
+    subscription?.plan === 'monthly' ||
+    subscription?.plan === 'yearly' ||
+    subscription?.plan === 'lifetime' ||
+    role === 'super_admin' ||
+    role === 'admin';
 
   // Model & State
   const [selectedModel, setSelectedModel] = useState<string>('kira-3.5-pro');
@@ -270,8 +278,18 @@ export function EmlyAiView() {
   };
 
   return (
-    <div className="space-y-6 max-w-[1850px] w-full mx-auto p-4 sm:p-6 md:p-8 pb-12 animate-in fade-in duration-300">
-      
+    <div className="space-y-6 max-w-[1850px] w-full mx-auto p-4 sm:p-6 md:p-8 pb-12 animate-in fade-in duration-300 relative min-h-[85vh]">
+      {/* Pro Soft Paywall Overlay */}
+      {!isPro && (
+        <ProFeaturePaywall
+          featureNameVi="Siêu Trợ Lý Emly AI (Thuế & Luật Mỹ 50 Bang)"
+          featureNameEn="Emly AI Tax & Law Super Assistant"
+          featureDescriptionVi="Trí tuệ nhân tạo chuyên sâu tra cứu luật thuế IRS, Form 1040/1120/1065, bảo hiểm ACA/Medicare và tự động phân tích báo cáo doanh thu khách hàng."
+          featureDescriptionEn="AI engine specialized in US IRS Tax Code, 50-State Regulations, Form 1040/1120/1065, and real-time CRM practice intelligence."
+          icon={<Sparkles className="w-7 h-7 text-slate-950 fill-amber-300" />}
+        />
+      )}
+
       {/* ─── 1. TOP HEADER & DIRECT INTEGRATION BANNER ─── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-white/10">
         <div>
@@ -279,9 +297,8 @@ export function EmlyAiView() {
             <span className="text-xs font-black tracking-wider text-slate-400 dark:text-slate-500 uppercase">
               {isVi ? 'Trợ Lý Trí Tuệ Nhân Tạo' : 'Tax Practice AI Workspace'}
             </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-              <Sparkles className="w-3 h-3 text-amber-600" />
-              <span>Beta</span>
+            <span className="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              Pro
             </span>
           </div>
 

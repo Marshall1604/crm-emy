@@ -606,9 +606,9 @@ export function UsersManager() {
           className="h-10 px-3 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700 bg-white cursor-pointer"
         >
           <option value="">All Subscription Plans</option>
-          <option value="monthly">Monthly Pro ($19)</option>
-          <option value="yearly">Annual Enterprise ($199)</option>
-          <option value="lifetime">Lifetime License ($390)</option>
+          <option value="monthly">Monthly Pro ($14)</option>
+          <option value="yearly">Annual Pro ($142)</option>
+          <option value="lifetime">Pro Lifetime (Liên hệ WhatsApp)</option>
           <option value="trial">7-Day Trial</option>
           <option value="expired">Expired Subscriptions</option>
         </select>
@@ -799,13 +799,21 @@ export function UsersManager() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            setSelectedPlan(
-                              u.subscription?.plan === 'yearly'
-                                ? 'yearly'
-                                : u.subscription?.plan === 'lifetime'
-                                ? 'lifetime'
-                                : 'monthly'
-                            );
+                            const currentPlan = (u.subscription?.plan as any) || 'monthly';
+                            setSelectedPlan(currentPlan);
+                            if (currentPlan === 'yearly') {
+                              setDaysToAdd(365);
+                              setPaymentAmount(142);
+                            } else if (currentPlan === 'lifetime') {
+                              setDaysToAdd(0);
+                              setPaymentAmount(0);
+                            } else if (currentPlan === 'trial') {
+                              setDaysToAdd(30);
+                              setPaymentAmount(0);
+                            } else {
+                              setDaysToAdd(30);
+                              setPaymentAmount(14);
+                            }
                             setActionModal({ type: 'subscription', user: u });
                           }}
                           className="h-7 px-2 text-[11px] font-bold gap-1 border-blue-300 text-blue-700 hover:bg-blue-50 cursor-pointer"
@@ -978,10 +986,10 @@ export function UsersManager() {
                   onChange={(e: any) => setCreateForm({ ...createForm, plan: e.target.value })}
                   className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white font-medium"
                 >
-                  <option value="trial">7-Day Free Trial ($0)</option>
-                  <option value="monthly">Monthly Pro ($19/mo)</option>
-                  <option value="yearly">Annual Enterprise ($199/yr)</option>
-                  <option value="lifetime">Lifetime License ($390)</option>
+                  <option value="trial">Free Starter ($0 - Max 20 clients)</option>
+                  <option value="monthly">Pro Monthly ($14/mo - Unlimited)</option>
+                  <option value="yearly">Pro Annual ($142/yr - Save 20%)</option>
+                  <option value="lifetime">Pro Lifetime (Liên hệ WhatsApp)</option>
                 </select>
               </div>
             </div>
@@ -1058,41 +1066,34 @@ export function UsersManager() {
           </header>
 
           <div className="space-y-4 text-xs">
-            <div>
-              <label className="block font-bold text-slate-700 mb-1.5">Quick Add Duration</label>
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  { label: '+7 Days (Trial)', days: 7 },
-                  { label: '+30 Days (1 Mo)', days: 30 },
-                  { label: '+90 Days (3 Mo)', days: 90 },
-                  { label: '+1 Year', days: 365 },
-                ].map((item) => (
-                  <button
-                    key={item.days}
-                    type="button"
-                    onClick={() => setDaysToAdd(item.days)}
-                    className={`py-2 px-2 rounded-lg border text-center font-bold cursor-pointer transition-all ${
-                      daysToAdd === item.days
-                        ? 'bg-[#092c5c] text-white border-[#092c5c]'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Plan Type</label>
                 <select
                   value={selectedPlan}
-                  onChange={(e: any) => setSelectedPlan(e.target.value)}
-                  className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white"
+                  onChange={(e: any) => {
+                    const plan = e.target.value;
+                    setSelectedPlan(plan);
+                    if (plan === 'monthly') {
+                      setDaysToAdd(30);
+                      setPaymentAmount(14);
+                    } else if (plan === 'yearly') {
+                      setDaysToAdd(365);
+                      setPaymentAmount(142);
+                    } else if (plan === 'lifetime') {
+                      setDaysToAdd(0);
+                      setPaymentAmount(0);
+                    } else {
+                      setDaysToAdd(30);
+                      setPaymentAmount(0);
+                    }
+                  }}
+                  className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white font-medium"
                 >
-                  <option value="monthly">Monthly Pro ($19)</option>
-                  <option value="yearly">Annual Enterprise ($199)</option>
+                  <option value="trial">Free Starter ($0)</option>
+                  <option value="monthly">Pro Monthly ($14/mo)</option>
+                  <option value="yearly">Pro Annual ($142/yr)</option>
+                  <option value="lifetime">Pro Lifetime (Liên hệ WhatsApp)</option>
                 </select>
               </div>
 
@@ -1101,7 +1102,7 @@ export function UsersManager() {
                 <select
                   value={paymentMethod}
                   onChange={(e: any) => setPaymentMethod(e.target.value)}
-                  className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white"
+                  className="w-full h-9 px-2.5 rounded-lg border border-slate-300 bg-white font-medium"
                 >
                   <option value="zelle">Zelle / QuickPay</option>
                   <option value="cash">Cash / Office Front Desk</option>
@@ -1153,10 +1154,10 @@ export function UsersManager() {
             </Button>
             <Button
               size="sm"
-              onClick={() => handleExtendSubscription('days')}
+              onClick={() => handleExtendSubscription(selectedPlan === 'lifetime' ? 'lifetime' : 'days')}
               className="text-xs font-bold bg-[#092c5c] hover:bg-[#072247] text-white"
             >
-              Apply +{daysToAdd} Days Subscription
+              Apply Subscription Changes
             </Button>
           </div>
         </DialogContent>

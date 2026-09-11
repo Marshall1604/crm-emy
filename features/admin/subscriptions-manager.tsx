@@ -85,12 +85,12 @@ export function SubscriptionsManager() {
         const sub = u.subscription;
         const planName =
           sub.lifetime || sub.plan === 'lifetime'
-            ? 'Lifetime License'
+            ? 'Pro Lifetime (Liên hệ WhatsApp)'
             : sub.plan === 'yearly'
-            ? 'Annual Enterprise'
+            ? 'Pro Annual ($142/yr)'
             : sub.plan === 'monthly'
-            ? 'Monthly Pro'
-            : '7-Day Free Trial';
+            ? 'Pro Monthly ($14/mo)'
+            : 'Free Starter ($0)';
 
         const expireText =
           sub.lifetime || sub.plan === 'lifetime'
@@ -155,13 +155,13 @@ export function SubscriptionsManager() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <span className="text-xs font-bold text-slate-500 uppercase">Monthly Subscribers</span>
           <div className="text-3xl font-black text-slate-900 mt-2">{monthlyCount}</div>
-          <p className="text-xs text-slate-500 mt-1">$19/month per seat</p>
+          <p className="text-xs text-slate-500 mt-1">$14/month per seat</p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <span className="text-xs font-bold text-slate-500 uppercase">Yearly Subscribers</span>
           <div className="text-3xl font-black text-slate-900 mt-2">{yearlyCount}</div>
-          <p className="text-xs text-blue-700 font-semibold mt-1">$199/year billed</p>
+          <p className="text-xs text-blue-700 font-semibold mt-1">$142/year billed</p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-purple-200 bg-purple-50/20 shadow-xs">

@@ -105,7 +105,7 @@ export default function SubscriptionExpiredPage() {
               {/* Price */}
               <div className="my-6">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-5xl font-black text-slate-900 tracking-tight">$19</span>
+                  <span className="text-5xl font-black text-slate-900 tracking-tight">$14</span>
                   <span className="text-sm text-slate-500 font-bold">/ month</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-2">
@@ -121,15 +121,15 @@ export default function SubscriptionExpiredPage() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>Form 1040, 1065, 1120, 1120-S returns</span>
+                  <span>Emly AI: US Tax & Law Assistant (50 States)</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>Marketing Mail & Bulk Client Campaigns</span>
+                  <span>AI Business Reports & Predictive Analytics</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>Excel Exports & Revenue Invoicing</span>
+                  <span>Insurance & Marketing Mail Campaigns</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -143,7 +143,7 @@ export default function SubscriptionExpiredPage() {
                 onClick={() => setIsSupportModalOpen(true)}
                 className="w-full h-12 text-sm font-bold bg-[#092c5c] hover:bg-[#072247] text-white rounded-2xl shadow-sm cursor-pointer"
               >
-                Renew Monthly ($19)
+                Renew Monthly ($14)
               </Button>
             </div>
           </div>
@@ -160,13 +160,13 @@ export default function SubscriptionExpiredPage() {
             {/* Top Savings Badge */}
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-blue-600 text-white text-xs font-black tracking-wider uppercase shadow-md flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5" />
-              Save $29 / Year (Best Value)
+              Save 20% · $11.8/tháng (Best Value)
             </div>
 
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 mt-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-blue-900">
-                  Annual Enterprise
+                  Annual Pro
                 </span>
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
@@ -182,11 +182,11 @@ export default function SubscriptionExpiredPage() {
               {/* Price */}
               <div className="my-6">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-5xl font-black text-slate-900 tracking-tight">$199</span>
+                  <span className="text-5xl font-black text-slate-900 tracking-tight">$142</span>
                   <span className="text-sm text-slate-500 font-bold">/ year</span>
                 </div>
                 <p className="text-xs text-blue-700 font-semibold mt-2">
-                  Best value for tax preparation offices & CPAs.
+                  Best value for tax preparation offices & CPAs (Save $26/yr).
                 </p>
               </div>
 
@@ -198,11 +198,11 @@ export default function SubscriptionExpiredPage() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span className="font-semibold text-blue-900">Save over 13% vs monthly billing</span>
+                  <span className="font-semibold text-blue-900">Save 20% vs monthly billing</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>Priority IRS E-file preparation workflow</span>
+                  <span>Emly AI full tax intelligence suite</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -210,7 +210,7 @@ export default function SubscriptionExpiredPage() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>Dedicated phone & live chat support</span>
+                  <span>Dedicated priority live chat support</span>
                 </li>
               </ul>
             </div>
@@ -220,7 +220,7 @@ export default function SubscriptionExpiredPage() {
                 onClick={() => setIsSupportModalOpen(true)}
                 className="w-full h-12 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-md cursor-pointer"
               >
-                Renew Yearly ($199)
+                Renew Yearly ($142)
               </Button>
             </div>
           </div>
@@ -254,11 +254,10 @@ export default function SubscriptionExpiredPage() {
               {/* Price */}
               <div className="my-6">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-5xl font-black text-slate-900 tracking-tight">$390</span>
-                  <span className="text-sm text-slate-500 font-bold">one-time</span>
+                  <span className="text-3xl font-black text-purple-900 tracking-tight">Liên hệ WhatsApp</span>
                 </div>
                 <p className="text-xs text-purple-700 font-semibold mt-2">
-                  Pay once, permanent access forever without monthly fees.
+                  Báo giá theo quy mô doanh nghiệp & kích hoạt vĩnh viễn.
                 </p>
               </div>
 
@@ -266,7 +265,7 @@ export default function SubscriptionExpiredPage() {
               <ul className="space-y-3.5 text-xs text-slate-700 pt-2 border-t border-slate-100">
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                  <span className="font-bold text-slate-900">Never Expires (Permanent Access)</span>
+                  <span className="font-bold text-slate-900">Never Expires (Sở hữu vĩnh viễn)</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
@@ -274,25 +273,31 @@ export default function SubscriptionExpiredPage() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                  <span>Unlimited staff accounts & tax seasons</span>
+                  <span>Toàn bộ quyền lợi gói Pro không giới hạn</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                  <span>Custom branding & office domain support</span>
+                  <span>Cài đặt máy chủ / tên miền riêng theo yêu cầu</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                  <span>VIP 24/7 priority support channel</span>
+                  <span>VIP 1-on-1 WhatsApp Priority Support 24/7</span>
                 </li>
               </ul>
             </div>
 
             <div className="pt-8">
               <Button
-                onClick={() => setIsSupportModalOpen(true)}
+                onClick={() => {
+                  window.open(
+                    'https://wa.me/84931233639?text=' +
+                      encodeURIComponent('Xin chào, tôi muốn nhận báo giá và tư vấn gói CRM EMLY Lifetime Vĩnh Viễn.'),
+                    '_blank'
+                  );
+                }}
                 className="w-full h-12 text-sm font-bold bg-purple-700 hover:bg-purple-800 text-white rounded-2xl shadow-sm cursor-pointer"
               >
-                Get Lifetime ($390)
+                Liên hệ WhatsApp ngay
               </Button>
             </div>
           </div>
@@ -354,7 +359,7 @@ export default function SubscriptionExpiredPage() {
                 Renew Subscription & License
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
-                Selected Plan: <b className="text-blue-900 capitalize font-bold">{selectedPlan}</b> ({selectedPlan === 'lifetime' ? '$390' : selectedPlan === 'yearly' ? '$199' : '$19'})
+                Selected Plan: <b className="text-blue-900 capitalize font-bold">{selectedPlan}</b> ({selectedPlan === 'lifetime' ? 'Liên hệ WhatsApp' : selectedPlan === 'yearly' ? '$142' : '$14'})
               </DialogDescription>
             </div>
           </header>
@@ -374,7 +379,7 @@ export default function SubscriptionExpiredPage() {
                   </span>
                 </div>
                 <div className="text-slate-600 font-mono text-xs">
-                  Email: <b className="text-blue-700">billing@crmemy.com</b>
+                  Email: <b className="text-blue-700">billing@crmemly.com</b>
                 </div>
                 <div className="text-[11px] text-slate-500">
                   Memo: Your account email (<code>{user?.email || 'your-email@domain.com'}</code>)
@@ -384,7 +389,7 @@ export default function SubscriptionExpiredPage() {
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                 <b className="text-slate-900 font-bold block">2. Bank Wire / ACH Transfer</b>
                 <div className="text-slate-600 text-[11px]">
-                  Bank: <b>Chase Bank N.A.</b> · Account Name: <b>CRM EMY Tax Practice LLC</b>
+                  Bank: <b>Chase Bank N.A.</b> · Account Name: <b>CRM EMLY Tax Practice LLC</b>
                 </div>
               </div>
 

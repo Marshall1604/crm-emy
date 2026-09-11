@@ -23,6 +23,7 @@ import { useLanguage } from '@/lib/i18n/language-context';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useStaffList } from '@/features/team/member-store';
 import { CreateBusinessModal } from '@/features/businesses/create-business-modal';
+import { UpgradeProModal } from '@/components/upgrade-pro-modal';
 
 export interface BusinessItem {
   id: string;
@@ -131,11 +132,28 @@ const initialBusinesses: BusinessItem[] = [
 ];
 
 export function BusinessesList() {
-  const { user, role } = useAuth();
+  const { user, role, subscription } = useAuth();
   const { staffNames } = useStaffList();
   const isAdmin = role === 'super_admin' || role === 'admin';
   const { language } = useLanguage();
   const [modalOpen, setModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
+  const handleOpenModal = () => {
+    const isPro =
+      subscription?.plan === 'monthly' ||
+      subscription?.plan === 'yearly' ||
+      subscription?.plan === 'lifetime' ||
+      role === 'super_admin' ||
+      role === 'admin';
+
+    if (!isPro && businessList.length >= 20) {
+      setIsUpgradeModalOpen(true);
+      return;
+    }
+    setModalOpen(true);
+  };
+
   const [search, setSearch] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [entityFilter, setEntityFilter] = useState('');
@@ -264,7 +282,7 @@ export function BusinessesList() {
   };
 
   return (
-    <main className="p-6 md:p-8 max-w-[1850px] w-full mx-auto space-y-6">
+    <main className="p-4 sm:p-6 md:p-8 w-full max-w-none space-y-6">
       {/* 1. HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
@@ -303,7 +321,7 @@ export function BusinessesList() {
           </Link>
 
           <Button
-            onClick={() => setModalOpen(true)}
+            onClick={handleOpenModal}
             className="h-10 px-4 bg-[#092c5c] hover:bg-[#072247] text-white font-bold text-xs rounded-lg shadow-xs flex items-center gap-2 cursor-pointer transition-all"
           >
             <Plus className="w-4 h-4" />
@@ -492,23 +510,23 @@ export function BusinessesList() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[850px]">
+            <table className="w-full text-left border-collapse min-w-[960px]">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3.5 px-4">{language === 'vi' ? 'TÊN DOANH NGHIỆP & DBA' : 'BUSINESS NAME & DBA'}</th>
-                  <th className="py-3.5 px-3">{language === 'vi' ? 'MÃ SỐ EIN' : 'EIN'}</th>
-                  <th className="py-3.5 px-3">{language === 'vi' ? 'LOẠI HÌNH / TỜ KHAI' : 'ENTITY / FORM'}</th>
-                  <th className="py-3.5 px-3">{language === 'vi' ? 'NĂM THUẾ' : 'TAX YEAR'}</th>
-                  <th className="py-3.5 px-3">{language === 'vi' ? 'TRẠNG THÁI' : 'STATUS'}</th>
-                  <th className="py-3.5 px-3">{language === 'vi' ? 'NHÂN VIÊN PHỤ TRÁCH' : 'ASSIGNED STAFF'}</th>
-                  {isAdmin && <th className="py-3.5 px-4 text-right">{language === 'vi' ? 'PHÍ / CÒN NỢ' : 'FEE / BALANCE'}</th>}
-                  <th className="py-3.5 px-3 text-center">{language === 'vi' ? 'THAO TÁC' : 'ACTION'}</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">{language === 'vi' ? 'TÊN DOANH NGHIỆP & DBA' : 'BUSINESS NAME & DBA'}</th>
+                  <th className="py-3.5 px-3 whitespace-nowrap">{language === 'vi' ? 'MÃ SỐ EIN' : 'EIN'}</th>
+                  <th className="py-3.5 px-3 whitespace-nowrap">{language === 'vi' ? 'LOẠI HÌNH / TỜ KHAI' : 'ENTITY / FORM'}</th>
+                  <th className="py-3.5 px-3 text-center whitespace-nowrap">{language === 'vi' ? 'NĂM THUẾ' : 'TAX YEAR'}</th>
+                  <th className="py-3.5 px-3 whitespace-nowrap">{language === 'vi' ? 'TRẠNG THÁI' : 'STATUS'}</th>
+                  <th className="py-3.5 px-3 whitespace-nowrap">{language === 'vi' ? 'NHÂN VIÊN PHỤ TRÁCH' : 'ASSIGNED STAFF'}</th>
+                  {isAdmin && <th className="py-3.5 px-4 text-right whitespace-nowrap">{language === 'vi' ? 'PHÍ / CÒN NỢ' : 'FEE / BALANCE'}</th>}
+                  <th className="py-3.5 px-3 text-center whitespace-nowrap">{language === 'vi' ? 'THAO TÁC' : 'ACTION'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
                 {filtered.map((b) => (
                   <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-4 px-4">
+                    <td className="py-4 px-4 whitespace-nowrap">
                       <Link href={`/businesses/${b.id}`} className="flex items-center gap-3 group">
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#092c5c] to-blue-800 text-white font-extrabold text-xs flex items-center justify-center shrink-0">
                           {b.name.slice(0, 2).toUpperCase()}
@@ -522,18 +540,18 @@ export function BusinessesList() {
                       </Link>
                     </td>
 
-                    <td className="py-4 px-3 font-mono text-xs text-slate-600 font-semibold">{b.ein}</td>
+                    <td className="py-4 px-3 font-mono text-xs text-slate-600 font-semibold whitespace-nowrap">{b.ein}</td>
 
-                    <td className="py-4 px-3">
+                    <td className="py-4 px-3 whitespace-nowrap">
                       <div className="font-semibold text-slate-800 text-xs">{getEntityLabel(b.entityType)}</div>
                       <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                         {b.returnType}
                       </span>
                     </td>
 
-                    <td className="py-4 px-3 font-bold text-slate-900">{b.year}</td>
+                    <td className="py-4 px-3 font-bold text-slate-900 text-center whitespace-nowrap">{b.year}</td>
 
-                    <td className="py-4 px-3">
+                    <td className="py-4 px-3 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
                           b.status === 'Waiting Documents'
@@ -560,20 +578,24 @@ export function BusinessesList() {
                       </span>
                     </td>
 
-                    <td className="py-4 px-3">
+                    <td className="py-4 px-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center justify-center border border-slate-200">
+                        <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center justify-center border border-slate-200 shrink-0">
                           {b.preparer
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
+                            ? b.preparer
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')
+                                .slice(0, 2)
+                                .toUpperCase()
+                            : 'AT'}
                         </span>
-                        <span className="text-xs font-medium text-slate-700">{b.preparer}</span>
+                        <span className="text-xs font-medium text-slate-700">{b.preparer || 'Amy Tran'}</span>
                       </div>
                     </td>
 
                     {isAdmin && (
-                      <td className="py-4 px-4 text-right">
+                      <td className="py-4 px-4 text-right whitespace-nowrap">
                         <div className="font-bold text-slate-900 text-xs">${b.fee.toLocaleString()}</div>
                         {b.balance > 0 ? (
                           <div className="text-[11px] font-semibold text-rose-600">
@@ -585,7 +607,7 @@ export function BusinessesList() {
                       </td>
                     )}
 
-                    <td className="py-4 px-3 text-center">
+                    <td className="py-4 px-3 text-center whitespace-nowrap">
                       <Link href={`/businesses/${b.id}`}>
                         <Button variant="ghost" size="sm" className="h-8 px-2 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 cursor-pointer">
                           {language === 'vi' ? 'Chi Tiết →' : 'View →'}
@@ -605,6 +627,13 @@ export function BusinessesList() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         onBusinessCreated={handleCreateBusiness}
+      />
+
+      {/* Upgrade Pro Limit Modal */}
+      <UpgradeProModal
+        open={isUpgradeModalOpen}
+        onOpenChange={setIsUpgradeModalOpen}
+        currentCount={businessList.length}
       />
     </main>
   );

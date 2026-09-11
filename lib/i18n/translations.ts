@@ -3,7 +3,7 @@ export type Language = 'en' | 'vi';
 export const translations = {
   en: {
     // Brand & General
-    brand_name: 'EMLY CUSTOMER LIST',
+    brand_name: 'CRM EMLY',
     tax_crm_workspace: 'TAX CRM WORKSPACE',
     live_sync_active: 'Live Sync Active',
 
@@ -166,7 +166,7 @@ export const translations = {
   },
   vi: {
     // Brand & General
-    brand_name: 'EMLY CUSTOMER LIST',
+    brand_name: 'CRM EMLY',
     tax_crm_workspace: 'KHÔNG GIAN LÀM VIỆC CRM THUẾ',
     live_sync_active: 'Đồng bộ trực tiếp',
 

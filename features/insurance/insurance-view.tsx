@@ -40,11 +40,19 @@ import {
 } from './insurance-types';
 import { CreateInsuranceModal } from './create-insurance-modal';
 import { EditInsuranceModal } from './edit-insurance-modal';
+import { ProFeaturePaywall } from '@/components/pro-feature-paywall';
 
 export function InsuranceServicesView() {
   const { language } = useLanguage();
-  const { user } = useAuth();
+  const { user, role, subscription } = useAuth();
   const { staffNames } = useStaffList();
+
+  const isPro =
+    subscription?.plan === 'monthly' ||
+    subscription?.plan === 'yearly' ||
+    subscription?.plan === 'lifetime' ||
+    role === 'super_admin' ||
+    role === 'admin';
 
   const [clients, setClients] = useState<InsuranceClient[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -200,7 +208,18 @@ export function InsuranceServicesView() {
   };
 
   return (
-    <div className="space-y-6 max-w-[1850px] w-full mx-auto p-4 sm:p-6 md:p-8 pb-12">
+    <div className="space-y-6 max-w-[1850px] w-full mx-auto p-4 sm:p-6 md:p-8 pb-12 relative min-h-[85vh]">
+      {/* Pro Soft Paywall Overlay */}
+      {!isPro && (
+        <ProFeaturePaywall
+          featureNameVi="Phân Hệ Quản Lý Bảo Hiểm (Insurance Services)"
+          featureNameEn="Insurance Services Pro Module"
+          featureDescriptionVi="Quản lý khách hàng bảo hiểm Medicare, ACA (Obamacare), Life Policy, theo dõi tái tục và lịch hẹn chăm sóc chuyên nghiệp."
+          featureDescriptionEn="Manage Medicare, ACA (Obamacare), and Life Policy client portfolios with automated renewal tracking."
+          icon={<Shield className="w-7 h-7 text-slate-950 fill-amber-300" />}
+        />
+      )}
+
       {/* 1. HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
@@ -217,8 +236,8 @@ export function InsuranceServicesView() {
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
             <Shield className="w-7 h-7 text-[#092c5c]" />
             <span>Insurance Services</span>
-            <span className="text-xs font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
-              Beta
+            <span className="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              Pro
             </span>
           </h1>
 
